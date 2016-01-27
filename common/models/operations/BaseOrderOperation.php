@@ -12,7 +12,7 @@ use yii\base\Component;
 use common\exceptions\OrderOperationException;
 use common\models\entities\OrderOperation;
 use common\models\entities\RoomTable;
-use common\models\service\RoomService;
+use common\models\services\RoomService;
 
 /**
  * 预约操作的基类
@@ -105,14 +105,15 @@ class BaseOrderOperation extends Component {
     protected function checkRoomTable() {
         $hours = $this->order->getHours();
 
-        $used = $this->roomTable->getUsed($hours);
-        if (!empty($used)) {
-            throw new OrderOperationException('该时段已被占用', BaseOrderOperation::ERROR_ROOMTABLE_USED);
-        }
         $locked = $this->roomTable->getUsed($hours);
         if (!empty($locked)) {
             throw new OrderOperationException('该时段已被锁定', BaseOrderOperation::ERROR_ROOMTABLE_LOCKED);
         }
+
+        $used = $this->roomTable->getUsed($hours);
+        if (!empty($used)) {
+            throw new OrderOperationException('该时段已被占用', BaseOrderOperation::ERROR_ROOMTABLE_USED);
+        }    
     }
 
     /**

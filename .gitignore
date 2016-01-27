@@ -28,3 +28,5 @@ composer.phar
 phpunit.phar
 # local phpunit config
 /phpunit.xml
+
+/tests/codeception/config/runtime

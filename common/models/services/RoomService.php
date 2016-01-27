@@ -5,7 +5,7 @@
  * @author j3l11234@j3l11234.com
  */
 
-namespace common\models\service;
+namespace common\models\services;
 
 use Yii;
 use yii\base\Component;
@@ -18,6 +18,34 @@ use common\models\entities\RoomTable;
  * 预约信息注册，房间锁信息的注册
  */
 class RoomService extends Component {
+
+    /**
+     * 查询一个房间表(带缓存)
+     * 优先从缓存中查询
+     *
+     * @param string $date 预约日期
+     * @param integer $room_id 房间id
+     * @return json
+     */
+    public static function queryRoomTable($date, $room_id){
+        $cache = Yii::$app->cache;
+        $cacheKey = RoomTable::getCacheKey($date, $room_id);
+        $data = $cache->get($cacheKey);
+        if($data == null){
+            $roomTable = self::getRoomTable($date, $room_id);
+            $data = $roomTable->toArray(['ordered', 'used', 'locked']);
+            
+            $startHour = Yii::$app->params['order.startHour'];
+            $endHour = Yii::$app->params['order.endHour'];
+            $hours = [];
+            for ($hour = $startHour; $hour <=$endHour ; $hour++) { 
+                $hours[] = $hour;
+            }
+            $data['hourTable'] = $roomTable->getHourTable($hours);
+            $cache->set($cacheKey, $data);
+        }
+        return $data;
+    }
 
     /**
      * 得到一个房间表

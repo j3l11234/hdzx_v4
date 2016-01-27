@@ -25,12 +25,31 @@ use yii\db\ActiveRecord;
  * @property integer $ver
  */
 class RoomTable extends ActiveRecord {
+    /**
+     * 时间状态 可用
+     */
+    const STATUS_FREE       = 0x01;
+    /**
+     * 时间状态 被预约
+     */
+    const STATUS_ORDERED    = 0x02;
+    /**
+     * 时间状态 被占用
+     */
+    const STATUS_USED       = 0x03;
+    /**
+     * 时间状态 锁定
+     */
+    const STATUS_LOCKED     = 0x04;
+
     //申请表
     protected $_ordered = [];
     //占用表
     protected $_used = [];
     //锁定表
     protected $_locked = [];
+
+
 
     /**
      * @inheritdoc
@@ -95,8 +114,29 @@ class RoomTable extends ActiveRecord {
     /**
      * @inheritdoc
      */
+    public function fields() {
+        return [
+            'ordered' => function () {
+                return $this->_ordered;
+            },
+            'used' => function () {
+                return $this->_used;
+            },
+            'locked' => function () {
+                return $this->_locked;
+            },
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function optimisticLock() {
         return 'ver';
+    }
+
+    public static function getCacheKey($date, $room_id){
+        return 'RoomTable'.'_'.$date.'_'.$room_id;
     }
 
     /**
@@ -263,5 +303,29 @@ class RoomTable extends ActiveRecord {
      */
     public function getLocked($hours = null) {
         return $this->getTable('_locked', $hours);
+    }
+
+    /**
+     * 生成小时表
+     * @param array $hours 查找的小时数组
+     * [1,2,3]
+     * 
+     * @return array
+     */
+    public function getHourTable($hours) {
+        $hourTable = [];
+
+        foreach ($hours as $hour) {
+            if(isset($this->_locked[$hour]) && sizeof($this->_locked[$hour]) > 0){
+                $hourTable[$hour] = self::STATUS_LOCKED;
+            }else if(isset($this->_used[$hour]) && sizeof($this->_used[$hour]) > 0){
+                $hourTable[$hour] = self::STATUS_USED;
+            }else if(isset($this->_ordered[$hour]) && sizeof($this->_ordered[$hour]) > 0){
+                $hourTable[$hour] = self::STATUS_ORDERED;
+            }else{
+                $hourTable[$hour] = self::STATUS_FREE;
+            }
+        }
+        return $hourTable;
     }
 }

@@ -3,12 +3,14 @@ namespace common\models;
 
 use Yii;
 use yii\base\Model;
+use common\models\entities\User;
+use common\models\entities\StudentUser;
+use common\models\services\UserService;
 
 /**
  * Login form
  */
-class LoginForm extends Model
-{
+class LoginForm extends Model {
     public $username;
     public $password;
     public $rememberMe = true;
@@ -19,60 +21,49 @@ class LoginForm extends Model
     /**
      * @inheritdoc
      */
-    public function rules()
-    {
+    public function rules() {
         return [
             // username and password are both required
             [['username', 'password'], 'required'],
             // rememberMe must be a boolean value
             ['rememberMe', 'boolean'],
-            // password is validated by validatePassword()
-            ['password', 'validatePassword'],
         ];
-    }
-
-    /**
-     * Validates the password.
-     * This method serves as the inline validation for password.
-     *
-     * @param string $attribute the attribute currently being validated
-     * @param array $params the additional name-value pairs given in the rule
-     */
-    public function validatePassword($attribute, $params)
-    {
-        if (!$this->hasErrors()) {
-            $user = $this->getUser();
-            if (!$user || !$user->validatePassword($this->password)) {
-                $this->addError($attribute, 'Incorrect username or password.');
-            }
-        }
     }
 
     /**
      * Logs in a user using the provided username and password.
      *
-     * @return boolean whether the user is logged in successfully
+     * @return boolean 是否登录成功
      */
-    public function login()
-    {
+    public function login() {
         if ($this->validate()) {
-            return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600 * 24 * 30 : 0);
-        } else {
-            return false;
+            $user = $this->getUser();
+            if ($user === null) {
+                $this->addError('username', '用户不存在');
+            } else {
+                if ($user->validatePassword($this->password)) {
+                    $userService = new UserService($user);
+                    return Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0);
+                }else{
+                    $this->addError('password', '密码不正确');
+                }
+            }
         }
+        return false;
     }
 
     /**
-     * Finds user by [[username]]
+     * 根据用户名取得正常用户和学生用户
+     * 优先从学号判断
      *
      * @return User|null
      */
-    protected function getUser()
-    {
-        if ($this->_user === null) {
-            $this->_user = User::findByUsername($this->username);
+    protected function getUser() {
+        $user = StudentUser::findByUsername($this->username);
+        if ($user === null) {
+            $user = User::findByUsername($this->username);
         }
 
-        return $this->_user;
+        return $user;
     }
 }

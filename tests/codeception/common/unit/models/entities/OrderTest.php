@@ -1,6 +1,6 @@
 <?php
 
-namespace tests\codeception\common\unit\models;
+namespace tests\codeception\common\unit\models\entities;
 
 use Yii;
 use tests\codeception\common\unit\DbTestCase;

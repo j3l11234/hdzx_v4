@@ -5,7 +5,7 @@
  * @author j3l11234@j3l11234.com
  */
 
-namespace common\models\service;
+namespace common\models\services;
 
 use Yii;
 use yii\base\NotSupportedException;
@@ -63,20 +63,20 @@ class UserService implements IdentityInterface {
      * @inheritdoc
      */
     public function getId() {
-        return $this->$user->getLogicId();
+        return $this->user->getLogicId();
     }
 
     /**
      * @inheritdoc
      */
     public function getAuthKey() {
-        return $this->$user->auth_key;
+        return $this->user->auth_key;
     }
 
     /**
      * @inheritdoc
      */
     public function validateAuthKey($authKey) {
-        return $this->$user->getAuthKey() === $authKey;
+        return $this->user->getAuthKey() === $authKey;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace tests\codeception\common\unit\models;
+namespace tests\codeception\common\unit\models\entities;
 
 use Yii;
 use tests\codeception\common\unit\DbTestCase;
@@ -84,7 +84,7 @@ class RoomTest extends DbTestCase {
     public function fixtures()
     {
         return [
-            'user' => [
+            'room' => [
                 'class' => RoomFixture::className(),
                 'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/entities/room.php'
             ],

@@ -19,9 +19,8 @@ use Yii;
  * @property integer $updated_at
  * @property string $password write-only password
  */
-class StudentUser extends User {
-    protected $approve_dept = [];
-
+class StudentUser extends BaseUser {
+    
     /**
      * @inheritdoc
      */

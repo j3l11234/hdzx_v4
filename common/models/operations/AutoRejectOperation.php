@@ -13,7 +13,7 @@ use common\exceptions\OrderOperationException;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
 use common\models\entities\User;
-use common\models\service\RoomService;
+use common\models\services\RoomService;
 
 /**
  * 自动审批驳回 操作

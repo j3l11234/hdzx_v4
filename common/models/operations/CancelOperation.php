@@ -12,7 +12,7 @@ use yii\base\Component;
 use common\exceptions\OrderOperationException;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
-use common\models\service\RoomService;
+use common\models\services\RoomService;
 
 /**
  * 取消预约操作

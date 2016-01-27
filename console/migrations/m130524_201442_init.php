@@ -74,7 +74,7 @@ class m130524_201442_init extends Migration
             'room_id' => $this->integer()->notNull(),
             'hours' => $this->text()->notNull(),
 
-            'user_id' => $this->string()->notNull(),
+            'user_id' => $this->string(10)->notNull(),
             'dept_id' => $this->integer()->notNull(),
 
             'type' => $this->integer()->notNull(), //申请类型 琴房申请，活动室申请
@@ -96,6 +96,7 @@ class m130524_201442_init extends Migration
             'updated_at' => $this->integer()->notNull(),
             'ver' => $this->integer(),
         ], $tableOptions);
+        $this->createIndex('user_id', '{{%order}}', 'user_id');
 
         //预约的操作
         $this->createTable('{{%order_op}}', [

@@ -9,13 +9,11 @@ use tests\codeception\common\unit\DbTestCase;
 use tests\codeception\common\fixtures\UserFixture;
 
 /**
- * Order test
+ * User test
  */
 class UserTest extends DbTestCase {
 
     use Specify;
-
-    //throw new \yii\base\Exception(var_export($var,true));
 
     public function testApproveDeptList() {
         $this->specify('can get Approve', function () {
