@@ -210,4 +210,15 @@ class User extends BaseUser{
             'status' => '状态',
         ];
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function fields() {
+        $fields = parent::fields();
+
+        unset($fields['auth_key'], $fields['password_hash'], $fields['password_reset_token']);
+
+        return $fields;
+    }
 }

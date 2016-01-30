@@ -1,6 +1,22 @@
 <?php
 
+use common\models\entities\User;
+
 return [
+    [
+        'username' => 'admin',
+        'auth_key' => '3P8HQa4cb5_KDuL8tbGkSFOClcwoznx8',
+        'password_hash' => '$2y$13$PzJIiAaEOJ19Ade9gsOvPupX67CZYbXWNN8BXnrzuUEgMbE6djWg2',
+        'password_reset_token' => null,
+        'dept_id' => 1,
+        'email' => 'admin@admin.com',
+        'alias' => '管理员',
+        'approve_dept' => '[1,2,3,4]',
+        'privilege' => (User::PRIV_ADMIN ^ User::PRIV_APPROVE_MANAGER_DEPT ^ User::PRIV_APPROVE_MANAGER_ALL ^ User::PRIV_APPROVE_SCHOOL ^ User::PRIV_APPROVE_AUTO),
+        'status' => User::STATUS_ACTIVE,
+        'created_at' => 1450067555,
+        'updated_at' => 1450067555,
+    ],
     [
         'username' => 'user0',
         'auth_key' => '20kdfbHyfoA5tEJqXOiYo_3faEBz3Of7',
@@ -10,7 +26,7 @@ return [
         'email' => 'Mohr.Marianna@gmail.com',
         'alias' => 'Brisa',
         'approve_dept' => '[0,1,3]',
-        'privilege' => 1,
+        'privilege' => 0,
         'status' => 2,
         'created_at' => 1450067555,
         'updated_at' => 1450067555,
@@ -42,33 +58,5 @@ return [
         'status' => 2,
         'created_at' => 1450067556,
         'updated_at' => 1450067556,
-    ],
-    [
-        'username' => 'user3',
-        'auth_key' => '1CnPHgbmGP3_9pnYZCX2OuVdCSNTWcCM',
-        'password_hash' => '$2y$13$BhOQm2U9myUfrZdvl3A0MeOZfNcf/v4wjmDRNCHf5zcGX15kQ0Vsq',
-        'password_reset_token' => 'ISA_ivQFKZCILkknpXhj_MAJl-oUPf5E_1450067557',
-        'dept_id' => 1,
-        'email' => 'Rashad81@yahoo.com',
-        'alias' => 'Flavio',
-        'approve_dept' => '[0,1,3]',
-        'privilege' => 1,
-        'status' => 2,
-        'created_at' => 1450067557,
-        'updated_at' => 1450067557,
-    ],
-    [
-        'username' => 'user4',
-        'auth_key' => 'AYRmLe4L5KEoEEFE7LB9APcvJy5uXbX3',
-        'password_hash' => '$2y$13$9tFaZJUZGyqwXvGUUbUKRelEsHkjbwt06hmE1BBtn8HRTqiZOLpQm',
-        'password_reset_token' => 'LFs4cY5lxHQqhRAKGH9m6-79hliVLbsz_1450067557',
-        'dept_id' => 1,
-        'email' => 'Russel.Ignatius@Mayer.net',
-        'alias' => 'Brett',
-        'approve_dept' => '[0,1,3]',
-        'privilege' => 1,
-        'status' => 2,
-        'created_at' => 1450067557,
-        'updated_at' => 1450067557,
     ],
 ];

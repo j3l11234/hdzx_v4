@@ -3,6 +3,7 @@ namespace common\models;
 
 use Yii;
 use yii\base\Model;
+use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\StudentUser;
 use common\models\services\UserService;
@@ -15,8 +16,18 @@ class LoginForm extends Model {
     public $password;
     public $rememberMe = true;
 
-    private $_user;
+    private $user;
 
+    /**
+     * @inheritdoc
+     */
+    public function behaviors() {
+        return [
+            [
+                'class' => ErrorBehavior::className()
+            ],
+        ];
+    }
 
     /**
      * @inheritdoc
@@ -24,7 +35,7 @@ class LoginForm extends Model {
     public function rules() {
         return [
             // username and password are both required
-            [['username', 'password'], 'required'],
+            [['username', 'password'], 'required', 'message'=>'{attribute} 不能为空'],
             // rememberMe must be a boolean value
             ['rememberMe', 'boolean'],
         ];
@@ -37,15 +48,21 @@ class LoginForm extends Model {
      */
     public function login() {
         if ($this->validate()) {
-            $user = $this->getUser();
+            //根据用户名取得学生用户(优先)和正常用户
+            $user = StudentUser::findByUsername($this->username);
             if ($user === null) {
-                $this->addError('username', '用户不存在');
+                $user = User::findByUsername($this->username);
+            }
+
+            if ($user === null) {
+                $this->setErrorMessage('用户不存在');
             } else {
                 if ($user->validatePassword($this->password)) {
                     $userService = new UserService($user);
+                    $this->user = $user;
                     return Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0);
                 }else{
-                    $this->addError('password', '密码不正确');
+                    $this->setErrorMessage('密码不正确');
                 }
             }
         }
@@ -53,17 +70,12 @@ class LoginForm extends Model {
     }
 
     /**
-     * 根据用户名取得正常用户和学生用户
-     * 优先从学号判断
+     * 
+     * 取得用户
      *
      * @return User|null
      */
-    protected function getUser() {
-        $user = StudentUser::findByUsername($this->username);
-        if ($user === null) {
-            $user = User::findByUsername($this->username);
-        }
-
-        return $user;
+    public function getUser() {
+        return $this->user;
     }
 }
