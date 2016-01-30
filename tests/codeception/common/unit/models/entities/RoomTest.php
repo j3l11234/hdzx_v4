@@ -6,7 +6,6 @@ use Yii;
 use tests\codeception\common\unit\DbTestCase;
 use Codeception\Specify;
 use common\models\entities\Room;
-use tests\codeception\common\fixtures\RoomFixture;
 
 /**
  * OrderOperation test
@@ -26,7 +25,7 @@ class RoomTest extends DbTestCase {
             ];
             $roomData = [
                 'secure' => 1,
-                'open_per_week' => 1,
+                'by_week' => 1,
                 'max_before' => 30,
                 'min_before' => 5,
                 'max_hour' => 2,
@@ -59,7 +58,7 @@ class RoomTest extends DbTestCase {
         ];
         $roomData = [
             'secure' => 1,
-            'open_per_week' => 1,
+            'by_week' => 1,
             'max_before' => 10,
             'min_before' => 5,
             'max_hour' => 2,
@@ -84,10 +83,6 @@ class RoomTest extends DbTestCase {
     public function fixtures()
     {
         return [
-            'room' => [
-                'class' => RoomFixture::className(),
-                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/entities/room.php'
-            ],
         ];
     }
 }

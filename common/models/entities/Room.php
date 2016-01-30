@@ -22,7 +22,7 @@ use yii\db\ActiveRecord;
  * ```php
  * $data = [
  *     'secure' => 1, //是否需要填写安全信息
- *     'open_per_week' => 1, //按周开放
+ *     'by_week' => 1, //按周开放
  *     'max_before' => 30, //最大提前
  *     'min_before' => 5, //最小提前申请
  *     'max_hour' => 2, //单次申请最长时间
@@ -41,7 +41,11 @@ class Room extends ActiveRecord {
     /**
      * 操作类型 手动审批类房间
      */
-    const TYPE_TWICE    = 02;
+    const TYPE_TWICE        = 02;
+    /**
+     * 操作类型 负责人手动审批 校级自动审批
+     */
+    const TYPE_SCHOOL_AUTO  = 03;
 
     /**
      * 房间状态 关闭
@@ -134,27 +138,46 @@ class Room extends ActiveRecord {
      * @return boolean 是否可以申请
      */
     public function checkOpen($date, $now = null) {
-        $now = $now === null ? time() : $now;
         $date = strtotime($date);
+        $range = $this->getDateRange($now);
+        
+        return ($date >= $range['start'] && $date <= $range['end']);
+    }
+
+    /**
+     * 得到允许申请的日期
+     *
+     * @param int $now 参考时间，默认为当前时间
+     * @return array 返回的格式
+     * [
+     *      'start' => $limitStart,
+     *      'end' => $limitEnd
+     * ]
+     */
+    public function getDateRange($now = null) {
+        $now = $now === null ? time() : $now;
 
         $max_before = $this->_data['max_before'];
         $min_before = $this->_data['min_before'];
 
-        $weekDay = date('w',$now);
+        $weekDay = date('w', $now);
         $month = date("m", $now);
         $year = date("Y", $now);
         $day = date("d", $now);
 
         $limitStart = mktime(0, 0, 0, $month, $day + $min_before, $year);
 
-        if($this->_data['open_per_week'] == 1) {
+        if($this->_data['by_week'] == 1) {
             $max_before -= $max_before % 7;
             $limitEnd = mktime(23, 59, 59, $month, $day - $weekDay + 7 + $max_before, $year);
         } else {
             $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);
         }
 
-        return ($date >= $limitStart && $date <= $limitEnd);
+        return [
+            'start' => $limitStart,
+            'end' => $limitEnd
+        ];
     }
 
     /**

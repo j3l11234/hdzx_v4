@@ -196,8 +196,7 @@ class User extends BaseUser{
     /**
      * @inheritdoc
      */
-    public function attributeLabels()
-    {
+    public function attributeLabels() {
         return [
             'id' => 'ID',
             'username' => '用户名',
