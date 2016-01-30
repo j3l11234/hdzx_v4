@@ -140,7 +140,7 @@ class Room extends ActiveRecord {
     public function checkOpen($date, $now = null) {
         $date = strtotime($date);
         $range = $this->getDateRange($now);
-        
+
         return ($date >= $range['start'] && $date <= $range['end']);
     }
 
@@ -160,17 +160,18 @@ class Room extends ActiveRecord {
         $max_before = $this->_data['max_before'];
         $min_before = $this->_data['min_before'];
 
-        $weekDay = date('w', $now);
+        
         $month = date("m", $now);
         $year = date("Y", $now);
         $day = date("d", $now);
 
         $limitStart = mktime(0, 0, 0, $month, $day + $min_before, $year);
+        $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);
 
+        //如果是按周开发则自动开放到本周日
         if($this->_data['by_week'] == 1) {
-            $max_before -= $max_before % 7;
-            $limitEnd = mktime(23, 59, 59, $month, $day - $weekDay + 7 + $max_before, $year);
-        } else {
+            $weekDay = date('w', $limitEnd);
+            $max_before += (7 - $weekDay) % 7;
             $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);
         }
 
@@ -178,6 +179,30 @@ class Room extends ActiveRecord {
             'start' => $limitStart,
             'end' => $limitEnd
         ];
+    }
+
+    /**
+     * 得到所有开启的房间
+     *
+     * @return static|null
+     */
+    public static function getOpenRooms() {
+        return static::find()
+            ->where(['status' => self::STATUS_OPEN])
+            ->orderBy('align')
+            ->all();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function fields() {
+        $fields = parent::fields();
+        $fields['data'] = function () {
+            return $this->_data;
+        };
+
+        return $fields;
     }
 
     /**

@@ -55,9 +55,14 @@ class RoomServiceTest extends DbTestCase {
         ])]);
     }
 
-    public function  testQueryRoomTable(){
+    public function testQueryRoomTable(){
         $roomTable = RoomService::queryRoomTable('2015-01-02', 2);
-        //codecept_debug($roomTable);
+        codecept_debug($roomTable);
+    }
+
+    public function testQueryRoomList() {
+        $rooms = RoomService::queryRoomList();
+        codecept_debug($rooms);
     }
 
     /**

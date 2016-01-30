@@ -10,6 +10,7 @@ namespace common\models\services;
 use Yii;
 use yii\base\Component;
 use common\exception\RoomTableException;
+use common\models\entities\Room;
 use common\models\entities\RoomTable;
 
 /**
@@ -27,7 +28,7 @@ class RoomService extends Component {
      * @param integer $room_id 房间id
      * @return json
      */
-    public static function queryRoomTable($date, $room_id){
+    public static function queryRoomTable($date, $room_id) {
         $cache = Yii::$app->cache;
         $cacheKey = RoomTable::getCacheKey($date, $room_id);
         $data = $cache->get($cacheKey);
@@ -42,6 +43,30 @@ class RoomService extends Component {
                 $hours[] = $hour;
             }
             $data['hourTable'] = $roomTable->getHourTable($hours);
+            $cache->set($cacheKey, $data);
+        }
+        return $data;
+    }
+
+    /**
+     * 查询所有打开房间(带缓存)
+     * 优先从缓存中查询
+     *
+     * @return json
+     */
+    public static function queryRoomList() {
+        $cacheKey = 'roomList';
+        $cache = Yii::$app->cache;
+        $data = $cache->get($cacheKey );
+        if ($data == null) {
+            $data = [];
+            $roomList = Room::getOpenRooms();
+            foreach ($roomList as $key => $room) {
+                $room = $room->toArray(['id','number', 'name', 'type', 'data']);
+                $room = array_merge($room, $room['data']);
+                unset($room['data']);
+                $data[] = $room;
+            }
             $cache->set($cacheKey, $data);
         }
         return $data;

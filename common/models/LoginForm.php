@@ -23,9 +23,7 @@ class LoginForm extends Model {
      */
     public function behaviors() {
         return [
-            [
-                'class' => ErrorBehavior::className()
-            ],
+            ErrorBehavior::className()
         ];
     }
 
