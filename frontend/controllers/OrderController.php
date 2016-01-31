@@ -10,9 +10,10 @@ use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
+use yii\filters\Cors;
 
 /**
- * Site controller
+ * Order controller
  */
 class OrderController extends Controller
 {
@@ -22,6 +23,13 @@ class OrderController extends Controller
     public function behaviors()
     {
         return [
+            'cors' => [
+                'class' => Cors::className(),
+                'cors' => [
+                    'Origin' => ['*'],
+                    'Access-Control-Request-Method' => ['POST', 'PUT'],
+                ],
+            ],
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => ['logout', 'signup'],
@@ -84,7 +92,7 @@ class OrderController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $data = Yii::$app->request->getIsPost() ? Yii::$app->request->post() : Yii::$app->request->get();
-        $model = new OrderQueryForm();
+        $model = new OrderQueryForm(['scenario' => 'getRoomTables']);
         if ($model->load($data, '') && $model->validate()) {
             return $model->getRoomTables();
         } else {

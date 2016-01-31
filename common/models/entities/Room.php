@@ -134,12 +134,15 @@ class Room extends ActiveRecord {
      * 验证日期是否在可申请范围内
      *
      * @param string $date 测试日期 形如'2015-12-15'
+     * @param int $max_before 最大提前日期
+     * @param int $min_before 最小提前日期
+     * @param int $by_week 是否按周开放，1为是
      * @param int $now 参考时间，默认为当前时间
      * @return boolean 是否可以申请
      */
-    public function checkOpen($date, $now = null) {
+    public static function checkOpen($date, $max_before, $min_before, $by_week, $now = null) {
         $date = strtotime($date);
-        $range = $this->getDateRange($now);
+        $range = self::getDateRange($date, $max_before, $min_before, $by_week, $now);
 
         return ($date >= $range['start'] && $date <= $range['end']);
     }
@@ -147,6 +150,10 @@ class Room extends ActiveRecord {
     /**
      * 得到允许申请的日期
      *
+     * @param int $max_before 最大提前日期
+     * @param int $min_before 最小提前日期
+     * @param int $by_week 是否按周开放，1为是
+     * @param int $now 参考时间，默认为当前时间
      * @param int $now 参考时间，默认为当前时间
      * @return array 返回的格式
      * [
@@ -154,13 +161,9 @@ class Room extends ActiveRecord {
      *      'end' => $limitEnd
      * ]
      */
-    public function getDateRange($now = null) {
+    public static function  getDateRange($max_before, $min_before, $by_week, $now = null) {
         $now = $now === null ? time() : $now;
 
-        $max_before = $this->_data['max_before'];
-        $min_before = $this->_data['min_before'];
-
-        
         $month = date("m", $now);
         $year = date("Y", $now);
         $day = date("d", $now);
@@ -169,7 +172,7 @@ class Room extends ActiveRecord {
         $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);
 
         //如果是按周开发则自动开放到本周日
-        if($this->_data['by_week'] == 1) {
+        if($by_week == 1) {
             $weekDay = date('w', $limitEnd);
             $max_before += (7 - $weekDay) % 7;
             $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);

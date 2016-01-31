@@ -29,9 +29,19 @@ class OrderQueryForm extends Model {
     /**
      * @inheritdoc
      */
+    public function scenarios(){
+        $scenarios = parent::scenarios();
+        $scenarios['getRoomTables'] = ['start_date', 'end_date', 'rooms', 'rt_detail'];
+        return $scenarios;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function rules() {
         return [
             [['start_date', 'end_date'], 'required'],
+            [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['rooms'], 'jsonValidator']
         ];
     }
@@ -51,15 +61,23 @@ class OrderQueryForm extends Model {
         $roonList = json_decode($this->rooms,true);
         $startDate = strtotime($this->start_date);
         $endDate = strtotime($this->end_date);
+        $minEndDate = $startDate;
 
+        $rooms = RoomService::queryRoomList()['rooms'];
+        //计算roomTables
         $roomTables = [];
         foreach ($roonList as $room_id) {
+            if(!isset($rooms[$room_id])){
+                continue;
+            }
             $roomTables[$room_id] = [];
-            $room = Room::findOne($room_id);
+            $room = $rooms[$room_id];
             //计算日期范围 合并起始区间
-            $dateRange = $room->getDateRange();
+            $dateRange = Room::getDateRange($room['max_before'], $room['min_before'], $room['by_week']);
             $start = $startDate;
             $end = min($endDate, $dateRange['end']);
+            $minEndDate = max($minEndDate, $end);
+
             for ($time=$start; $time <= $end; $time = strtotime("+1 day", $time)) {
                 $date = date('Y-m-d', $time);
                 $roomTable = RoomService::queryRoomTable($date, $room_id);
@@ -70,8 +88,17 @@ class OrderQueryForm extends Model {
                 }
                 $roomTables[$room_id][$date] = $roomTable;
             }
-            
         }
-        return $roomTables;
+
+        //计算dateList
+        $dateList = [];
+        for ($time=$startDate; $time <= $minEndDate; $time = strtotime("+1 day", $time)) {
+            $dateList[] = date('Y-m-d', $time);
+        }
+
+        return [
+            'dateList' => $dateList,
+            'roomTables' => $roomTables,
+        ];
     }
 }

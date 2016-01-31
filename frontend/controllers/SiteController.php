@@ -12,7 +12,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-
+use yii\filters\Cors;
 /**
  * Site controller
  */
@@ -24,6 +24,13 @@ class SiteController extends Controller
     public function behaviors()
     {
         return [
+            'cors' => [
+                'class' => Cors::className(),
+                'cors' => [
+                    'Origin' => ['*'],
+                    'Access-Control-Request-Method' => ['GET', 'POST', 'HEAD', 'OPTIONS'],
+                ],
+            ],
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => ['logout', 'signup'],

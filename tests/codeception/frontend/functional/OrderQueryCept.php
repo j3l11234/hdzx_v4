@@ -13,10 +13,10 @@ $I->seeResponseIsJson();
 
 $I->amGoingTo('get roomtables');
 $I->sendPost('/order/getroomtables', [
-	'start_date' => '2016-01-30',
-    'end_date' => '2016-02-28',
-	'rooms' => '[404]'
-	]);
+	'end_date' => "2016-03-20",
+	'rooms' => "[301,302]",
+	'start_date' =>"2016-01-31",
+]);
 $I->seeResponseIsJson();
 
 //$aa= $I->grabResponse();

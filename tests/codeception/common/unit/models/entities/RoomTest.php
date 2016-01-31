@@ -69,12 +69,12 @@ class RoomTest extends DbTestCase {
         $room->setRoomData($roomData);
 
         $now = strtotime('2015-12-15');
-        expect('2015-12-19 false', $room->checkOpen('2015-12-19',$now))->false();
-        expect('2015-12-20 true', $room->checkOpen('2015-12-20',$now))->true();
-        expect('2015-12-21 true', $room->checkOpen('2015-12-21',$now))->true();
-        expect('2015-12-23 true', $room->checkOpen('2015-12-23',$now))->true();
-        expect('2015-12-27 true', $room->checkOpen('2015-12-27',$now))->true();
-        expect('2015-12-28 false', $room->checkOpen('2015-12-28',$now))->false();
+        expect('2015-12-19 false', $room->checkOpen('2015-12-19',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->false();
+        expect('2015-12-20 true', $room->checkOpen('2015-12-20',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->true();
+        expect('2015-12-21 true', $room->checkOpen('2015-12-21',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->true();
+        expect('2015-12-23 true', $room->checkOpen('2015-12-23',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->true();
+        expect('2015-12-27 true', $room->checkOpen('2015-12-27',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->true();
+        expect('2015-12-28 false', $room->checkOpen('2015-12-28',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->false();
     }
 
     /**

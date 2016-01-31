@@ -32,7 +32,8 @@ class RoomService extends Component {
         $cache = Yii::$app->cache;
         $cacheKey = RoomTable::getCacheKey($date, $room_id);
         $data = $cache->get($cacheKey);
-        if($data == null){
+        if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效'); 
             $roomTable = self::getRoomTable($date, $room_id);
             $data = $roomTable->toArray(['ordered', 'used', 'locked']);
             
@@ -44,6 +45,8 @@ class RoomService extends Component {
             }
             $data['hourTable'] = $roomTable->getHourTable($hours);
             $cache->set($cacheKey, $data);
+        } else {
+            Yii::trace($cacheKey.':缓存命中'); 
         }
         return $data;
     }
@@ -57,17 +60,27 @@ class RoomService extends Component {
     public static function queryRoomList() {
         $cacheKey = 'roomList';
         $cache = Yii::$app->cache;
-        $data = $cache->get($cacheKey );
+        $data = $cache->get($cacheKey);
         if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效'); 
             $data = [];
-            $roomList = Room::getOpenRooms();
-            foreach ($roomList as $key => $room) {
+            $roomList_ = Room::getOpenRooms();
+            $roomList = [];
+            $rooms = [];
+            foreach ($roomList_ as $key => $room) {
                 $room = $room->toArray(['id','number', 'name', 'type', 'data']);
                 $room = array_merge($room, $room['data']);
                 unset($room['data']);
-                $data[] = $room;
+                $roomList[] = $room['id'];
+                $rooms[$room['id']] = $room;
             }
+            $data = [
+                'roomList' => $roomList,
+                'rooms' => $rooms,
+            ];
             $cache->set($cacheKey, $data);
+        }else{
+            Yii::trace($cacheKey.':缓存命中'); 
         }
         return $data;
     }
