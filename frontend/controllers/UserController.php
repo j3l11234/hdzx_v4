@@ -13,7 +13,7 @@ use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-
+use yii\filters\Cors;
 
 /**
  * User controller
@@ -23,9 +23,16 @@ class UserController extends Controller
     /**
      * @inheritdoc
      */
-    public function behaviors()
-    {
+    public function behaviors() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
         return [
+            'cors' => [
+                'class' => Cors::className(),
+                'cors' => [
+                    'Origin' => ['*'],
+                    'Access-Control-Request-Method' => ['POST', 'PUT'],
+                ],
+            ],
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => ['logout', 'signup'],
@@ -92,11 +99,32 @@ class UserController extends Controller
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post(),'') && $model->login()) {
             return [
+                'status' => 200,
                 'message' => '您已经登录成功',
                 'user' => $model->getUser()->toArray(['dept_id', 'email', 'alias', 'privilege'])
             ];
         } else {
             throw new BadRequestHttpException($model->getErrorMessage());
+        }
+    }
+
+    /**
+     * 获取自动登录信息
+     *
+     * @return mixed
+     */
+    public function actionGetlogin() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        if (\Yii::$app->user->isGuest) {
+            return [
+                'user' => null,
+            ];
+        }else {
+            return [
+                'user' => \Yii::$app->user->getIdentity()->getUser()->toArray(['dept_id', 'email', 'alias', 'privilege']),
+            ];
+            
         }
     }
 
@@ -107,9 +135,9 @@ class UserController extends Controller
      */
     public function actionLogout() {
         Yii::$app->user->logout();
-
         return [
-                'message' => '您已经注销成功'
-            ];
+            'status' => 200,
+            'message' => '您已经注销成功'
+        ];
     }
 }

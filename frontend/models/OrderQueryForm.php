@@ -64,13 +64,13 @@ class OrderQueryForm extends Model {
         $minEndDate = $startDate;
 
         $rooms = RoomService::queryRoomList()['rooms'];
-        //计算roomTables
-        $roomTables = [];
+        //计算hourTables
+        $hourTables = [];
         foreach ($roonList as $room_id) {
             if(!isset($rooms[$room_id])){
                 continue;
             }
-            $roomTables[$room_id] = [];
+            $hourTables[$room_id] = [];
             $room = $rooms[$room_id];
             //计算日期范围 合并起始区间
             $dateRange = Room::getDateRange($room['max_before'], $room['min_before'], $room['by_week']);
@@ -86,7 +86,7 @@ class OrderQueryForm extends Model {
                     unset($roomTable['used']);
                     unset($roomTable['locked']);
                 }
-                $roomTables[$room_id][$date] = $roomTable;
+                $hourTables[$room_id][$date] = $roomTable;
             }
         }
 
@@ -98,7 +98,7 @@ class OrderQueryForm extends Model {
 
         return [
             'dateList' => $dateList,
-            'roomTables' => $roomTables,
+            'hourTables' => $hourTables,
         ];
     }
 }

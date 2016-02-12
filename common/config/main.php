@@ -11,7 +11,7 @@ return [
         ],
         'user' => [
             'class' => 'yii\web\User',
-            'identityClass' => 'common\models\service\UserService',
+            'identityClass' => 'common\models\services\UserService',
             'enableAutoLogin' => true,
         ]
     ],

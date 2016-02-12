@@ -20,8 +20,9 @@ return [
             ]
         ],
         'user' => [
-            'identityClass' => 'common\models\service\UserService',
+            'identityClass' => 'common\models\services\UserService',
             'enableAutoLogin' => true,
+            'loginUrl' => null,
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
