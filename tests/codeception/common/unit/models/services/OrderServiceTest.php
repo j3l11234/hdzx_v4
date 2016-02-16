@@ -59,7 +59,12 @@ class OrderServiceTest extends DbTestCase {
         $ordered = $newRoomTable->getOrdered($order->getHours());
         expect('RoomTable can find order', in_array($order->id, $ordered))->true();
     }
-
+    
+    public function testQueryDeptList() {
+        $depts = OrderService::queryDeptList();
+        codecept_debug($depts);
+    }
+    
     /**
      * @inheritdoc
      */

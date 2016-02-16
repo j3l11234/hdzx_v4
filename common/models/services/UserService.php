@@ -77,6 +77,13 @@ class UserService implements IdentityInterface {
      * @inheritdoc
      */
     public function validateAuthKey($authKey) {
-        return $this->user->getAuthKey() === $authKey;
+        return $this->getAuthKey() === $authKey;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function __get($name){
+        return $this->user->$name;
     }
 }

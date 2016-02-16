@@ -2,8 +2,6 @@
 namespace frontend\controllers;
 
 use Yii;
-use common\models\services\RoomService;
-use frontend\models\OrderQueryForm;
 use yii\base\InvalidParamException;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -11,6 +9,9 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\filters\Cors;
+use common\models\services\RoomService;
+use common\models\services\OrderService;
+use frontend\models\OrderQueryForm;
 
 /**
  * Order controller
@@ -81,6 +82,18 @@ class OrderController extends Controller
 
         $roomList = RoomService::queryRoomList();
         return $roomList;
+    }
+
+    /**
+     * 查询dept列表
+     *
+     * @return mixed
+     */
+    public function actionGetdepts() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $deptList = OrderService::queryDeptList();
+        return $deptList;
     }
 
     /**

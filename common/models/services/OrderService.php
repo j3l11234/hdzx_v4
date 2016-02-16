@@ -10,6 +10,7 @@ namespace common\models\services;
 use Yii;
 use yii\base\Component;
 use common\exception\RoomTableException;
+use common\models\entities\Department;
 use common\models\entities\RoomTable;
 use common\models\operations\SubmitOperation;
 
@@ -19,6 +20,38 @@ use common\models\operations\SubmitOperation;
  * 提交取消等
  */
 class OrderService extends Component {
+
+    /**
+     * 查询部门列表(带缓存)
+     * 优先从缓存中查询
+     *
+     * @return json
+     */
+    public static function queryDeptList() {
+        $cacheKey = 'deptList';
+        $cache = Yii::$app->cache;
+        $data = $cache->get($cacheKey);
+        if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效'); 
+            $data = [];
+            $result = Department::find()->orderBy('align')->all();
+            $deptList = [];
+            $depts = [];
+            foreach ($result as $key => $dept) {
+                $dept = $dept->toArray(['id', 'name']);
+                $deptList[] = $dept['id'];
+                $depts[$dept['id']] = $dept;
+            }
+            $data = [
+                'deptList' => $deptList,
+                'depts' => $depts,
+            ];
+            $cache->set($cacheKey, $data);
+        }else{
+            Yii::trace($cacheKey.':缓存命中'); 
+        }
+        return $data;
+    }
 
     /**
      * 提交一个申请
