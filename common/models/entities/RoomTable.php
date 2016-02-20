@@ -102,9 +102,9 @@ class RoomTable extends ActiveRecord {
      */
     public function beforeSave($insert) {
         if (parent::beforeSave($insert)) {
-            $this->ordered = json_encode($this->_ordered, JSON_FORCE_OBJECT);
-            $this->used = json_encode($this->_used, JSON_FORCE_OBJECT);
-            $this->locked = json_encode($this->_locked, JSON_FORCE_OBJECT);
+            $this->ordered = json_encode($this->_ordered);
+            $this->used = json_encode($this->_used);
+            $this->locked = json_encode($this->_locked);
             return true;
         } else {
             return false;

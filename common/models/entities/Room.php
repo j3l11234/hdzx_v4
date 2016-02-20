@@ -134,6 +134,17 @@ class Room extends ActiveRecord {
      * 验证日期是否在可申请范围内
      *
      * @param string $date 测试日期 形如'2015-12-15'
+     * @param int $now 参考时间，默认为当前时间
+     * @return boolean 是否可以申请
+     */
+    public function checkOpenSelf($date, $now = null) {
+        return self::checkOpen($date, $this->_data['max_before'], $this->_data['min_before'], $this->_data['by_week'], $now);
+    }
+
+    /**
+     * 验证日期是否在可申请范围内(静态)
+     *
+     * @param string $date 测试日期 形如'2015-12-15'
      * @param int $max_before 最大提前日期
      * @param int $min_before 最小提前日期
      * @param int $by_week 是否按周开放，1为是
@@ -142,7 +153,7 @@ class Room extends ActiveRecord {
      */
     public static function checkOpen($date, $max_before, $min_before, $by_week, $now = null) {
         $date = strtotime($date);
-        $range = self::getDateRange($date, $max_before, $min_before, $by_week, $now);
+        $range = self::getDateRange($max_before, $min_before, $by_week, $now);
 
         return ($date >= $range['start'] && $date <= $range['end']);
     }
@@ -161,7 +172,7 @@ class Room extends ActiveRecord {
      *      'end' => $limitEnd
      * ]
      */
-    public static function  getDateRange($max_before, $min_before, $by_week, $now = null) {
+    public static function getDateRange($max_before, $min_before, $by_week, $now = null) {
         $now = $now === null ? time() : $now;
 
         $month = date("m", $now);

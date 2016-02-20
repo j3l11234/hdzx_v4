@@ -12,6 +12,7 @@ use yii\filters\Cors;
 use common\models\services\RoomService;
 use common\models\services\OrderService;
 use frontend\models\OrderQueryForm;
+use frontend\models\OrderSubmitForm;
 
 /**
  * Order controller
@@ -23,6 +24,7 @@ class OrderController extends Controller
      */
     public function behaviors()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
         return [
             'cors' => [
                 'class' => Cors::className(),
@@ -33,7 +35,7 @@ class OrderController extends Controller
             ],
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout', 'signup'],
+                'only' => ['submitorder', 'signup'],
                 'rules' => [
                     [
                         'actions' => ['signup'],
@@ -41,7 +43,7 @@ class OrderController extends Controller
                         'roles' => ['?'],
                     ],
                     [
-                        'actions' => ['logout'],
+                        'actions' => ['submitorder'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -111,6 +113,28 @@ class OrderController extends Controller
         } else {
             throw new BadRequestHttpException($model->getErrorMessage());
         }
+        return $data;
     }
-  
+
+     /**
+     * 查询room列表
+     *
+     * @return mixed
+     */
+    public function actionSubmitorder() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $data = Yii::$app->request->post();
+        $model = new OrderSubmitForm(['scenario' => 'submitOrder']);
+
+        if ($model->load($data, '') && $model->validate() && $result = $model->submitOrder()) {
+            //return $result;
+            return [
+                'status' => 200,
+                'message' => '提交成功',
+            ];
+        } else {
+             throw new BadRequestHttpException($model->getErrorMessage());
+        }
+    }
 }

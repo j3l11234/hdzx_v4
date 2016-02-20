@@ -128,6 +128,11 @@ class RoomService extends Component {
         }else{
             $roomTable->addOrdered($id, $hours);
         }
+        //清除缓存
+        $cache = Yii::$app->cache;
+        $cacheKey = RoomTable::getCacheKey($roomTable->date, $roomTable->room_id);
+        $cache->delete($cacheKey);
+
         return $roomTable->save();
     }
 }

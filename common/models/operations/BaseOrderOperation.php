@@ -95,7 +95,7 @@ class BaseOrderOperation extends Component {
      * @throws OrderOperationException 如果出现错误
      */
     protected function setPostStatus() {
-
+        return true;
     }
 
     /**
