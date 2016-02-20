@@ -62,25 +62,26 @@ class RoomService extends Component {
      */
     public static function queryRoomUse($date, $room_id){
         $data = self::queryRoomTable($date, $room_id);
-        $roomUse['ordered'] = RoomTable::getTable($data['ordered']);
-        $roomUse['used'] = RoomTable::getTable($data['used']);
-        $roomUse['locked'] = RoomTable::getTable($data['locked']);
 
-        $roomUse['orders'] = [];
-        foreach ($roomUse['ordered'] as  $order_id) {
+        $ordered = RoomTable::getTable($data['ordered']);
+        $used = RoomTable::getTable($data['used']);
+        $locked = RoomTable::getTable($data['locked']);
+
+        $data['orders'] = [];
+        foreach ($ordered as  $order_id) {
             $order = OrderService::queryOneOrder($order_id);
             if ($order !== null) {
-                $roomUse['orders'][$order_id] = $order;
+                $data['orders'][$order_id] = $order;
             }
         }
-        foreach ($roomUse['used'] as  $order_id) {
+        foreach ($used as  $order_id) {
             $order = OrderService::queryOneOrder($order_id);
             if ($order !== null) {
-                $roomUse['orders'][$order_id] = $order;
+                $data['orders'][$order_id] = $order;
             }
         }
         
-        return $roomUse;
+        return $data;
     }
 
     /**

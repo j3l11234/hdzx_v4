@@ -31,6 +31,7 @@ class OrderController extends Controller
                 'cors' => [
                     'Origin' => ['*'],
                     'Access-Control-Request-Method' => ['POST', 'PUT'],
+                    'Access-Control-Allow-Credentials' => true,
                 ],
             ],
             'access' => [
