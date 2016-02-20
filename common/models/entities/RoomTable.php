@@ -190,15 +190,15 @@ class RoomTable extends ActiveRecord {
     }
 
     /**
-     * 获取一个时段内的id
+     * 获取一个时段内的id(静态)
      *
      * @param string $name _ordered|_used|_locled
      * @param array $hours 查找的小时数组 为null则为全部
      * @return array idList
      */
-    protected function getTable($name, $hours = null) {
+    public static function getTable($table, $hours = null) {
         $idList = [];
-        foreach ($this->{$name} as $hour=>$hourTable) {
+        foreach ($table as $hour=>$hourTable) {
             if ($hours == null || in_array($hour, $hours)){
                 foreach ($hourTable as $id) {
                     $idList[$id] = true;
@@ -208,6 +208,7 @@ class RoomTable extends ActiveRecord {
         $idList = array_keys($idList);
         return $idList;
     }
+
 
     /**
      * 增加一个id到ordered表
@@ -238,7 +239,7 @@ class RoomTable extends ActiveRecord {
      * @return array
      */
     public function getOrdered($hours = null) {
-        return $this->getTable('_ordered', $hours);
+        return self::getTable($this->_ordered, $hours);
     }
 
     /**
@@ -270,7 +271,7 @@ class RoomTable extends ActiveRecord {
      * @return array
      */
     public function getUsed($hours = null) {
-        return $this->getTable('_used', $hours);
+        return self::getTable($this->_used, $hours);
     }
 
     /**
@@ -302,7 +303,7 @@ class RoomTable extends ActiveRecord {
      * @return array
      */
     public function getLocked($hours = null) {
-        return $this->getTable('_locked', $hours);
+        return self::getTable($this->_locked, $hours);
     }
 
     /**

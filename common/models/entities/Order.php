@@ -164,6 +164,26 @@ class Order extends ActiveRecord {
     }
 
     /**
+     * @inheritdoc
+     */
+    public function fields() {
+        $fields = parent::fields();
+
+        $fields['hours'] = function () {
+            return $this->_hours;
+        };
+        $fields['data'] = function () {
+            return $this->_data;
+        };
+
+        return $fields;
+    }
+
+    public static function getCacheKey($order_id){
+        return 'Order'.'_'.$order_id;
+    }
+
+    /**
      * 得到预约的小时数组
      *
      * @return array 小时

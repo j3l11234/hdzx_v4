@@ -3,7 +3,9 @@ namespace frontend\models;
 
 use common\behaviors\ErrorBehavior;
 use common\models\User;
+use common\models\entities\Order;
 use common\models\entities\Room;
+use common\models\entities\RoomTable;
 use common\models\services\RoomService;
 use yii\base\Model;
 use Yii;
@@ -16,6 +18,8 @@ class OrderQueryForm extends Model {
     public $end_date;
     public $rooms;
     public $rt_detail = false;
+    public $date;
+    public $room;
 
     /**
      * @inheritdoc
@@ -32,6 +36,7 @@ class OrderQueryForm extends Model {
     public function scenarios(){
         $scenarios = parent::scenarios();
         $scenarios['getRoomTables'] = ['start_date', 'end_date', 'rooms', 'rt_detail'];
+        $scenarios['getRoomUse'] = ['date', 'room'];
         return $scenarios;
     }
 
@@ -40,8 +45,8 @@ class OrderQueryForm extends Model {
      */
     public function rules() {
         return [
-            [['start_date', 'end_date'], 'required'],
-            [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
+            [['start_date', 'end_date', 'date', 'room'], 'required'],
+            [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['rooms'], 'jsonValidator']
         ];
     }
@@ -53,7 +58,7 @@ class OrderQueryForm extends Model {
     }
 
     /**
-     * Signs user up.
+     * 查询房间使用表
      *
      * @return User|null the saved model or null if saving fails
      */
@@ -100,5 +105,16 @@ class OrderQueryForm extends Model {
             'dateList' => $dateList,
             'hourTables' => $hourTables,
         ];
+    }
+
+    /**
+     * 取得房间当日占用
+     *
+     * @return Mixed|null 返回数据
+     */
+    public function getRoomUse() {
+        return $data = RoomService::queryRoomUse($this->date, $this->room);
+
+        return $roomTable;
     }
 }

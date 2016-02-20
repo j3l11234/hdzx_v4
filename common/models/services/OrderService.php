@@ -11,6 +11,7 @@ use Yii;
 use yii\base\Component;
 use common\exception\RoomTableException;
 use common\models\entities\Department;
+use common\models\entities\Order;
 use common\models\entities\RoomTable;
 use common\models\operations\SubmitOperation;
 
@@ -77,4 +78,29 @@ class OrderService extends Component {
             throw $e;
         }
     }
+
+    /**
+     * 查询一个申请(带缓存)
+     *
+     * @param Order $order 预约
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function queryOneOrder($order_id) {
+        $cache = Yii::$app->cache;
+        $cacheKey = Order::getCacheKey($order_id);
+        $data = $cache->get($cacheKey);
+        if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效'); 
+            $order = Order::findOne($order_id);
+            $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
+            $data = array_merge($data, $data['data']);
+            unset($data['data']);
+            $cache->set($cacheKey, $data);
+        } else {
+            Yii::trace($cacheKey.':缓存命中'); 
+        }
+        return $data;
+    }
+
 }

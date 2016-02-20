@@ -113,7 +113,7 @@ class BaseOrderOperation extends Component {
         $used = $this->roomTable->getUsed($hours);
         if (!empty($used)) {
             throw new OrderOperationException('该时段已被占用', BaseOrderOperation::ERROR_ROOMTABLE_USED);
-        }    
+        }
     }
 
     /**

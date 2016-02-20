@@ -50,6 +50,7 @@ class SubmitOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function setPostStatus() {
+        $this->order->submit_time = time();
         if($this->order->type == Order::TYPE_AUTO){ //自动审批
             $this->order->status = Order::STATUS_AUTO_PENDING;
         } else if($this->order->type == Order::TYPE_TWICE) { //二级审批

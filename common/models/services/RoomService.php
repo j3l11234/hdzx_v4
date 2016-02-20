@@ -12,6 +12,7 @@ use yii\base\Component;
 use common\exception\RoomTableException;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
+use common\models\services\OrderService;
 
 /**
  * 房间相关服务类
@@ -49,6 +50,37 @@ class RoomService extends Component {
             Yii::trace($cacheKey.':缓存命中'); 
         }
         return $data;
+    }
+
+    /**
+     * 查询一个房间占用信息
+     * 优先从缓存中查询
+     *
+     * @param string $date 预约日期
+     * @param integer $room_id 房间id
+     * @return Mixed 房间占用信息
+     */
+    public static function queryRoomUse($date, $room_id){
+        $data = self::queryRoomTable($date, $room_id);
+        $roomUse['ordered'] = RoomTable::getTable($data['ordered']);
+        $roomUse['used'] = RoomTable::getTable($data['used']);
+        $roomUse['locked'] = RoomTable::getTable($data['locked']);
+
+        $roomUse['orders'] = [];
+        foreach ($roomUse['ordered'] as  $order_id) {
+            $order = OrderService::queryOneOrder($order_id);
+            if ($order !== null) {
+                $roomUse['orders'][$order_id] = $order;
+            }
+        }
+        foreach ($roomUse['used'] as  $order_id) {
+            $order = OrderService::queryOneOrder($order_id);
+            if ($order !== null) {
+                $roomUse['orders'][$order_id] = $order;
+            }
+        }
+        
+        return $roomUse;
     }
 
     /**
