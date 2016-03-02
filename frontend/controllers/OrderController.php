@@ -100,16 +100,17 @@ class OrderController extends Controller
     }
 
     /**
-     * 查询room列表
+     * 查询Getroomtables
      *
      * @return mixed
      */
     public function actionGetroomtables() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $data = Yii::$app->request->getIsPost() ? Yii::$app->request->post() : Yii::$app->request->get();
+        $data = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomTables']);
-        if ($model->load($data, '') && $model->validate()) {
+        $model->load($data, '');
+        if ($model->validate()) {
             return $model->getRoomTables();
         } else {
             throw new BadRequestHttpException($model->getErrorMessage());
@@ -125,9 +126,10 @@ class OrderController extends Controller
     public function actionGetroomuse() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $data = Yii::$app->request->getIsPost() ? Yii::$app->request->post() : Yii::$app->request->get();
+        $data = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomUse']);
-        if ($model->load($data, '') && $model->validate()) {
+        $model->load($data, '');
+        if ($model->validate()) {
             $model->rt_detail = true;
             return $model->getRoomUse();
         } else {

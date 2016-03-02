@@ -118,6 +118,40 @@ class RoomService extends Component {
         return $data;
     }
 
+     /**
+     * 查询所有房间的日期范围(带缓存)
+     * 优先从缓存中查询
+     *
+     * @return json
+     */
+    public static function queryDateRange() {
+        $now = time();
+        $cacheKey = 'dateRange_'.date('Y-m-d', $now);
+        $cache = Yii::$app->cache;
+        $data = $cache->get($cacheKey);
+        if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效'); 
+
+            $startDate = mktime(0, 0, 0, date("m", $now), date("d", $now), date("Y", $now));
+            $endDate = $startDate;
+
+            $roomList = Room::getOpenRooms();
+            foreach ($roomList as $room) {
+                $dateRange = $room->getDateRangeSelf();
+                $endDate = max($endDate, $dateRange['end']);
+            }
+            $data = [
+                'start' => $startDate,
+                'end' => $endDate,
+            ];
+            $cache->set($cacheKey, $data, 86400);
+        }else{
+            Yii::trace($cacheKey.':缓存命中'); 
+        }
+        return $data;    
+    }
+
+
     /**
      * 得到一个房间表
      * 如果方法不存在将会创建一个，多并发情况下可能会创建多个，但是读取的保证是最早创建的唯一一个

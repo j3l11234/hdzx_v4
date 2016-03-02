@@ -45,9 +45,10 @@ class OrderQueryForm extends Model {
      */
     public function rules() {
         return [
-            [['start_date', 'end_date', 'date', 'room'], 'required'],
+            [['date', 'room'], 'required'],
             [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
-            [['rooms'], 'jsonValidator']
+            [['rooms'], 'jsonValidator'],
+            [['start_date', 'end_date'], 'dateRangeValidator']
         ];
     }
 
@@ -56,6 +57,18 @@ class OrderQueryForm extends Model {
             $this->addError($attribute, $attribute.'格式错误');
         }
     }
+    function dateRangeValidator($attribute, $params) {
+        $today = strtotime(date('Y-m-d', time()));
+        $start = strtotime("-31 day",$today);
+        $end = strtotime("+31 day",$today);
+        
+        $date = strtotime($this->$attribute);
+        
+        if($date < $start  || $date > $end){
+            $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内');
+        }
+    }
+
 
     /**
      * 查询房间使用表
@@ -63,27 +76,22 @@ class OrderQueryForm extends Model {
      * @return User|null the saved model or null if saving fails
      */
     public function getRoomTables() {
-        $roonList = json_decode($this->rooms,true);
-        $startDate = strtotime($this->start_date);
-        $endDate = strtotime($this->end_date);
-        $minEndDate = $startDate;
+        $roomList = !empty($this->rooms) ? json_decode($this->rooms, true) : [];
+
+        $dateRange = RoomService::queryDateRange();
+        $startDate = !empty($this->start_date) ? strtotime($this->start_date) : $dateRange['start'];
+        $endDate = !empty($this->end_date) ? strtotime($this->end_date) : $dateRange['end'];
 
         $rooms = RoomService::queryRoomList()['rooms'];
         //计算hourTables
-        $hourTables = [];
-        foreach ($roonList as $room_id) {
-            if(!isset($rooms[$room_id])){
+        $roomTables = [];
+        foreach ($rooms as $room_id => $room) {
+            if(!in_array($room_id, $roomList) && !empty($this->rooms)){
                 continue;
             }
-            $hourTables[$room_id] = [];
-            $room = $rooms[$room_id];
-            //计算日期范围 合并起始区间
-            $dateRange = Room::getDateRange($room['max_before'], $room['min_before'], $room['by_week']);
-            $start = $startDate;
-            $end = min($endDate, $dateRange['end']);
-            $minEndDate = max($minEndDate, $end);
 
-            for ($time=$start; $time <= $end; $time = strtotime("+1 day", $time)) {
+            $roomTables[$room_id] = [];
+            for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {
                 $date = date('Y-m-d', $time);
                 $roomTable = RoomService::queryRoomTable($date, $room_id);
                 if(!$this->rt_detail){
@@ -91,19 +99,19 @@ class OrderQueryForm extends Model {
                     unset($roomTable['used']);
                     unset($roomTable['locked']);
                 }
-                $hourTables[$room_id][$date] = $roomTable;
+                $roomTables[$room_id][$date] = $roomTable;
             }
         }
 
         //计算dateList
         $dateList = [];
-        for ($time=$startDate; $time <= $minEndDate; $time = strtotime("+1 day", $time)) {
+        for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {
             $dateList[] = date('Y-m-d', $time);
         }
 
         return [
             'dateList' => $dateList,
-            'hourTables' => $hourTables,
+            'roomTables' => $roomTables,
         ];
     }
 

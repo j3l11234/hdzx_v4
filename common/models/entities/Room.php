@@ -158,8 +158,23 @@ class Room extends ActiveRecord {
         return ($date >= $range['start'] && $date <= $range['end']);
     }
 
+
     /**
      * 得到允许申请的日期
+     *
+     * @param int $now 参考时间，默认为当前时间
+     * @return array 返回的格式
+     * [
+     *      'start' => $limitStart,
+     *      'end' => $limitEnd
+     * ]
+     */
+    public function getDateRangeSelf($now = null) {
+        return self::getDateRange($this->_data['max_before'], $this->_data['min_before'], $this->_data['by_week'], $now);
+    }
+
+    /**
+     * 得到允许申请的日期(静态)
      *
      * @param int $max_before 最大提前日期
      * @param int $min_before 最小提前日期

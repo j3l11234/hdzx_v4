@@ -65,6 +65,12 @@ class RoomServiceTest extends DbTestCase {
         codecept_debug($rooms);
     }
 
+    public function testQueryDateRange() {
+        $range = RoomService::queryDateRange();
+        codecept_debug($range);
+    }
+    
+
     /**
      * @inheritdoc
      */
