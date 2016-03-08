@@ -16,20 +16,20 @@ use common\models\entities\User;
 use common\models\services\RoomService;
 
 /**
- * 自动审批通过 操作
+ * 校级审批通过 操作
  *
  */
-class AutoAcceptOperation extends BaseOrderOperation {
+class SchoolApproveOperation extends BaseOrderOperation {
 
-    protected static $type = OrderOperation::TYPE_AUTO_ACCEPT;
+    protected static $type = OrderOperation::TYPE_SCHOOL_APPROVE;
 
     /**
      * @inheritdoc
      * 该方法将会检查用户是否拥有审批权限
      */
     protected function checkAuth() {
-        if (!$this->user->checkPrivilege(User::PRIV_APPROVE_AUTO)) {
-            throw new OrderOperationException('该账户无自动审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
+        if (!$this->user->checkPrivilege(User::PRIV_APPROVE_SCHOOL)) {
+            throw new OrderOperationException('该账户无校级审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
         }
     }
 
@@ -37,7 +37,7 @@ class AutoAcceptOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkPreStatus() {
-        if ($this->order->status != Order::STATUS_AUTO_PENDING){
+        if ($this->order->status != Order::STATUS_SCHOOL_PENDING){
             throw new OrderOperationException('预约状态异常', BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
         }
     }
@@ -51,7 +51,7 @@ class AutoAcceptOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function setPostStatus() {
-        $this->order->status = Order::STATUS_AUTO_ACCEPTED;
+        $this->order->status = Order::STATUS_SCHOOL_APPROVED;
     }
 
     /**
@@ -60,7 +60,7 @@ class AutoAcceptOperation extends BaseOrderOperation {
     protected function getOpData() {
         $opData = [];
         $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '自动审批通过';
+        $opData['commemt'] = '校级审批通过';
 
         return $opData;
     }

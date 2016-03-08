@@ -10,7 +10,7 @@ use common\models\entities\OrderOperation;
 use common\models\entities\RoomTable;
 use common\models\entities\User;
 use common\models\operations\BaseOrderOperation;
-use common\models\operations\SchoolAcceptOperation;
+use common\models\operations\SchoolApproveOperation;
 use common\models\services\RoomService;
 use common\models\services\UserService;
 use tests\codeception\common\fixtures\OrderFixture;
@@ -22,7 +22,7 @@ use tests\codeception\common\unit\DbTestCase;
 /**
  * OrderOperation test
  */
-class SchoolAcceptOperationTest extends DbTestCase {
+class SchoolApproveOperationTest extends DbTestCase {
 
     use Specify;
 
@@ -37,7 +37,7 @@ class SchoolAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();
      
-            $submitOp = new SchoolAcceptOperation($order, $user, $roomTable);
+            $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 expect('should throw exception', false)->true();
@@ -60,7 +60,7 @@ class SchoolAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();  
 
-            $submitOp = new SchoolAcceptOperation($order, $user, $roomTable);
+            $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 expect('should throw exception', false)->true();
@@ -85,7 +85,7 @@ class SchoolAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();
   
-            $submitOp = new SchoolAcceptOperation($order, $user, $roomTable);
+            $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 $transaction->commit();
@@ -95,12 +95,12 @@ class SchoolAcceptOperationTest extends DbTestCase {
             }
 
             $newOrder = Order::findOne($order->id);
-            expect('$order->status', $newOrder->status)->equals(Order::STATUS_SCHOOL_ACCEPTED);
+            expect('$order->status', $newOrder->status)->equals(Order::STATUS_SCHOOL_APPROVED);
 
             $orderOp = OrderOperation::findOne([
                 'order_id' => $order->id,
                 'user_id' => $user->getLogicId(),
-                'type' => OrderOperation::TYPE_SCHOOL_ACCEPT
+                'type' => OrderOperation::TYPE_SCHOOL_APPROVE
                 ]);
             expect('can find $orderOp', $orderOp)->notNull();
 

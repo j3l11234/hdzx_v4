@@ -16,26 +16,20 @@ use common\models\entities\User;
 use common\models\services\RoomService;
 
 /**
- * 校级审批通过 操作
+ * 自动审批通过 操作
  *
  */
-class ManagerAcceptOperation extends BaseOrderOperation {
+class AutoApproveOperation extends BaseOrderOperation {
 
-    protected static $type = OrderOperation::TYPE_MANAGER_ACCEPT;
+    protected static $type = OrderOperation::TYPE_AUTO_APPROVE;
 
     /**
      * @inheritdoc
      * 该方法将会检查用户是否拥有审批权限
      */
     protected function checkAuth() {
-        if (!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
-            if(!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
-                throw new OrderOperationException('该账户无负责人审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
-            }else{
-                if(!$this->user->checkApproveDept($this->order->dept_id)){
-                    throw new OrderOperationException('该账户对该预约无负责人审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
-                }
-            }
+        if (!$this->user->checkPrivilege(User::PRIV_APPROVE_AUTO)) {
+            throw new OrderOperationException('该账户无自动审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
         }
     }
 
@@ -43,21 +37,21 @@ class ManagerAcceptOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkPreStatus() {
-        if ($this->order->status != Order::STATUS_MANAGER_PENDING){
+        if ($this->order->status != Order::STATUS_AUTO_PENDING){
             throw new OrderOperationException('预约状态异常', BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
         }
     }
 
     protected function applyRoomTable() {
         $hours = $this->order->getHours();
-        RoomService::applyOrder($this->roomTable, $this->order->id, $hours, false);
+        RoomService::applyOrder($this->roomTable, $this->order->id, $hours, true);
     }
 
     /**
      * @inheritdoc
      */
     protected function setPostStatus() {
-        $this->order->status = Order::STATUS_MANAGER_ACCEPTED;
+        $this->order->status = Order::STATUS_AUTO_APPROVED;
     }
 
     /**
@@ -66,7 +60,7 @@ class ManagerAcceptOperation extends BaseOrderOperation {
     protected function getOpData() {
         $opData = [];
         $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '负责人审批通过';
+        $opData['commemt'] = '自动审批通过';
 
         return $opData;
     }

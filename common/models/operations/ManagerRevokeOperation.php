@@ -43,7 +43,7 @@ class ManagerRevokeOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkPreStatus() {
-        if ($this->order->status != Order::STATUS_MANAGER_ACCEPTED && $this->order->status != Order::STATUS_MANAGER_REJECTED){
+        if ($this->order->status != Order::STATUS_MANAGER_APPROVED && $this->order->status != Order::STATUS_MANAGER_REJECTED){
             throw new OrderOperationException('预约状态异常', BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
         }
     }

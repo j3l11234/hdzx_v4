@@ -10,7 +10,7 @@ use common\models\entities\OrderOperation;
 use common\models\entities\RoomTable;
 use common\models\entities\User;
 use common\models\operations\BaseOrderOperation;
-use common\models\operations\AutoAcceptOperation;
+use common\models\operations\AutoApproveOperation;
 use common\models\services\RoomService;
 use common\models\services\UserService;
 use tests\codeception\common\fixtures\OrderFixture;
@@ -22,7 +22,7 @@ use tests\codeception\common\unit\DbTestCase;
 /**
  * OrderOperation test
  */
-class AutoAcceptOperationTest extends DbTestCase {
+class AutoApproveOperationTest extends DbTestCase {
 
     use Specify;
 
@@ -37,7 +37,7 @@ class AutoAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();
      
-            $submitOp = new AutoAcceptOperation($order, $user, $roomTable);
+            $submitOp = new AutoApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 expect('should throw exception', false)->true();
@@ -60,7 +60,7 @@ class AutoAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();  
 
-            $submitOp = new AutoAcceptOperation($order, $user, $roomTable);
+            $submitOp = new AutoApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 expect('should throw exception', false)->true();
@@ -85,7 +85,7 @@ class AutoAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();
   
-            $submitOp = new AutoAcceptOperation($order, $user, $roomTable);
+            $submitOp = new AutoApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 $transaction->commit();
@@ -95,12 +95,12 @@ class AutoAcceptOperationTest extends DbTestCase {
             }
 
             $newOrder = Order::findOne($order->id);
-            expect('$order->status', $newOrder->status)->equals(Order::STATUS_AUTO_ACCEPTED);
+            expect('$order->status', $newOrder->status)->equals(Order::STATUS_AUTO_APPROVED);
 
             $orderOp = OrderOperation::findOne([
                 'order_id' => $order->id,
                 'user_id' => $user->getLogicId(),
-                'type' => OrderOperation::TYPE_AUTO_ACCEPT
+                'type' => OrderOperation::TYPE_AUTO_APPROVE
                 ]);
             expect('can find $orderOp', $orderOp)->notNull();
 

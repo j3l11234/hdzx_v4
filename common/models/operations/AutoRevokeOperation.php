@@ -37,7 +37,7 @@ class AutoRevokeOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkPreStatus() {
-        if ($this->order->status != Order::STATUS_AUTO_ACCEPTED && $this->order->status != Order::STATUS_AUTO_REJECTED){
+        if ($this->order->status != Order::STATUS_AUTO_APPROVED && $this->order->status != Order::STATUS_AUTO_REJECTED){
             throw new OrderOperationException('预约状态异常', BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
         }
     }

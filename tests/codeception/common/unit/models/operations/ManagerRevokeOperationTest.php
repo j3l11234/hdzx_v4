@@ -72,7 +72,7 @@ class ManagerRevokeOperationTest extends DbTestCase {
             }
 
              $newOrder = Order::findOne($order->id);
-             expect('order->status should be STATUS_MANAGER_ACCEPTED', $newOrder->status)->equals(Order::STATUS_MANAGER_ACCEPTED);
+             expect('order->status should be STATUS_MANAGER_APPROVED', $newOrder->status)->equals(Order::STATUS_MANAGER_APPROVED);
         });
     }
 

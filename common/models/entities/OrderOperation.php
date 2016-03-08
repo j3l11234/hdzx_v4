@@ -45,7 +45,7 @@ class OrderOperation extends ActiveRecord {
     /**
      * 操作类型 负责人审批通过
      */
-    const TYPE_MANAGER_ACCEPT = 10;
+    const TYPE_MANAGER_APPROVE = 10;
     /**
      * 操作类型 负责人审批驳回
      */
@@ -57,7 +57,7 @@ class OrderOperation extends ActiveRecord {
     /**
      * 操作类型 校团委审批通过
      */
-    const TYPE_SCHOOL_ACCEPT  = 20;
+    const TYPE_SCHOOL_APPROVE  = 20;
     /**
      * 操作类型 校团委审批驳回
      */
@@ -69,7 +69,7 @@ class OrderOperation extends ActiveRecord {
       /**
      * 操作类型 自动审批通过
      */
-    const TYPE_AUTO_ACCEPT    = 30;
+    const TYPE_AUTO_APPROVE    = 30;
     /**
      * 操作类型 自动审批驳回
      */
@@ -98,9 +98,9 @@ class OrderOperation extends ActiveRecord {
             [['order_id', 'user_id'], 'integer'],
             [['type'], 'in', 'range' => [
                 self::TYPE_SUBMIT, self::TYPE_CHANGE_HOUR, self::TYPE_CANCEL, 
-                self::TYPE_MANAGER_ACCEPT, self::TYPE_MANAGER_REJECT, self::TYPE_MANAGER_REVOKE, 
-                self::TYPE_SCHOOL_ACCEPT, self::TYPE_SCHOOL_REJECT, self::TYPE_SCHOOL_REVOKE, 
-                self::TYPE_AUTO_ACCEPT, self::TYPE_AUTO_REJECT, self::TYPE_AUTO_REVOKE]],
+                self::TYPE_MANAGER_APPROVE, self::TYPE_MANAGER_REJECT, self::TYPE_MANAGER_REVOKE, 
+                self::TYPE_SCHOOL_APPROVE, self::TYPE_SCHOOL_REJECT, self::TYPE_SCHOOL_REVOKE, 
+                self::TYPE_AUTO_APPROVE, self::TYPE_AUTO_REJECT, self::TYPE_AUTO_REVOKE]],
         ];
     }
 

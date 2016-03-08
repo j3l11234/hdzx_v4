@@ -26,14 +26,6 @@ class UserController extends Controller
     public function behaviors() {
         Yii::$app->response->format = Response::FORMAT_JSON;
         return [
-            'cors' => [
-                'class' => Cors::className(),
-                'cors' => [
-                    'Origin' => ['*'],
-                    'Access-Control-Request-Method' => ['POST', 'PUT'],
-                    'Access-Control-Allow-Credentials' => true,
-                ],
-            ],
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => ['logout', 'signup'],
@@ -118,15 +110,15 @@ class UserController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         if (\Yii::$app->user->isGuest) {
-            return [
-                'user' => null,
-            ];
+            $user = null;
         }else {
-            return [
-                'user' => \Yii::$app->user->getIdentity()->getUser()->toArray(['dept_id', 'email', 'alias', 'privilege']),
-            ];
-            
+            $user = Yii::$app->user->getIdentity()->getUser()->toArray(['dept_id', 'email', 'alias', 'privilege']);
         }
+
+        return [
+            'status' => 200,
+            'user' => $user,
+        ];
     }
 
     /**

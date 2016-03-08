@@ -10,7 +10,7 @@ use common\models\entities\OrderOperation;
 use common\models\entities\RoomTable;
 use common\models\entities\User;
 use common\models\operations\BaseOrderOperation;
-use common\models\operations\ManagerAcceptOperation;
+use common\models\operations\ManagerApproveOperation;
 use common\models\services\RoomService;
 use common\models\services\UserService;
 use tests\codeception\common\fixtures\OrderFixture;
@@ -22,7 +22,7 @@ use tests\codeception\common\unit\DbTestCase;
 /**
  * OrderOperation test
  */
-class ManagerAcceptOperationTest extends DbTestCase {
+class ManagerApproveOperationTest extends DbTestCase {
 
     use Specify;
 
@@ -39,7 +39,7 @@ class ManagerAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();
      
-            $submitOp = new ManagerAcceptOperation($order, $user, $roomTable);
+            $submitOp = new ManagerApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 expect('should throw exception', false)->true();
@@ -60,7 +60,7 @@ class ManagerAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();
      
-            $submitOp = new ManagerAcceptOperation($order, $user, $roomTable);
+            $submitOp = new ManagerApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 $transaction->commit();
@@ -82,7 +82,7 @@ class ManagerAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();  
 
-            $submitOp = new ManagerAcceptOperation($order, $user, $roomTable);
+            $submitOp = new ManagerApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 expect('should throw exception', false)->true();
@@ -107,7 +107,7 @@ class ManagerAcceptOperationTest extends DbTestCase {
             $connection = Yii::$app->db;
             $transaction=$connection->beginTransaction();
   
-            $submitOp = new ManagerAcceptOperation($order, $user, $roomTable);
+            $submitOp = new ManagerApproveOperation($order, $user, $roomTable);
             try {
                 $submitOp->doOperation();
                 $transaction->commit();
@@ -117,12 +117,12 @@ class ManagerAcceptOperationTest extends DbTestCase {
             }
 
             $newOrder = Order::findOne($order->id);
-            expect('$order->status', $newOrder->status)->equals(Order::STATUS_MANAGER_ACCEPTED);
+            expect('$order->status', $newOrder->status)->equals(Order::STATUS_MANAGER_APPROVED);
 
             $orderOp = OrderOperation::findOne([
                 'order_id' => $order->id,
                 'user_id' => $user->getLogicId(),
-                'type' => OrderOperation::TYPE_MANAGER_ACCEPT
+                'type' => OrderOperation::TYPE_MANAGER_APPROVE
                 ]);
             expect('can find $orderOp', $orderOp)->notNull();
 

@@ -51,7 +51,7 @@ class Order extends ActiveRecord {
     /**
      * 预约状态 负责人通过
      */
-    const STATUS_MANAGER_ACCEPTED   = 0x11;
+    const STATUS_MANAGER_APPROVED   = 0x11;
     /**
      * 预约状态 负责人驳回
      */
@@ -63,7 +63,7 @@ class Order extends ActiveRecord {
     /**
      * 预约状态 校团委通过
      */
-    const STATUS_SCHOOL_ACCEPTED    = 0x02;
+    const STATUS_SCHOOL_APPROVED    = 0x02;
     /**
      * 预约状态 校团委驳回
      */
@@ -75,7 +75,7 @@ class Order extends ActiveRecord {
     /**
      * 预约状态 自动通过
      */
-    const STATUS_AUTO_ACCEPTED      = 0x02;
+    const STATUS_AUTO_APPROVED      = 0x02;
     /**
      * 预约状态 自动驳回
      */
@@ -124,9 +124,9 @@ class Order extends ActiveRecord {
             [['room_id', 'user_id', 'dept_id', 'submit_time', 'issue_time'], 'integer'],
             [['status'], 'in', 'range' => [
                 self::STATUS_INIT, self::STATUS_PASSED, self::STATUS_CANCELED,
-                self::STATUS_MANAGER_PENDING, self::STATUS_MANAGER_ACCEPTED, self::STATUS_MANAGER_REJECTED,
-                self::STATUS_SCHOOL_PENDING, self::STATUS_SCHOOL_ACCEPTED, self::STATUS_SCHOOL_REJECTED,
-                self::STATUS_AUTO_PENDING, self::STATUS_AUTO_ACCEPTED, self::STATUS_AUTO_REJECTED]],
+                self::STATUS_MANAGER_PENDING, self::STATUS_MANAGER_APPROVED, self::STATUS_MANAGER_REJECTED,
+                self::STATUS_SCHOOL_PENDING, self::STATUS_SCHOOL_APPROVED, self::STATUS_SCHOOL_REJECTED,
+                self::STATUS_AUTO_PENDING, self::STATUS_AUTO_APPROVED, self::STATUS_AUTO_REJECTED]],
             [['type'], 'in', 'range' => [self::TYPE_AUTO, self::TYPE_TWICE]],
         ];
     }

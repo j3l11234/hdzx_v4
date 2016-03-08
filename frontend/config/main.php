@@ -16,7 +16,8 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                '' => 'site/index'
+                '' => 'site/index',
+                'OPTIONS <path:.*>' => 'options/index',
             ]
         ],
         'user' => [
