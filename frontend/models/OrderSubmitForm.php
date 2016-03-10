@@ -59,7 +59,7 @@ class OrderSubmitForm extends Model {
     }
 
     function jsonValidator($attribute, $params) {
-        if (!is_array(json_decode($this->$attribute, true))) {
+        if (!is_string($this->$attribute) || !is_array(json_decode($this->$attribute, true))) {
             $this->addError($attribute, $attribute.'格式错误');
         }
     }

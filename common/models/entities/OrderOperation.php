@@ -157,6 +157,18 @@ class OrderOperation extends ActiveRecord {
     public function setOpData($data){
         $this->_data = $data;
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function fields() {
+        $fields = parent::fields();
+        $fields['data'] = function () {
+            return $this->_data;
+        };
+
+        return $fields;
+    }
 
     /**
      * @inheritdoc

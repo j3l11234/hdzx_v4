@@ -2,7 +2,7 @@
 namespace frontend\models;
 
 use common\behaviors\ErrorBehavior;
-use common\models\User;
+use common\models\entities\User;
 use common\models\entities\Order;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
@@ -17,7 +17,7 @@ class OrderQueryForm extends Model {
     public $start_date;
     public $end_date;
     public $rooms;
-    public $rt_detail = false;
+    public $rt_detail = true;
     public $date;
     public $room;
 
@@ -122,7 +122,5 @@ class OrderQueryForm extends Model {
      */
     public function getRoomUse() {
         return $data = RoomService::queryRoomUse($this->date, $this->room);
-
-        return $roomTable;
     }
 }

@@ -26,14 +26,6 @@ class OrderController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         return [
-            'cors' => [
-                'class' => Cors::className(),
-                'cors' => [
-                    'Origin' => ['*'],
-                    'Access-Control-Request-Method' => ['POST', 'PUT'],
-                    'Access-Control-Allow-Credentials' => true,
-                ],
-            ],
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => ['submitorder', 'signup'],
@@ -84,7 +76,9 @@ class OrderController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $roomList = RoomService::queryRoomList();
-        return $roomList;
+        return array_merge($roomList, [
+            'status' => 200,
+        ]);
     }
 
     /**
@@ -96,7 +90,9 @@ class OrderController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $deptList = OrderService::queryDeptList();
-        return $deptList;
+        return array_merge($deptList, [
+            'status' => 200,
+        ]);
     }
 
     /**
@@ -107,15 +103,16 @@ class OrderController extends Controller
     public function actionGetroomtables() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $data = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomTables']);
-        $model->load($data, '');
+        $model->load(Yii::$app->request->get(), '');
         if ($model->validate()) {
-            return $model->getRoomTables();
+            $data = $model->getRoomTables();
+            return array_merge($data, [
+                'status' => 200,
+            ]);
         } else {
             throw new BadRequestHttpException($model->getErrorMessage());
         }
-        return $data;
     }
 
     /**

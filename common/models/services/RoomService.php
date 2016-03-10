@@ -45,6 +45,7 @@ class RoomService extends Component {
                 $hours[] = $hour;
             }
             $data['hourTable'] = $roomTable->getHourTable($hours);
+            $data['chksum'] = substr(md5(json_encode($data)), 0, 6);
             $cache->set($cacheKey, $data);
         } else {
             Yii::trace($cacheKey.':缓存命中'); 
@@ -67,7 +68,11 @@ class RoomService extends Component {
         $used = RoomTable::getTable($data['used']);
         $locked = RoomTable::getTable($data['locked']);
 
-        $data['orders'] = [];
+        $data = [
+            'roomTable' => $data,
+            'orders' => [],
+            'locks' => [],
+        ];
         foreach ($ordered as  $order_id) {
             $order = OrderService::queryOneOrder($order_id);
             if ($order !== null) {

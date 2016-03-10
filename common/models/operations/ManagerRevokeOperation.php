@@ -16,7 +16,7 @@ use common\models\entities\User;
 use common\models\services\RoomService;
 
 /**
- * 校级审批撤回 操作
+ * 负责人审批撤回 操作
  *
  */
 class ManagerRevokeOperation extends BaseOrderOperation {

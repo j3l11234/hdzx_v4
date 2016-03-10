@@ -71,7 +71,7 @@ return [
         'user_id' => '1',
         'dept_id' => '1',
         'type' => Order::TYPE_TWICE,
-        'status' => Order::STATUS_MANAGER_ACCEPTED,
+        'status' => Order::STATUS_MANAGER_APPROVED,
         'submit_time' => 12312312,
         'data' => json_encode([
             'name' => '李鹏翔',

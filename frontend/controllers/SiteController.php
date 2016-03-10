@@ -24,13 +24,6 @@ class SiteController extends Controller
     public function behaviors()
     {
         return [
-            'cors' => [
-                'class' => Cors::className(),
-                'cors' => [
-                    'Origin' => ['*'],
-                    'Access-Control-Request-Method' => ['GET', 'POST', 'HEAD', 'OPTIONS'],
-                ],
-            ],
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => ['logout', 'signup'],
