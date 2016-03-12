@@ -21,7 +21,7 @@ use common\models\services\RoomService;
  */
 class ManagerApproveOperation extends BaseOrderOperation {
 
-    protected static $type = OrderOperation::TYPE_MANAGER_ACCEPT;
+    protected static $type = OrderOperation::TYPE_MANAGER_APPROVE;
 
     /**
      * @inheritdoc
@@ -57,7 +57,7 @@ class ManagerApproveOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function setPostStatus() {
-        $this->order->status = Order::STATUS_MANAGER_ACCEPTED;
+        $this->order->status = Order::STATUS_MANAGER_APPROVED;
     }
 
     /**

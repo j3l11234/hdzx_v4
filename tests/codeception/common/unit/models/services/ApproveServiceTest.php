@@ -30,6 +30,59 @@ class ApproveServiceTest extends DbTestCase {
         codecept_debug($orderList);
     }
     
+    public function testApproveOrder(){
+        $user = UserService::findIdentity(1)->getUser();
+
+        //负责人审批测试
+        $order = Order::findOne(20);
+        ApproveService::approveOrder($order, $user, ApproveService::TYPE_MANAGER);
+
+        $newOrder = Order::findOne($order->id);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_MANAGER_APPROVED);
+
+        //校团委审批测试
+        $order = Order::findOne(30);
+        ApproveService::approveOrder($order, $user, ApproveService::TYPE_SCHOOL);
+
+        $newOrder = Order::findOne($order->id);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_SCHOOL_APPROVED);
+
+        //自动审批测试
+        $order = Order::findOne(40);
+        ApproveService::approveOrder($order, $user, ApproveService::TYPE_AUTO);
+
+        $newOrder = Order::findOne($order->id);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_AUTO_APPROVED);
+
+    }
+
+    public function testRejectOrder(){
+        $user = UserService::findIdentity(1)->getUser();
+
+        //负责人审批测试
+        $order = Order::findOne(20);
+        ApproveService::rejectOrder($order, $user, ApproveService::TYPE_MANAGER);
+
+        $newOrder = Order::findOne($order->id);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_MANAGER_REJECTED);
+
+        //校团委审批测试
+        $order = Order::findOne(30);
+        ApproveService::rejectOrder($order, $user, ApproveService::TYPE_SCHOOL);
+
+        $newOrder = Order::findOne($order->id);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_SCHOOL_REJECTED);
+
+        //自动审批测试
+        $order = Order::findOne(40);
+        ApproveService::rejectOrder($order, $user, ApproveService::TYPE_AUTO);
+
+        $newOrder = Order::findOne($order->id);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_AUTO_REJECTED);
+            
+    }
+
+
     /**
      * @inheritdoc
      */

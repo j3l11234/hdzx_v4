@@ -15,10 +15,8 @@ use Yii;
 /**
  * Signup form
  */
-class ApproveQueryForm extends Model {
-    public $start_date;
-    public $end_date;
-    public $status;
+class ApproveForm extends Model {
+    public $order_id;
     public $type;
 
     /**
@@ -35,7 +33,8 @@ class ApproveQueryForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios['getApproveOrder'] = ['start_date', 'end_date', 'status', 'type'];
+        $scenarios['approveOrder'] = ['order_id', 'type'];
+        $scenarios['rejectOrder'] = ['order_id', 'type'];
         return $scenarios;
     }
 
@@ -44,23 +43,9 @@ class ApproveQueryForm extends Model {
      */
     public function rules() {
         return [
-            [['type'], 'required'],
-            [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
-            [['start_date', 'end_date'], 'dateRangeValidator'],
-            [['type'], 'in', 'range' => ['auto', 'manager', 'school', ]],
+            [['order_id', 'type'], 'required'],
+            [['type'], 'in', 'range' => [ApproveService::TYPE_AUTO, ApproveService::TYPE_MANAGER, ApproveService::TYPE_SCHOOL]],
         ];
-    }
-
-    function dateRangeValidator($attribute, $params) {
-        $today = strtotime(date('Y-m-d', time()));
-        $start = strtotime("-31 day",$today);
-        $end = strtotime("+31 day",$today);
-        
-        $date = strtotime($this->$attribute);
-        
-        if($date < $start  || $date > $end){
-            $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内');
-        }
     }
 
     function getType($type) {
@@ -77,14 +62,22 @@ class ApproveQueryForm extends Model {
     }
 
     /**
-     * 查询房间使用表
+     * 审批预约
      *
-     * @return User|null the saved model or null if saving fails
+     * @return Order|false 是否审批成功
      */
-    public function getApproveOrder() {
+    public function approveOrder() {
         $user = Yii::$app->user->getIdentity()->getUser();
+        $order = Order::findOne($this->order_id);
+
+        if($order === null){
+            $this->setErrorMessage('预约不存在');
+            return false;
+        }
+
         $numType = $this->getType($this->type);
-        $data = ApproveService::queryApproveOrder($user, $numType, $this->start_date, $this->end_date);
-        return $data;
+        
+        $data = ApproveService::approveOrder($order, $user, $numType);
+        return $order;
     }
 }

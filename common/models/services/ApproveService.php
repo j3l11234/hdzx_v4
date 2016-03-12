@@ -10,13 +10,12 @@ namespace common\models\services;
 use Yii;
 use yii\base\Component;
 use common\exception\RoomTableException;
-use common\exception\OrderQueryException;
+use common\exception\ApproveException;
 use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\User;
 use common\models\entities\OrderOperation;
 use common\models\services\UserService;
-use common\models\operations\SubmitOperation;
 
 /**
  * 审批预约相关服务类
@@ -55,7 +54,7 @@ class ApproveService extends Component {
                 $where[] = ['=', 'type', Order::TYPE_AUTO];
                 $where[] = ['in', 'status', [Order::STATUS_AUTO_PENDING, Order::STATUS_AUTO_APPROVED, Order::STATUS_AUTO_REJECTED]];
                 if (!$user->checkPrivilege(User::PRIV_APPROVE_AUTO)) {
-                    new OrderQueryException('没有查询权限', OrderQueryException::AUTH_FAILED);
+                    new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
                 }
                 break;
             case static::TYPE_MANAGER:
@@ -65,18 +64,18 @@ class ApproveService extends Component {
                 } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
                     $where[] = ['in', 'dept_id', $user->getApproveDeptList()];
                 } else {
-                    new OrderQueryException('没有查询权限', OrderQueryException::AUTH_FAILED);
+                    new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
                 }
                 break;
             case static::TYPE_SCHOOL:
                 $where[] = ['=', 'type', Order::TYPE_TWICE];
                 $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
                 if (!$user->checkPrivilege(User::PRIV_APPROVE_SCHOOL)) {
-                    new OrderQueryException('没有查询权限', OrderQueryException::AUTH_FAILED);
+                    new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
                 }
                 break;
             default:
-                new OrderQueryException('查询类型异常', OrderQueryException::AUTH_FAILED);
+                new ApproveException('查询类型异常', ApproveException::TYPE_NOT_FOUND);
                 break;
         }
 
@@ -142,5 +141,97 @@ class ApproveService extends Component {
             Yii::trace($cacheKey.':缓存命中'); 
         }
         return $data;
+    }
+
+    /**
+     * 审批一个申请
+     *
+     * @param Order $order 预约
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function approveOrder($order, $user, $type) {
+        switch ($type) {
+            case static::TYPE_AUTO:
+                $operationClass = 'common\models\operations\AutoApproveOperation';
+                break;
+            case static::TYPE_MANAGER:
+                $operationClass = 'common\models\operations\ManagerApproveOperation';
+                break;
+            case static::TYPE_SCHOOL:
+                $operationClass = 'common\models\operations\SchoolApproveOperation';
+                break;
+            default:
+                new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
+                break;
+        }
+
+        $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
+
+        $connection = Yii::$app->db;
+        $transaction = $connection->beginTransaction();
+
+        try {
+            $operation = new $operationClass($order, $user, $roomTable);
+            $operation->doOperation();
+
+            $transaction->commit();
+
+            //清除缓存
+            $cache = Yii::$app->cache;
+            $cacheKey = Order::getCacheKey($order->id);
+            $cache->delete($cacheKey);
+            $cacheKey = Order::getCacheKey($order->id).'_approve';
+            $cache->delete($cacheKey);
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * 驳回一个申请
+     *
+     * @param Order $order 预约
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function rejectOrder($order, $user, $type) {
+        switch ($type) {
+            case static::TYPE_AUTO:
+                $operationClass = 'common\models\operations\AutoRejectOperation';
+                break;
+            case static::TYPE_MANAGER:
+                $operationClass = 'common\models\operations\ManagerRejectOperation';
+                break;
+            case static::TYPE_SCHOOL:
+                $operationClass = 'common\models\operations\SchoolRejectOperation';
+                break;
+            default:
+                new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
+                break;
+        }
+
+        $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
+
+        $connection = Yii::$app->db;
+        $transaction = $connection->beginTransaction();
+
+        try {
+            $operation = new $operationClass($order, $user, $roomTable);
+            $operation->doOperation();
+
+            $transaction->commit();
+
+            //清除缓存
+            $cache = Yii::$app->cache;
+            $cacheKey = Order::getCacheKey($order->id);
+            $cache->delete($cacheKey);
+            $cacheKey = Order::getCacheKey($order->id).'_approve';
+            $cache->delete($cacheKey);
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
     }
 }

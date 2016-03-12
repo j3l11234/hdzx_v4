@@ -12,18 +12,22 @@ use yii\base\Exception;
 /**
  * 预约操作出现异常
  */
-class OrderOperationException extends Exception {
+class ApproveException extends Exception {
 	 /**
      * 错误信息 权限认证失败
      */
     const AUTH_FAILED         = 0x0001;
 
+    /**
+     * 错误信息 权限认证失败
+     */
+    const TYPE_NOT_FOUND       = 0x0002;
 
     /**
      * @inheritdoc
      */
     public function getName()
     {
-        return 'Order Operation Exception';
+        return 'Approve Exception';
     }
 }

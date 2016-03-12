@@ -12,6 +12,7 @@ use yii\filters\Cors;
 
 use common\models\services\ApproveService;
 use frontend\models\ApproveQueryForm;
+use frontend\models\ApproveForm;
 
 /**
  * Order controller
@@ -49,12 +50,19 @@ class ApproveController extends Controller
                         'allow' => true,
                         'roles' => ['@'],
                     ],
+                    [
+                        'actions' => ['approveOrder'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                    
                 ],
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'logout' => ['post'],
+                    'approveOrder' => ['post'],
                 ],
             ],
         ];
@@ -73,13 +81,12 @@ class ApproveController extends Controller
     }
 
     /**
-     * 查询自动审批的预约
+     * 查询审批的预约
      *
      * @return mixed
      */
-    public function actionGetautoorder() {
+    public function actionGetorder() {
         $data = Yii::$app->request->get();
-        $data['type'] = ApproveService::TYPE_AUTO;
         $model = new ApproveQueryForm(['scenario' => 'getApproveOrder']);
         $model->load($data, '');
         if ($model->validate()) {
@@ -90,36 +97,24 @@ class ApproveController extends Controller
         return $data;
     }
 
-    /**
-     * 查询负责人审批的预约
-     *
-     * @return mixed
-     */
-    public function actionGetmanagerorder() {
-        $data = Yii::$app->request->get();
-        $data['type'] = ApproveService::TYPE_MANAGER;
-        $model = new ApproveQueryForm(['scenario' => 'getApproveOrder']);
-        $model->load($data, '');
-        if ($model->validate()) {
-            return $model->getApproveOrder();
-        } else {
-            throw new BadRequestHttpException($model->getErrorMessage());
-        }
-        return $data;
-    }
+
+
+
 
     /**
-     * 查询校级审批的预约
+     * 审批预约预约
      *
      * @return mixed
      */
-    public function actionGetschoolorder() {
-        $data = Yii::$app->request->get();
-        $data['type'] = ApproveService::TYPE_SCHOOL;
-        $model = new ApproveQueryForm(['scenario' => 'getApproveOrder']);
+    public function actionApproveorder() {
+        $data = Yii::$app->request->post();
+        $model = new ApproveForm(['scenario' => 'approveOrder']);
         $model->load($data, '');
-        if ($model->validate()) {
-            return $model->getApproveOrder();
+        if ($model->validate() && $model->approveOrder()) {
+            return [
+                'status' => 200,
+                'message' => '审批成功',
+            ];
         } else {
             throw new BadRequestHttpException($model->getErrorMessage());
         }
