@@ -22,7 +22,8 @@ use common\models\services\RoomService;
 class AutoRevokeOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_AUTO_REVOKE;
-
+    protected static $opName = '自动审批撤回';
+    
     /**
      * @inheritdoc
      * 该方法将会检查用户是否拥有审批权限
@@ -64,14 +65,4 @@ class AutoRevokeOperation extends BaseOrderOperation {
         $this->order->status = Order::STATUS_AUTO_PENDING;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '自动审批撤回';
-
-        return $opData;
-    }
 }

@@ -22,7 +22,8 @@ use common\models\services\RoomService;
 class AutoRejectOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_AUTO_REJECT;
-
+    protected static $opName = '自动审批驳回';
+    
     /**
      * @inheritdoc
      * 该方法将会检查用户是否拥有审批权限
@@ -63,14 +64,4 @@ class AutoRejectOperation extends BaseOrderOperation {
         $this->order->status = Order::STATUS_AUTO_REJECTED;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '自动审批驳回';
-
-        return $opData;
-    }
 }

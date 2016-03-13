@@ -18,6 +18,7 @@ use Yii;
 class ApproveForm extends Model {
     public $order_id;
     public $type;
+    public $comment;
 
     /**
      * @inheritdoc
@@ -33,8 +34,9 @@ class ApproveForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios['approveOrder'] = ['order_id', 'type'];
-        $scenarios['rejectOrder'] = ['order_id', 'type'];
+        $scenarios['approveOrder'] = ['order_id', 'type', 'comment'];
+        $scenarios['rejectOrder'] = ['order_id', 'type', 'comment'];
+        $scenarios['revokeOrder'] = ['order_id', 'type', 'comment'];
         return $scenarios;
     }
 
@@ -44,7 +46,7 @@ class ApproveForm extends Model {
     public function rules() {
         return [
             [['order_id', 'type'], 'required'],
-            [['type'], 'in', 'range' => [ApproveService::TYPE_AUTO, ApproveService::TYPE_MANAGER, ApproveService::TYPE_SCHOOL]],
+            [['type'], 'in', 'range' => ['auto', 'manager', 'school', ]],
         ];
     }
 
@@ -62,7 +64,7 @@ class ApproveForm extends Model {
     }
 
     /**
-     * 审批预约
+     * 通过预约
      *
      * @return Order|false 是否审批成功
      */
@@ -77,7 +79,47 @@ class ApproveForm extends Model {
 
         $numType = $this->getType($this->type);
         
-        $data = ApproveService::approveOrder($order, $user, $numType);
+        $data = ApproveService::approveOrder($order, $user, $numType, $this->comment);
+        return $order;
+    }
+
+    /**
+     * 驳回预约
+     *
+     * @return Order|false 是否审批成功
+     */
+    public function rejectOrder() {
+        $user = Yii::$app->user->getIdentity()->getUser();
+        $order = Order::findOne($this->order_id);
+
+        if($order === null){
+            $this->setErrorMessage('预约不存在');
+            return false;
+        }
+
+        $numType = $this->getType($this->type);
+        
+        $data = ApproveService::rejectOrder($order, $user, $numType, $this->comment);
+        return $order;
+    }
+
+    /**
+     * 撤回审批预约
+     *
+     * @return Order|false 是否审批成功
+     */
+    public function revokeOrder() {
+        $user = Yii::$app->user->getIdentity()->getUser();
+        $order = Order::findOne($this->order_id);
+
+        if($order === null){
+            $this->setErrorMessage('预约不存在');
+            return false;
+        }
+
+        $numType = $this->getType($this->type);
+        
+        $data = ApproveService::revokeOrder($order, $user, $numType, $this->comment);
         return $order;
     }
 }

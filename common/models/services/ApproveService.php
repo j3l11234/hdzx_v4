@@ -150,7 +150,7 @@ class ApproveService extends Component {
      * @return null
      * @throws Exception 如果出现异常
      */
-    public static function approveOrder($order, $user, $type) {
+    public static function approveOrder($order, $user, $type, $comment = null) {
         switch ($type) {
             case static::TYPE_AUTO:
                 $operationClass = 'common\models\operations\AutoApproveOperation';
@@ -166,27 +166,7 @@ class ApproveService extends Component {
                 break;
         }
 
-        $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
-
-        $connection = Yii::$app->db;
-        $transaction = $connection->beginTransaction();
-
-        try {
-            $operation = new $operationClass($order, $user, $roomTable);
-            $operation->doOperation();
-
-            $transaction->commit();
-
-            //清除缓存
-            $cache = Yii::$app->cache;
-            $cacheKey = Order::getCacheKey($order->id);
-            $cache->delete($cacheKey);
-            $cacheKey = Order::getCacheKey($order->id).'_approve';
-            $cache->delete($cacheKey);
-        } catch (\Exception $e) {
-            $transaction->rollBack();
-            throw $e;
-        }
+        static::operateOrder($order, $user, $operationClass, $comment);
     }
 
     /**
@@ -196,7 +176,7 @@ class ApproveService extends Component {
      * @return null
      * @throws Exception 如果出现异常
      */
-    public static function rejectOrder($order, $user, $type) {
+    public static function rejectOrder($order, $user, $type, $comment = null) {
         switch ($type) {
             case static::TYPE_AUTO:
                 $operationClass = 'common\models\operations\AutoRejectOperation';
@@ -212,13 +192,47 @@ class ApproveService extends Component {
                 break;
         }
 
+        static::operateOrder($order, $user, $operationClass, $comment);
+    }
+
+    /**
+     * 撤回一个申请预约
+     *
+     * @param Order $order 预约
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function revokeOrder($order, $user, $type, $comment = null) {
+        switch ($type) {
+            case static::TYPE_AUTO:
+                $operationClass = 'common\models\operations\AutoRevokeOperation';
+                break;
+            case static::TYPE_MANAGER:
+                $operationClass = 'common\models\operations\ManagerRevokeOperation';
+                break;
+            case static::TYPE_SCHOOL:
+                $operationClass = 'common\models\operations\SchoolRevokeOperation';
+                break;
+            default:
+                new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
+                break;
+        }
+
+        static::operateOrder($order, $user, $operationClass, $comment);
+    }
+
+    protected static function operateOrder($order, $user, $operationClass, $comment) {
+
         $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
+        $extra = [
+            'comment' => $comment
+        ];
 
         $connection = Yii::$app->db;
         $transaction = $connection->beginTransaction();
 
         try {
-            $operation = new $operationClass($order, $user, $roomTable);
+            $operation = new $operationClass($order, $user, $roomTable,$extra);
             $operation->doOperation();
 
             $transaction->commit();

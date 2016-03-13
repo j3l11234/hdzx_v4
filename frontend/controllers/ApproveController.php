@@ -102,12 +102,15 @@ class ApproveController extends Controller
 
 
     /**
-     * 审批预约预约
+     * 审批预约
      *
      * @return mixed
      */
     public function actionApproveorder() {
+        $getData = Yii::$app->request->get();
         $data = Yii::$app->request->post();
+        $data['type'] = $getData['type'];
+        
         $model = new ApproveForm(['scenario' => 'approveOrder']);
         $model->load($data, '');
         if ($model->validate() && $model->approveOrder()) {
@@ -120,4 +123,53 @@ class ApproveController extends Controller
         }
         return $data;
     }
+
+    /**
+     * 审批预约
+     *
+     * @return mixed
+     */
+    public function actionRejectorder() {
+        $getData = Yii::$app->request->get();
+        $data = Yii::$app->request->post();
+        $data['type'] = $getData['type'];
+        
+        $model = new ApproveForm(['scenario' => 'rejectOrder']);
+        $model->load($data, '');
+        if ($model->validate() && $model->rejectOrder()) {
+            return [
+                'status' => 200,
+                'message' => '审批成功',
+            ];
+        } else {
+            throw new BadRequestHttpException($model->getErrorMessage());
+        }
+        return $data;
+    }
+
+    /**
+     * 审批预约
+     *
+     * @return mixed
+     */
+    public function actionRevokeorder() {
+        $getData = Yii::$app->request->get();
+        $data = Yii::$app->request->post();
+        $data['type'] = $getData['type'];
+        
+        $model = new ApproveForm(['scenario' => 'revokeOrder']);
+        $model->load($data, '');
+        if ($model->validate() && $model->revokeOrder()) {
+            return [
+                'status' => 200,
+                'message' => '撤回成功',
+            ];
+        } else {
+            throw new BadRequestHttpException($model->getErrorMessage());
+        }
+        return $data;
+    }
+
+
+    
 }

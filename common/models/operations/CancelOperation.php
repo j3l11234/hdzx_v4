@@ -21,6 +21,7 @@ use common\models\services\RoomService;
 class CancelOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_CANCEL;
+    protected static $opName = '取消预约';
 
     /**
      * 检查用户权限
@@ -54,17 +55,4 @@ class CancelOperation extends BaseOrderOperation {
         $this->order->status = Order::STATUS_CANCELED;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        if ($this->user->isStudent()) {
-            $opData['studentn_no'] = $this->user->id;
-        }
-        $opData['commemt'] = '取消预约';
-
-        return $opData;
-    }
 }

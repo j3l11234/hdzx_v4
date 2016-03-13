@@ -22,6 +22,7 @@ use common\models\services\RoomService;
 class AutoApproveOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_AUTO_APPROVE;
+    protected static $opName = '自动审批通过';
 
     /**
      * @inheritdoc
@@ -52,16 +53,5 @@ class AutoApproveOperation extends BaseOrderOperation {
      */
     protected function setPostStatus() {
         $this->order->status = Order::STATUS_AUTO_APPROVED;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '自动审批通过';
-
-        return $opData;
     }
 }

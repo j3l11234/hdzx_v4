@@ -27,6 +27,7 @@ use common\models\services\RoomService;
 class SubmitOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_SUBMIT;
+    protected static $opName = '提交预约';
 
     /**
      * @inheritdoc
@@ -60,17 +61,4 @@ class SubmitOperation extends BaseOrderOperation {
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        if ($this->user->isStudent()) {
-            $opData['studentn_no'] = $this->user->id;
-        }
-        $opData['commemt'] = '提交预约';
-
-        return $opData;
-    }
 }

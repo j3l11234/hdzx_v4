@@ -22,7 +22,8 @@ use common\models\services\RoomService;
 class ManagerApproveOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_MANAGER_APPROVE;
-
+    protected static $opName = '负责人审批通过';
+    
     /**
      * @inheritdoc
      * 该方法将会检查用户是否拥有审批权限
@@ -60,14 +61,4 @@ class ManagerApproveOperation extends BaseOrderOperation {
         $this->order->status = Order::STATUS_MANAGER_APPROVED;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '负责人审批通过';
-
-        return $opData;
-    }
 }

@@ -61,6 +61,8 @@ class BaseOrderOperation extends Component {
     protected $extra;
 
     protected static $type = 0;
+    protected static $opName = '';
+
     /**
      * Constructor.
      * @param Order $order 预约
@@ -124,14 +126,6 @@ class BaseOrderOperation extends Component {
         
     }
 
-    /**
-     * 获取操作数据写入操作记录
-     * @return mixed 操作数据
-     */
-    protected function getOpData() {
-
-    }
-
     /** 
      * 执行操作
      * @throws OrderOperationException 如果出现错误
@@ -147,13 +141,6 @@ class BaseOrderOperation extends Component {
         $this->checkRoomTable();
         // 写入时间表(乐观锁并发回滚)
         $this->applyRoomTable();
-
-        $roomTable = $this->extra['roomTable'];
-        if(!empty($roomTable)){
-            if($roomTable->save() !== true){
-                throw new OrderOperationException('时间表保存错误'."\n".var_export($roomTable->getErrors(), true), BaseOrderOperation::ERROR_SAVE_ROOMTABLE);
-            }
-        }
         
         // 保存预约状态(设置后置状态);
         $this->setPostStatus();
@@ -173,5 +160,20 @@ class BaseOrderOperation extends Component {
             throw new OrderOperationException('预约操作记录保存错误'."\n".var_export($orderOp->getErrors(), true), BaseOrderOperation::ERROR_SVAE_ORDEROP);
         }
 
+    }
+
+     /**
+     * 获取操作数据写入操作记录
+     * @return mixed 操作数据
+     */
+    protected function getOpData() {
+        $opData = [];
+        $opData['operator'] = $this->user->alias;
+        $opData['commemt'] = !empty($this->extra['comment']) ? $this->extra['comment'] : static::$opName;
+        if ($this->user->isStudent()) {
+            $opData['studentn_no'] = $this->user->id;
+        }
+
+        return $opData;
     }
 }

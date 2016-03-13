@@ -22,7 +22,8 @@ use common\models\services\RoomService;
 class SchoolRejectOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_SCHOOL_REJECT;
-
+    protected static $opName = '校级审批驳回';
+    
     /**
      * @inheritdoc
      * 该方法将会检查用户是否拥有审批权限
@@ -63,14 +64,4 @@ class SchoolRejectOperation extends BaseOrderOperation {
         $this->order->status = Order::STATUS_SCHOOL_REJECTED;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '校级审批驳回';
-
-        return $opData;
-    }
 }

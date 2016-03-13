@@ -22,7 +22,8 @@ use common\models\services\RoomService;
 class ManagerRevokeOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_MANAGER_REVOKE;
-
+    protected static $opName = '负责人审批撤回';
+    
     /**
      * @inheritdoc
      * 该方法将会检查用户是否拥有审批权限
@@ -70,14 +71,4 @@ class ManagerRevokeOperation extends BaseOrderOperation {
         $this->order->status = Order::STATUS_MANAGER_PENDING;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '负责人审批撤回';
-
-        return $opData;
-    }
 }

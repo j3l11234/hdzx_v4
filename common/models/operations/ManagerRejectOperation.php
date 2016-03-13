@@ -22,7 +22,8 @@ use common\models\services\RoomService;
 class ManagerRejectOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_MANAGER_REJECT;
-
+    protected static $opName = '负责人审批驳回';
+    
     /**
      * @inheritdoc
      * 该方法将会检查用户是否拥有审批权限
@@ -69,14 +70,4 @@ class ManagerRejectOperation extends BaseOrderOperation {
         $this->order->status = Order::STATUS_MANAGER_REJECTED;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getOpData() {
-        $opData = [];
-        $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = '负责人审批驳回';
-
-        return $opData;
-    }
 }
