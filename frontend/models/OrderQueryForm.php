@@ -1,14 +1,15 @@
 <?php
 namespace frontend\models;
 
+use yii\base\Model;
+use Yii;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\Order;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
 use common\models\services\RoomService;
-use yii\base\Model;
-use Yii;
+use common\models\services\OrderService;
 
 /**
  * Signup form
@@ -121,6 +122,31 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getRoomUse() {
-        return $data = RoomService::queryRoomUse($this->date, $this->room);
+        $data = RoomService::queryRoomTable($this->date, $this->room);
+
+        $ordered = RoomTable::getTable($data['ordered']);
+        $used = RoomTable::getTable($data['used']);
+        $locked = RoomTable::getTable($data['locked']);
+
+        $data = [
+            'roomTable' => $data,
+            'orders' => [],
+            'locks' => [],
+        ];
+        foreach ($ordered as  $order_id) {
+            $order = OrderService::queryOneOrder($order_id);
+            if ($order !== null) {
+                $data['orders'][$order_id] = $order;
+            }
+        }
+        foreach ($used as  $order_id) {
+            $order = OrderService::queryOneOrder($order_id);
+            if ($order !== null) {
+                $data['orders'][$order_id] = $order;
+            }
+        }
+        
+        return $data;
+
     }
 }

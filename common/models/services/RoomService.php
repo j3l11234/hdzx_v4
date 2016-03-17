@@ -54,42 +54,6 @@ class RoomService extends Component {
     }
 
     /**
-     * 查询一个房间占用信息
-     * 优先从缓存中查询
-     *
-     * @param string $date 预约日期
-     * @param integer $room_id 房间id
-     * @return Mixed 房间占用信息
-     */
-    public static function queryRoomUse($date, $room_id){
-        $data = self::queryRoomTable($date, $room_id);
-
-        $ordered = RoomTable::getTable($data['ordered']);
-        $used = RoomTable::getTable($data['used']);
-        $locked = RoomTable::getTable($data['locked']);
-
-        $data = [
-            'roomTable' => $data,
-            'orders' => [],
-            'locks' => [],
-        ];
-        foreach ($ordered as  $order_id) {
-            $order = OrderService::queryOneOrder($order_id);
-            if ($order !== null) {
-                $data['orders'][$order_id] = $order;
-            }
-        }
-        foreach ($used as  $order_id) {
-            $order = OrderService::queryOneOrder($order_id);
-            if ($order !== null) {
-                $data['orders'][$order_id] = $order;
-            }
-        }
-        
-        return $data;
-    }
-
-    /**
      * 查询所有打开房间(带缓存)
      * 优先从缓存中查询
      *

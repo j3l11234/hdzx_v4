@@ -33,7 +33,7 @@ class ApproveQueryForm extends Model {
     /**
      * @inheritdoc
      */
-    public function scenarios(){
+    public function scenarios() {
         $scenarios = parent::scenarios();
         $scenarios['getApproveOrder'] = ['start_date', 'end_date', 'status', 'type'];
         return $scenarios;
@@ -85,6 +85,25 @@ class ApproveQueryForm extends Model {
         $user = Yii::$app->user->getIdentity()->getUser();
         $numType = $this->getType($this->type);
         $data = ApproveService::queryApproveOrder($user, $numType, $this->start_date, $this->end_date);
+
+        //解析roomTable，用于分析冲突
+        $roomTables = [];
+        foreach ($data['orders'] as $id => $order) {
+            $roomTable = RoomService::queryRoomTable($order['date'], $order['room_id']);
+            //unset($roomTable['ordered']);
+            //unset($roomTable['used']);
+            unset($roomTable['locked']);
+            unset($roomTable['hourTable']);
+            unset($roomTable['chksum']);
+            
+
+            if(!isset($roomTables[$order['room_id']])){
+                $roomTables[$order['room_id']] = [];
+            }
+            $roomTables[$order['room_id']][$order['date']] = $roomTable;
+        }
+        $data['roomTables'] = $roomTables;
+
         return $data;
     }
 }
