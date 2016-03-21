@@ -106,7 +106,7 @@ class ApproveService extends Component {
     }
 
     /**
-     * 查询单条审批预约的详细信息
+     * 查询单条审批预约的详细信息(带缓存)
      * 数据会包含操作记录
      * 优先使用缓存
      *

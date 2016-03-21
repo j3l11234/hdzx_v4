@@ -49,7 +49,7 @@ class RoomTable extends ActiveRecord {
     //锁定表
     protected $_locked = [];
 
-
+    public $useOptimisticLock = true;
 
     /**
      * @inheritdoc
@@ -132,7 +132,7 @@ class RoomTable extends ActiveRecord {
      * @inheritdoc
      */
     public function optimisticLock() {
-        return 'ver';
+        return $this->useOptimisticLock ? 'ver' : null;
     }
 
     public static function getCacheKey($date, $room_id){
@@ -159,15 +159,15 @@ class RoomTable extends ActiveRecord {
      * @param array $hours 插入的小时数组
      * @return null
      */
-    protected function addTable($name, $id, $hours){
+    public static function addTable(&$table, $id, $hours){
         if ($hours != null) {
             foreach ($hours as $hour) {
-                if (isset($this->{$name}[$hour])) {
-                    if (!in_array($id, $this->{$name}[$hour])) {
-                        $this->{$name}[$hour][] = $id;
+                if (isset($table[$hour])) {
+                    if (!in_array($id, $table[$hour])) {
+                        $table[$hour][] = $id;
                     }
                 } else {
-                    $this->{$name}[$hour] = [$id];
+                    $table[$hour] = [$id];
                 }
             }
         }     
@@ -218,7 +218,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function addOrdered($id, $hours) {
-        return $this->addTable('_ordered', $id, $hours);
+        return self::addTable($this->_ordered, $id, $hours);
     }
 
     /**
@@ -250,7 +250,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function addUsed($id, $hours) {
-        return $this->addTable('_used', $id, $hours);
+        return self::addTable($this->_used, $id, $hours);
     }
 
     /**
@@ -282,7 +282,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function addLocked($id, $hours) {
-        return $this->addTable('_locked', $id, $hours);
+        return self::addTable($this->_locked, $id, $hours);
     }
 
     /**
@@ -306,6 +306,10 @@ class RoomTable extends ActiveRecord {
         return self::getTable($this->_locked, $hours);
     }
 
+    public function setLocked($locked) {
+        $this->_locked = $locked;
+    }
+    
     /**
      * 生成小时表
      * @param array $hours 查找的小时数组
