@@ -14,7 +14,7 @@ use Yii;
  */
 class OrderSubmitForm extends Model {
     public $date;
-    public $room;
+    public $room_id;
     public $hours;
     
     public $name;
@@ -41,7 +41,7 @@ class OrderSubmitForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios['submitOrder'] = ['date', 'room', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'dept', 'number', 'secure'];
+        $scenarios['submitOrder'] = ['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'dept', 'number', 'secure'];
         return $scenarios;
     }
 
@@ -50,11 +50,11 @@ class OrderSubmitForm extends Model {
      */
     public function rules() {
         return [
-            [['date', 'room', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'dept', 'number', 'secure'], 'required'],
+            [['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'dept', 'number', 'secure'], 'required'],
             [['date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['hours'], 'jsonValidator'],
             [['dept'], 'deptValidator'],
-            [['room'], 'roomValidator']
+            [['room_id'], 'roomValidator']
         ];
     }
 
@@ -88,7 +88,7 @@ class OrderSubmitForm extends Model {
         $user = Yii::$app->user->getIdentity()->getUser();
         //验证日期
 
-        $room = Room::findOne($this->room);
+        $room = Room::findOne($this->room_id);
         $orderType;
         switch ($room->type) {
             case Room::TYPE_AUTO:
@@ -113,7 +113,7 @@ class OrderSubmitForm extends Model {
 
         $order = new Order();
         $order->date = $this->date;
-        $order->room_id = $this->room;
+        $order->room_id = $this->room_id;
         $order->user_id = $user->getLogicId();
         $order->dept_id = $this->dept;
         $order->type = $orderType;

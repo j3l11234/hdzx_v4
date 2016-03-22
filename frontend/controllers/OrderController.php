@@ -61,8 +61,10 @@ class OrderController extends Controller
                 'class' => 'yii\web\ErrorAction',
             ],
             'captcha' => [
-                'class' => 'yii\captcha\CaptchaAction',
+                'class' => 'frontend\actions\MyCaptchaAction',
                 'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+                'height' => 40,
+                'padding' => 0,
             ],
         ];
     }
@@ -144,6 +146,16 @@ class OrderController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $data = Yii::$app->request->post();
+
+        $captchaAction = $this->createAction('captcha');
+        if (!$captchaAction->validate($data['captcha'], false)){
+            return [
+                'status' => 601,
+                'message' => '验证码错误',
+            ];
+        }
+
+            
         $model = new OrderSubmitForm(['scenario' => 'submitOrder']);
 
         if ($model->load($data, '') && $model->validate() && $result = $model->submitOrder()) {
