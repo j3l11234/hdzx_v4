@@ -10,6 +10,7 @@ use common\models\entities\Room;
 use common\models\entities\RoomTable;
 use common\models\services\RoomService;
 use common\models\services\OrderService;
+use common\models\services\LockService;
 
 /**
  * Signup form
@@ -133,16 +134,22 @@ class OrderQueryForm extends Model {
             'orders' => [],
             'locks' => [],
         ];
-        foreach ($ordered as  $order_id) {
+        foreach ($ordered as $order_id) {
             $order = OrderService::queryOneOrder($order_id);
             if ($order !== null) {
                 $data['orders'][$order_id] = $order;
             }
         }
-        foreach ($used as  $order_id) {
+        foreach ($used as $order_id) {
             $order = OrderService::queryOneOrder($order_id);
             if ($order !== null) {
                 $data['orders'][$order_id] = $order;
+            }
+        }
+        foreach ($locked as $lock_id) {
+            $lock = LockService::queryOneLock($lock_id);
+            if ($lock !== null) {
+                $data['locks'][$lock_id] = $lock;
             }
         }
         

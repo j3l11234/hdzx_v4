@@ -127,6 +127,11 @@ class LockService extends Component {
                     $roomTable->setLocked($lockTable);
                     $roomTable->useOptimisticLock = false;
                     $roomTable->save();
+
+                    //清除缓存
+                    $cache = Yii::$app->cache;
+                    $cacheKey = RoomTable::getCacheKey($date, $room_id);
+                    $cache->delete($cacheKey);
                 }
             }
         }

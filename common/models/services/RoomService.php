@@ -13,6 +13,7 @@ use common\exception\RoomTableException;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
 use common\models\services\OrderService;
+use common\models\services\LockService;
 
 /**
  * 房间相关服务类
@@ -35,7 +36,7 @@ class RoomService extends Component {
         $data = $cache->get($cacheKey);
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效'); 
-            $roomTable = self::getRoomTable($date, $room_id);
+            $roomTable = self::getRoomTable($date, $room_id, true);
             $data = $roomTable->toArray(['ordered', 'used', 'locked']);
             
             $startHour = Yii::$app->params['order.startHour'];
@@ -128,14 +129,25 @@ class RoomService extends Component {
      *
      * @param string $date 预约日期
      * @param integer $room_id 房间id
+     * @param integer $lock 是否自动应用房间锁
      * @return RoomTable
      */
-    public static function getRoomTable($date, $room_id) {
+    public static function getRoomTable($date, $room_id, $lock = false) {
         $roomTable = RoomTable::findByDateRoom($date, $room_id);
         if ($roomTable === null) {
             $roomTable = new RoomTable();
             $roomTable->date = $date;
             $roomTable->room_id = $room_id;
+
+            //应用房间锁
+            if ($lock) {
+                $lockList = LockService::queryLockTable($date, $room_id);
+                foreach ($lockList as $key => $lock_id) {
+                    $lock = LockService::queryOneLock($lock_id);
+                    $roomTable->addLocked($lock_id, $lock['hours']);
+                }
+            }
+            
             $roomTable->save();
 
             //重新查找，保证并发唯一

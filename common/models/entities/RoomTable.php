@@ -66,7 +66,7 @@ class RoomTable extends ActiveRecord {
         return [
             [
                 'class' => TimestampBehavior::className(),
-                'createdAtAttribute' => false,
+                'createdAtAttribute' => 'created_at',
                 'updatedAtAttribute' => 'updated_at',
             ],
         ];
@@ -309,7 +309,7 @@ class RoomTable extends ActiveRecord {
     public function setLocked($locked) {
         $this->_locked = $locked;
     }
-    
+
     /**
      * 生成小时表
      * @param array $hours 查找的小时数组
