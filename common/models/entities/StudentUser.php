@@ -42,4 +42,13 @@ class StudentUser extends BaseUser {
         return 'S'.$this->getPrimaryKey();
     }
     
+    /**
+     * 检查权限
+     *
+     * @param int $privNum 权限代号
+     * @return boolean 是否拥有权限
+     */
+    public function checkPrivilege($privNum) {
+        return false;
+    }
 }

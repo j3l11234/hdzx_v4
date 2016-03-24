@@ -9,9 +9,10 @@ namespace common\models\services;
 
 use Yii;
 use yii\base\Component;
-use common\exception\RoomTableException;
+use common\exceptions\RoomTableException;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
+use common\models\entities\Order;
 use common\models\services\OrderService;
 use common\models\services\LockService;
 
@@ -36,7 +37,7 @@ class RoomService extends Component {
         $data = $cache->get($cacheKey);
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效'); 
-            $roomTable = self::getRoomTable($date, $room_id, true);
+            $roomTable = self::getRoomTable($date, $room_id, true, true);
             $data = $roomTable->toArray(['ordered', 'used', 'locked']);
             
             $startHour = Yii::$app->params['order.startHour'];
@@ -132,15 +133,28 @@ class RoomService extends Component {
      * @param integer $lock 是否自动应用房间锁
      * @return RoomTable
      */
-    public static function getRoomTable($date, $room_id, $lock = false) {
+    public static function getRoomTable($date, $room_id, $applyOrder = false, $applyLock = false) {
         $roomTable = RoomTable::findByDateRoom($date, $room_id);
         if ($roomTable === null) {
             $roomTable = new RoomTable();
             $roomTable->date = $date;
             $roomTable->room_id = $room_id;
 
+            //应用预约
+            if ($applyOrder) {
+                $orderList = Order::findByDateRoom($date, $room_id);
+                foreach ($orderList as $key => $order) {
+                    $rtStatus = Order::getRoomTableStatus($order->status);
+                    if ($rtStatus == Order::ROOMTABLE_ORDERED) {
+                        $roomTable->addOrdered($order->id, $order->getHours());
+                    } if ($rtStatus == Order::ROOMTABLE_USED) {
+                        $roomTable->addUsed($order->id, $order->getHours());
+                    } 
+                }
+            };
+
             //应用房间锁
-            if ($lock) {
+            if ($applyLock) {
                 $lockList = LockService::queryLockTable($date, $room_id);
                 foreach ($lockList as $key => $lock_id) {
                     $lock = LockService::queryOneLock($lock_id);

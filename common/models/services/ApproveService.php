@@ -9,8 +9,8 @@ namespace common\models\services;
 
 use Yii;
 use yii\base\Component;
-use common\exception\RoomTableException;
-use common\exception\ApproveException;
+use common\exceptions\RoomTableException;
+use common\exceptions\ApproveException;
 use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\User;
@@ -54,7 +54,7 @@ class ApproveService extends Component {
                 $where[] = ['=', 'type', Order::TYPE_AUTO];
                 $where[] = ['in', 'status', [Order::STATUS_AUTO_PENDING, Order::STATUS_AUTO_APPROVED, Order::STATUS_AUTO_REJECTED]];
                 if (!$user->checkPrivilege(User::PRIV_APPROVE_AUTO)) {
-                    new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
+                    throw new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
                 }
                 break;
             case static::TYPE_MANAGER:
@@ -64,18 +64,18 @@ class ApproveService extends Component {
                 } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
                     $where[] = ['in', 'dept_id', $user->getApproveDeptList()];
                 } else {
-                    new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
+                    throw new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
                 }
                 break;
             case static::TYPE_SCHOOL:
                 $where[] = ['=', 'type', Order::TYPE_TWICE];
                 $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
                 if (!$user->checkPrivilege(User::PRIV_APPROVE_SCHOOL)) {
-                    new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
+                    throw new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
                 }
                 break;
             default:
-                new ApproveException('查询类型异常', ApproveException::TYPE_NOT_FOUND);
+                throw new ApproveException('查询类型异常', ApproveException::TYPE_NOT_FOUND);
                 break;
         }
 
@@ -162,7 +162,7 @@ class ApproveService extends Component {
                 $operationClass = 'common\models\operations\SchoolApproveOperation';
                 break;
             default:
-                new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
+                throw new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
                 break;
         }
 
@@ -188,7 +188,7 @@ class ApproveService extends Component {
                 $operationClass = 'common\models\operations\SchoolRejectOperation';
                 break;
             default:
-                new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
+                throw new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
                 break;
         }
 
@@ -214,7 +214,7 @@ class ApproveService extends Component {
                 $operationClass = 'common\models\operations\SchoolRevokeOperation';
                 break;
             default:
-                new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
+                throw new ApproveException('类型异常', ApproveException::TYPE_NOT_FOUND);
                 break;
         }
 

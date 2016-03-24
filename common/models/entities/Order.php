@@ -35,51 +35,51 @@ class Order extends ActiveRecord {
     /**
      * 预约状态 初始化
      */
-    const STATUS_INIT               = 0x01;
+    const STATUS_INIT               = 01;
     /**
      * 预约状态 已通过
      */
-    const STATUS_PASSED             = 0x02;
+    const STATUS_PASSED             = 02;
     /**
      * 预约状态 取消
      */
-    const STATUS_CANCELED           = 0x03;
+    const STATUS_CANCELED           = 03;
     /**
      * 预约状态 负责人待审批
      */
-    const STATUS_MANAGER_PENDING    = 0x10;
+    const STATUS_MANAGER_PENDING    = 10;
     /**
      * 预约状态 负责人通过
      */
-    const STATUS_MANAGER_APPROVED   = 0x11;
+    const STATUS_MANAGER_APPROVED   = 11;
     /**
      * 预约状态 负责人驳回
      */
-    const STATUS_MANAGER_REJECTED   = 0x12;
+    const STATUS_MANAGER_REJECTED   = 12;
     /**
      * 预约状态 校团委待审批
      */
-    const STATUS_SCHOOL_PENDING     = 0x11;
+    const STATUS_SCHOOL_PENDING     = 11;
     /**
      * 预约状态 校团委通过
      */
-    const STATUS_SCHOOL_APPROVED    = 0x02;
+    const STATUS_SCHOOL_APPROVED    = 02;
     /**
      * 预约状态 校团委驳回
      */
-    const STATUS_SCHOOL_REJECTED    = 0x22;
+    const STATUS_SCHOOL_REJECTED    = 22;
     /**
      * 预约状态 自动待审批
      */
-    const STATUS_AUTO_PENDING       = 0x30;
+    const STATUS_AUTO_PENDING       = 30;
     /**
      * 预约状态 自动通过
      */
-    const STATUS_AUTO_APPROVED      = 0x02;
+    const STATUS_AUTO_APPROVED      = 02;
     /**
      * 预约状态 自动驳回
      */
-    const STATUS_AUTO_REJECTED      = 0x32;
+    const STATUS_AUTO_REJECTED      = 32;
 
     /**
      * 预约类型 自动审批预约
@@ -89,6 +89,19 @@ class Order extends ActiveRecord {
      * 预约状态 二级审批预约
      */
     const TYPE_TWICE    = 2;
+
+    /**
+     * 房间锁状态 预约
+     */
+    const ROOMTABLE_ORDERED = 01;
+    /**
+     * 房间锁状态 占用
+     */
+    const ROOMTABLE_USED = 02;
+    /**
+     * 房间锁状态 失效
+     */
+    const ROOMTABLE_NONE = 00;
 
     protected $_hours = [];
     protected $_data = [];
@@ -227,13 +240,45 @@ class Order extends ActiveRecord {
      * @param integer $asArray 结果是否为数组形式
      * @return static|null
      */
-    public static function findByDateRoom($date,$room_id,$asArray = false)
-    {
-        $find = static::find(['date' => $date, 'room_id' => $room_id]);
+    public static function findByDateRoom($date, $room_id, $asArray = false) {
+        $find = static::find()->where(['date' => $date, 'room_id' => $room_id]);
         if ($asArray){
             $find = $find->asArray();
         }
 
         return $find->all();
+    }
+
+    /**
+     * 得到房间表状态
+     *
+     * @param integer $status 预约状态
+     * @return static|null
+     */
+    public static function getRoomTableStatus($status) {
+        $roomTableStatus = self::ROOMTABLE_NONE;
+        if ($status == self::STATUS_INIT ||
+            $status == self::STATUS_CANCELED ||
+            $status == self::STATUS_MANAGER_REJECTED ||
+            $status == self::STATUS_SCHOOL_REJECTED ||
+            $status == self::STATUS_AUTO_REJECTED ) {
+
+            $roomTableStatus = self::ROOMTABLE_NONE;
+
+        } else if ($status == self::STATUS_MANAGER_PENDING ||
+            $status == self::STATUS_MANAGER_APPROVED ||
+            $status == self::STATUS_SCHOOL_PENDING ||
+            $status == self::STATUS_AUTO_PENDING ) {
+
+            $roomTableStatus = self::ROOMTABLE_ORDERED;
+
+        } else if ($status == self::STATUS_PASSED ||
+            $status == self::STATUS_SCHOOL_APPROVED ||
+            $status == self::STATUS_AUTO_APPROVED) {
+
+            $roomTableStatus = self::ROOMTABLE_USED;
+        }
+
+        return $roomTableStatus;
     }
 }

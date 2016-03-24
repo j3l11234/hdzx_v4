@@ -63,7 +63,7 @@ class OrderController extends Controller
             'captcha' => [
                 'class' => 'frontend\actions\MyCaptchaAction',
                 'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-                'height' => 40,
+                'height' => 36,
                 'padding' => 0,
             ],
         ];

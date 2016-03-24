@@ -9,7 +9,7 @@ namespace common\models\services;
 
 use Yii;
 use yii\base\Component;
-use common\exception\RoomTableException;
+use common\exceptions\RoomTableException;
 use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\RoomTable;

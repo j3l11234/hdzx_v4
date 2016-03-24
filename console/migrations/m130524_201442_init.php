@@ -245,6 +245,8 @@ class m130524_201442_init extends Migration
             'ver' => $this->integer(),
         ], $tableOptions);
         $this->createIndex('user_id', '{{%order}}', 'user_id');
+        $this->createIndex('room_id', '{{%order}}', 'room_id');
+        $this->createIndex('date', '{{%order}}', 'date');
 
         //预约的操作
         $this->createTable('{{%order_op}}', [

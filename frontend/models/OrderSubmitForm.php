@@ -53,8 +53,6 @@ class OrderSubmitForm extends Model {
             [['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'dept', 'number', 'secure'], 'required'],
             [['date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['hours'], 'jsonValidator'],
-            [['dept'], 'deptValidator'],
-            [['room_id'], 'roomValidator']
         ];
     }
 
@@ -64,19 +62,6 @@ class OrderSubmitForm extends Model {
         }
     }
 
-    function deptValidator($attribute, $params) {
-        $dept = Department::findOne($this->$attribute);
-        if ($dept === null) {
-            $this->addError($attribute, $attribute.'不存在');
-        }
-    }
-
-    function roomValidator($attribute, $params) {
-        $room = Room::findOne($this->$attribute);
-        if ($room === null) {
-            $this->addError($attribute, $attribute.'不存在');
-        }
-    }
 
     /**
      * 提交设宁.
@@ -111,6 +96,15 @@ class OrderSubmitForm extends Model {
         $hours = json_decode($this->hours,true);
         
 
+        $dept = Department::findOne($this->dept);
+        if ($dept === null) {
+            $this->setErrorMessage('社团单位不存在');
+        }
+        $room = Room::findOne($this->$attribute);
+        if ($room === null) {
+            $this->setErrorMessage('房间不存在');
+        }
+
         $order = new Order();
         $order->date = $this->date;
         $order->room_id = $this->room_id;
@@ -127,6 +121,8 @@ class OrderSubmitForm extends Model {
             'content' => $this->content,
             'number' => $this->number,
             'secure' => $this->secure,
+            'dept_name' => $dept->name,
+            'room_name' => $room->$name.'('.$room->$number.')',
         ]);
 
         OrderService::submitOrder($order, $user);

@@ -19,7 +19,7 @@ class OrderQueryForm extends Model {
     public $start_date;
     public $end_date;
     public $rooms;
-    public $rt_detail = true;
+    public $rt_detail = false;
     public $date;
     public $room;
 

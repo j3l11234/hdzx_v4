@@ -51,6 +51,11 @@ class User extends BaseUser{
      * 自动审批权限(审批/驳回/撤销)
      */
     const PRIV_APPROVE_AUTO         = 0b0000010000;
+    /**
+     * 开门条发放权限
+     */
+    const PRIV_TYPE_ISSUE           = 0b0000100000;
+    
 
     //可审批dept_id表
     protected $_approve_dept = [];

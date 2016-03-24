@@ -78,6 +78,10 @@ class OrderOperation extends ActiveRecord {
      * 操作类型 自动审批撤回
      */
     const TYPE_AUTO_REVOKE      = 32;
+     /**
+     * 操作类型 发放开门条
+     */
+    const TYPE_ISSUE      = 40;
 
     protected $_data = [];
 
@@ -100,7 +104,7 @@ class OrderOperation extends ActiveRecord {
                 self::TYPE_SUBMIT, self::TYPE_CHANGE_HOUR, self::TYPE_CANCEL, 
                 self::TYPE_MANAGER_APPROVE, self::TYPE_MANAGER_REJECT, self::TYPE_MANAGER_REVOKE, 
                 self::TYPE_SCHOOL_APPROVE, self::TYPE_SCHOOL_REJECT, self::TYPE_SCHOOL_REVOKE, 
-                self::TYPE_AUTO_APPROVE, self::TYPE_AUTO_REJECT, self::TYPE_AUTO_REVOKE]],
+                self::TYPE_AUTO_APPROVE, self::TYPE_AUTO_REJECT, self::TYPE_AUTO_REVOKE, self::TYPE_ISSUE]],
         ];
     }
 
