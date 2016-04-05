@@ -42,7 +42,10 @@ class BaseUser extends ActiveRecord {
      * 用户状态 黑名单
      */
     const STATUS_BLOCKED = 0x002;
-
+    /**
+     * 用户状态 未激活
+     */
+    const STATUS_UNACTIVE = 0x004;
     /**
      * @inheritdoc
      */
@@ -58,7 +61,7 @@ class BaseUser extends ActiveRecord {
     public function rules() {
         return [
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
-            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED, self::STATUS_BLOCKED]],
+            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED, self::STATUS_BLOCKED, self::STATUS_UNACTIVE]],
         ];
     }
 
@@ -85,7 +88,7 @@ class BaseUser extends ActiveRecord {
 
         return static::findOne([
             'password_reset_token' => $token,
-            'status' => self::STATUS_ACTIVE,
+            'status' => [self::STATUS_ACTIVE, self::STATUS_UNACTIVE],
         ]);
     }
 

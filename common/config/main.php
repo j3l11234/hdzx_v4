@@ -16,5 +16,6 @@ return [
         ]
     ],
     'timeZone'=>'Asia/Chongqing',
+    'language'=>'zh_cn',
     'params' => $params
 ];

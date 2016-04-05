@@ -148,13 +148,12 @@ class OrderController extends Controller
         $data = Yii::$app->request->post();
 
         $captchaAction = $this->createAction('captcha');
-        if (!$captchaAction->validate($data['captcha'], false)){
+        if (!$captchaAction->validate($data['captcha'], false)) {
             return [
                 'status' => 601,
                 'message' => '验证码错误',
             ];
         }
-
             
         $model = new OrderSubmitForm(['scenario' => 'submitOrder']);
 

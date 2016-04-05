@@ -16,8 +16,6 @@ class LoginForm extends Model {
     public $password;
     public $rememberMe = true;
 
-    private $user;
-
     /**
      * @inheritdoc
      */
@@ -57,7 +55,6 @@ class LoginForm extends Model {
             } else {
                 if ($user->validatePassword($this->password)) {
                     $userService = new UserService($user);
-                    $this->user = $user;
                     return Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0);
                 }else{
                     $this->setErrorMessage('密码不正确');
@@ -67,13 +64,4 @@ class LoginForm extends Model {
         return false;
     }
 
-    /**
-     * 
-     * 取得用户
-     *
-     * @return User|null
-     */
-    public function getUser() {
-        return $this->user;
-    }
 }
