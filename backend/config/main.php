@@ -14,8 +14,10 @@ return [
     'modules' => [],
     'components' => [
         'user' => [
-            'identityClass' => 'common\models\service\UserService',
+            'identityClass' => 'common\models\services\UserService',
             'enableAutoLogin' => true,
+            'idParam' => '__id_admin',
+            'loginUrl' => ['user/login'],
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
