@@ -99,7 +99,7 @@ class OrderOperation extends ActiveRecord {
         return [
             [['order_id', 'user_id', 'type'], 'required'],
             [['data'], 'safe'],
-            [['order_id', 'user_id'], 'integer'],
+            [['order_id'], 'integer'],
             [['type'], 'in', 'range' => [
                 self::TYPE_SUBMIT, self::TYPE_CHANGE_HOUR, self::TYPE_CANCEL, 
                 self::TYPE_MANAGER_APPROVE, self::TYPE_MANAGER_REJECT, self::TYPE_MANAGER_REVOKE, 

@@ -9,8 +9,7 @@ use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Alert;
 use yii\captcha\Captcha;
 
-$this->title = '用户激活';
-$this->params['breadcrumbs'][] = $this->title;
+$this->title = '激活新用户';
 ?>
 <div class="site-signup">
     <h1><?= Html::encode($this->title) ?></h1>

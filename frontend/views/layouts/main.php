@@ -24,7 +24,10 @@ AppAsset::register($this);
 </head>
 <body>
 <?php $this->beginBody() ?>
-
+<script>
+    var _Server_Data_ = {};
+    _Server_Data_.BASE_URL = '<?= Yii::$app->urlManager->createUrl('/') ?>';
+</script>
 <div class="wrap">
     <?php
     NavBar::begin([
@@ -34,14 +37,38 @@ AppAsset::register($this);
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
+    $menuItems = [
+        ['label' => '房间预约', 'url' => ['/order']],
+        ['label' => '我的预约', 'url' => ['/myorder']],
+        ['label' => 'Contact', 'url' => ['/site/contact']],
+    ];
+    if (Yii::$app->user->isGuest) {
+        $menuItems[] = [
+            'label' => '未登录',
+            'items'=>[
+                ['label' => '登录', 'url' => ['/login']],
+                ['label' => '激活新用户', 'url' => ['/user/request-active-user']],
+            ],
+        ];
+    } else {
+        $menuItems[] = [
+            'label' => Yii::$app->user->identity->username.' ('. Yii::$app->user->identity->alias.')',
+            'items'=>[
+                ['label' => '注销', 'url' => ['/user/logout'], 'linkOptions' => ['data-method' => 'post']],
+                ['label' => '修改密码', 'url' => ['/user/request-password-reset']],
+            ],
+        ];
+    }
+
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
-        'items' => [],
+        'route' => Yii::$app->request->getPathInfo(),
+        'items' => $menuItems,
     ]);
     NavBar::end();
     ?>
 
-    <div class="container">
+    <div class="container-fluid">
         <?= Breadcrumbs::widget([
             'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
         ]) ?>
@@ -57,7 +84,6 @@ AppAsset::register($this);
         <p class="pull-right"><?= Yii::powered() ?></p>
     </div>
 </footer>
-
 <?php $this->endBody() ?>
 </body>
 </html>

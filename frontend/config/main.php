@@ -17,13 +17,16 @@ return [
             'showScriptName' => false,
             'rules' => [
                 '' => 'site/index',
+                '/login' => 'user/login-page',
+                '/order' => 'order/order-page',
+                '/myorder' => 'order/myorder-page',
                 'OPTIONS <path:.*>' => 'options/index',
             ]
         ],
         'user' => [
             'identityClass' => 'common\models\services\UserService',
             'enableAutoLogin' => true,
-            'loginUrl' => null,
+            'loginUrl' => ['/login'],
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,

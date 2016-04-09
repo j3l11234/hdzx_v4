@@ -69,9 +69,7 @@ class OrderSubmitForm extends Model {
      * @return Order|false 是否成功
      */
     public function submitOrder() {
-
         $user = Yii::$app->user->getIdentity()->getUser();
-        //验证日期
 
         $room = Room::findOne($this->room_id);
         $orderType;
@@ -89,6 +87,7 @@ class OrderSubmitForm extends Model {
                 $orderType = Order::TYPE_TWICE;
                 break;
         }
+        //验证日期
         if(!$room->checkOpenSelf($this->date)){
             $this->setErrorMessage('当前日期不在可预约范围内');
             return false;
@@ -100,7 +99,7 @@ class OrderSubmitForm extends Model {
         if ($dept === null) {
             $this->setErrorMessage('社团单位不存在');
         }
-        $room = Room::findOne($this->$attribute);
+        $room = Room::findOne($this->room_id);
         if ($room === null) {
             $this->setErrorMessage('房间不存在');
         }
@@ -115,14 +114,14 @@ class OrderSubmitForm extends Model {
         $order->setHours($hours);
         $order->setOrderData([
             'name' => $this->name,
-            'student_no' => $user->isStudent() ? $user->getLogicId() : '',
+            'student_no' => $user->isStudent() ? $user->id : '',
             'phone' => $this->phone,
             'title' => $this->title,
             'content' => $this->content,
             'number' => $this->number,
             'secure' => $this->secure,
             'dept_name' => $dept->name,
-            'room_name' => $room->$name.'('.$room->$number.')',
+            'room_name' => $room->name.'('.$room->number.')',
         ]);
 
         OrderService::submitOrder($order, $user);

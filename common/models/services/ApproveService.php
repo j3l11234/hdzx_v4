@@ -16,6 +16,8 @@ use common\models\entities\Order;
 use common\models\entities\User;
 use common\models\entities\OrderOperation;
 use common\models\services\UserService;
+use common\models\services\OrderService;
+
 
 /**
  * 审批预约相关服务类
@@ -91,7 +93,7 @@ class ApproveService extends Component {
         $orderList = [];
         $orders = [];
         foreach ($result as $key => $order) {
-            $order = static::queryOneOrder($order->id);
+            $order = OrderService::queryOneOrder($order->id);
 
             $orderList[] = $order['id'];
             $orders[$order['id']] = $order;
@@ -102,44 +104,6 @@ class ApproveService extends Component {
             'orders' => $orders,
         ];
 
-        return $data;
-    }
-
-    /**
-     * 查询单条审批预约的详细信息(带缓存)
-     * 数据会包含操作记录
-     * 优先使用缓存
-     *
-     * @param int $type 审批类型
-     * @return json
-     */
-    public static function queryOneOrder($order_id) {
-        $cache = Yii::$app->cache;
-        $cacheKey = Order::getCacheKey($order_id).'_approve';
-        $data = $cache->get($cacheKey);
-        if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效'); 
-            $order = Order::findOne($order_id);
-            $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
-            $data = array_merge($data, $data['data']);
-            unset($data['data']);
-
-            $result = OrderOperation::find()->where(['order_id' => $order_id])->all();
-            $operationList = [];
-            foreach ($result as $key => $orderOp) {
-                $orderOp = $orderOp->toArray(['id', 'user_id', 'time', 'type', 'data']);
-                $orderOp = array_merge($orderOp, $orderOp['data']);
-                unset($orderOp['data']);
-
-                $operationList[] = $orderOp;
-            }
-            $data['opList'] = $operationList;
-            $data['chksum'] = substr(md5(json_encode($data)), 0, 6);
-            
-            $cache->set($cacheKey, $data);
-        } else {
-            Yii::trace($cacheKey.':缓存命中'); 
-        }
         return $data;
     }
 
@@ -240,8 +204,6 @@ class ApproveService extends Component {
             //清除缓存
             $cache = Yii::$app->cache;
             $cacheKey = Order::getCacheKey($order->id);
-            $cache->delete($cacheKey);
-            $cacheKey = Order::getCacheKey($order->id).'_approve';
             $cache->delete($cacheKey);
         } catch (\Exception $e) {
             $transaction->rollBack();

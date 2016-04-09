@@ -3,6 +3,7 @@ namespace frontend\controllers;
 
 use Yii;
 use yii\base\InvalidParamException;
+use yii\helpers\Url;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\Response;
@@ -21,7 +22,6 @@ class UserController extends Controller {
      * @inheritdoc
      */
     public function behaviors() {
-        Yii::$app->response->format = Response::FORMAT_JSON;
         return [
             'access' => [
                 'class' => AccessControl::className(),
@@ -75,43 +75,47 @@ class UserController extends Controller {
     }
 
     /**
+     * 登录页面
+     *
+     * @return mixed
+     */
+    public function actionLoginPage()
+    {
+        if (!\Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+
+        return $this->render('/page/login');
+    }
+
+    /**
      * Logs in a user.
      *
      * @return mixed
      */
     public function actionLogin() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
         if (!\Yii::$app->user->isGuest) {
-            throw new BadRequestHttpException('已经登录');
+            return [
+                'error' => 1,
+                'message' => '您已经登录',
+            ];
         }
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post(),'') && $model->login()) {
             return [
-                'status' => 200,
+                'error' => 0,
                 'message' => '您已经登录成功',
-                'user' => $model->getUser()->toArray(['dept_id', 'email', 'alias', 'privilege'])
+                'url' => Yii::$app->user->getReturnUrl(),
             ];
         } else {
-            throw new BadRequestHttpException($model->getErrorMessage());
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
         }
-    }
-
-    /**
-     * 获取自动登录信息
-     *
-     * @return mixed
-     */
-    public function actionGetlogin() {
-        if (\Yii::$app->user->isGuest) {
-            $user = null;
-        }else {
-            $user = Yii::$app->user->getIdentity()->getUser()->toArray(['dept_id', 'email', 'alias', 'privilege']);
-        }
-
-        return [
-            'status' => 200,
-            'user' => $user,
-        ];
     }
 
     /**
@@ -121,19 +125,17 @@ class UserController extends Controller {
      */
     public function actionLogout() {
         Yii::$app->user->logout();
-        return [
-            'status' => 200,
-            'message' => '您已经注销成功'
-        ];
+        
+        return $this->goHome();
     }
 
+
     /**
-     * 重设密码请求
+     * 申请重设密码
      *
      * @return mixed
      */
     public function actionRequestPasswordReset() {
-        Yii::$app->response->format = Response::FORMAT_HTML;
         $model = new PasswordResetForm(['scenario' => 'request']);
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
             if ($model->requestReset()) {
@@ -156,8 +158,6 @@ class UserController extends Controller {
      * @throws BadRequestHttpException
      */
     public function actionResetPassword($token) {
-        Yii::$app->response->format = Response::FORMAT_HTML;
-
         $model = new PasswordResetForm(['scenario' => 'reset']);
 
         try {
@@ -186,8 +186,6 @@ class UserController extends Controller {
      * @return mixed
      */
     public function actionRequestActiveUser() {
-        Yii::$app->response->format = Response::FORMAT_HTML;
-
         $model = new UserActiveForm(['scenario' => 'request']);
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
             if($model->request()) {
@@ -210,8 +208,6 @@ class UserController extends Controller {
      * @throws BadRequestHttpException
      */
     public function actionActiveUser($token) {
-        Yii::$app->response->format = Response::FORMAT_HTML;
-
         $model = new UserActiveForm(['scenario' => 'active']);
 
         try {

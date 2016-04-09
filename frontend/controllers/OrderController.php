@@ -19,16 +19,15 @@ use frontend\models\OrderSubmitForm;
  */
 class OrderController extends Controller
 {
+
     /**
      * @inheritdoc
      */
     public function behaviors()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['submitorder', 'signup'],
                 'rules' => [
                     [
                         'actions' => ['signup'],
@@ -36,7 +35,7 @@ class OrderController extends Controller
                         'roles' => ['?'],
                     ],
                     [
-                        'actions' => ['submitorder'],
+                        'actions' => ['order-page', 'myorder-page', 'submitorder'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -45,7 +44,11 @@ class OrderController extends Controller
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
-                    'logout' => ['post'],
+                    'getrooms' => ['get'],
+                    'getdepts' => ['get'],
+                    'getroomtables' => ['get'],
+                    'getroomuse' => ['get'],
+                    'submitorder' => ['post'],
                 ],
             ],
         ];
@@ -70,6 +73,31 @@ class OrderController extends Controller
     }
 
     /**
+     * 预约房间-页面
+     *
+     * @return mixed
+     */
+    public function actionOrderPage()
+    {
+        return $this->render('/page/order');
+    }
+
+    /**
+     * 我的预约-页面
+     *
+     * @return mixed
+     */
+    public function actionMyorderPage()
+    {
+        $dataRange = OrderQueryForm::getDateRange();
+        return $this->render('/page/myorder', [
+            'start_date' => date('Y-m-d', $dataRange['start']),
+            'end_date' => date('Y-m-d', $dataRange['end']),
+        ]);
+    }
+
+
+    /**
      * 查询room列表
      *
      * @return mixed
@@ -79,7 +107,7 @@ class OrderController extends Controller
 
         $roomList = RoomService::queryRoomList();
         return array_merge($roomList, [
-            'status' => 200,
+            'error' => 0,
         ]);
     }
 
@@ -93,7 +121,7 @@ class OrderController extends Controller
 
         $deptList = OrderService::queryDeptList();
         return array_merge($deptList, [
-            'status' => 200,
+            'error' => 0,
         ]);
     }
 
@@ -110,10 +138,13 @@ class OrderController extends Controller
         if ($model->validate()) {
             $data = $model->getRoomTables();
             return array_merge($data, [
-                'status' => 200,
+                'error' => 0,
             ]);
         } else {
-            throw new BadRequestHttpException($model->getErrorMessage());
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
         }
     }
 
@@ -129,16 +160,21 @@ class OrderController extends Controller
         $model = new OrderQueryForm(['scenario' => 'getRoomUse']);
         $model->load($data, '');
         if ($model->validate()) {
-            $model->rt_detail = true;
-            return $model->getRoomUse();
+            $data = $model->getRoomUse();
+            return array_merge($data, [
+                'error' => 0,
+            ]);
         } else {
-            throw new BadRequestHttpException($model->getErrorMessage());
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
         }
         return $data;
     }
 
     /**
-     * 查询room列表
+     * 提交预约
      *
      * @return mixed
      */
@@ -148,9 +184,9 @@ class OrderController extends Controller
         $data = Yii::$app->request->post();
 
         $captchaAction = $this->createAction('captcha');
-        if (!$captchaAction->validate($data['captcha'], false)) {
+        if (empty($data['captcha']) || !$captchaAction->validate($data['captcha'], false)) {
             return [
-                'status' => 601,
+                'error' => 1,
                 'message' => '验证码错误',
             ];
         }
@@ -158,13 +194,40 @@ class OrderController extends Controller
         $model = new OrderSubmitForm(['scenario' => 'submitOrder']);
 
         if ($model->load($data, '') && $model->validate() && $result = $model->submitOrder()) {
-            //return $result;
             return [
-                'status' => 200,
+                'error' => 0,
                 'message' => '提交成功',
             ];
         } else {
-             throw new BadRequestHttpException($model->getErrorMessage());
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
         }
+    }
+
+    /**
+     * 查询我的预约
+     *
+     * @return mixed
+     */
+    public function actionGetmyorders() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $data = Yii::$app->request->get();
+        $model = new OrderQueryForm(['scenario' => 'getMyOrders']);
+        $model->load($data, '');
+        if ($model->validate()) {
+            $data = $model->getMyOrders();
+            return array_merge($data, [
+                'error' => 0,
+            ]);
+        } else {
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
+        }
+        return $data;
     }
 }

@@ -9,9 +9,7 @@ use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Alert;
 use yii\captcha\Captcha;
 
-$this->context->layout = 'main';
 $this->title = '申请重设密码';
-$this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="site-reset-password">
     <h1><?= Html::encode($this->title) ?></h1>

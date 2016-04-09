@@ -12,6 +12,7 @@ use yii\base\Component;
 use common\exceptions\RoomTableException;
 use common\models\entities\Department;
 use common\models\entities\Order;
+use common\models\entities\OrderOperation;
 use common\models\entities\RoomTable;
 use common\models\operations\SubmitOperation;
 
@@ -79,12 +80,54 @@ class OrderService extends Component {
         }
     }
 
+
     /**
-     * 查询一个申请(带缓存)
+     * 查询单个用户的预约
+     * 数据会包含操作记录
      *
-     * @param Order $order 预约
-     * @return null
-     * @throws Exception 如果出现异常
+     * @param User $user 用户
+     * @param int $type 审批类型
+     * @param String $start_date 开始时间
+     * @param String $end_date 结束时间
+     * @return json
+     */
+    public static function queryMyOrders($user, $start_date, $end_date) {
+        $where = ['and'];
+        $where[] = ['=', 'user_id', $user->getLogicId()];
+        if ($start_date !== null){
+            $where[] = ['>=', 'date', $start_date];
+        }
+        if ($end_date !== null){
+            $where[] = ['<=', 'date', $end_date];
+        }
+
+        $result = Order::find()->select(['id'])->where($where)->all();
+
+        $orderList = [];
+        $orders = [];
+        foreach ($result as $key => $order) {
+            $order = static::queryOneOrder($order->id);
+
+            $orderList[] = $order['id'];
+            $orders[$order['id']] = $order;
+        }
+
+        $data = [
+            'orderList' => $orderList,
+            'orders' => $orders,
+        ];
+
+        return $data;
+    }
+
+
+    /**
+     * 查询单条预约的详细信息(带缓存)
+     * 数据会包含操作记录
+     * 优先使用缓存
+     *
+     * @param int $type 审批类型
+     * @return json
      */
     public static function queryOneOrder($order_id) {
         $cache = Yii::$app->cache;
@@ -96,6 +139,19 @@ class OrderService extends Component {
             $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
             $data = array_merge($data, $data['data']);
             unset($data['data']);
+
+            $result = OrderOperation::find()->where(['order_id' => $order_id])->all();
+            $operationList = [];
+            foreach ($result as $key => $orderOp) {
+                $orderOp = $orderOp->toArray(['id', 'user_id', 'time', 'type', 'data']);
+                $orderOp = array_merge($orderOp, $orderOp['data']);
+                unset($orderOp['data']);
+
+                $operationList[] = $orderOp;
+            }
+            $data['opList'] = $operationList;
+            $data['chksum'] = substr(md5(json_encode($data)), 0, 6);
+            
             $cache->set($cacheKey, $data);
         } else {
             Yii::trace($cacheKey.':缓存命中'); 

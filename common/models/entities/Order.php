@@ -134,7 +134,7 @@ class Order extends ActiveRecord {
         return [
             [['date', 'room_id', 'dept_id', 'type', 'status'], 'required'],
             [['hours', 'data'], 'safe'],
-            [['room_id', 'user_id', 'dept_id', 'submit_time', 'issue_time'], 'integer'],
+            [['room_id', 'dept_id', 'submit_time', 'issue_time'], 'integer'],
             [['status'], 'in', 'range' => [
                 self::STATUS_INIT, self::STATUS_PASSED, self::STATUS_CANCELED,
                 self::STATUS_MANAGER_PENDING, self::STATUS_MANAGER_APPROVED, self::STATUS_MANAGER_REJECTED,

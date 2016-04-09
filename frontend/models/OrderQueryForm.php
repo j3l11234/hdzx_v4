@@ -39,6 +39,7 @@ class OrderQueryForm extends Model {
         $scenarios = parent::scenarios();
         $scenarios['getRoomTables'] = ['start_date', 'end_date', 'rooms', 'rt_detail'];
         $scenarios['getRoomUse'] = ['date', 'room'];
+        $scenarios['getMyOrders'] = ['start_date', 'end_date'];
         return $scenarios;
     }
 
@@ -50,7 +51,7 @@ class OrderQueryForm extends Model {
             [['date', 'room'], 'required'],
             [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['rooms'], 'jsonValidator'],
-            [['start_date', 'end_date'], 'dateRangeValidator']
+            [['start_date', 'end_date'], 'dateRangeValidator'],
         ];
     }
 
@@ -59,18 +60,27 @@ class OrderQueryForm extends Model {
             $this->addError($attribute, $attribute.'格式错误');
         }
     }
+
     function dateRangeValidator($attribute, $params) {
-        $today = strtotime(date('Y-m-d', time()));
-        $start = strtotime("-31 day",$today);
-        $end = strtotime("+31 day",$today);
+        $range = static::getDateRange();
         
         $date = strtotime($this->$attribute);
         
-        if($date < $start  || $date > $end){
-            $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内');
+        if($date < $range['start']  || $date > $range['end']){
+            $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内的记录');
         }
     }
 
+    public static function getDateRange(){
+        $today = strtotime(date('Y-m-d', time()));
+        $start = strtotime("-31 day",$today);
+        $end = strtotime("+31 day",$today);
+
+        return [
+            'start' => $start,
+            'end' => $end
+        ];
+    }
 
     /**
      * 查询房间使用表
@@ -136,12 +146,14 @@ class OrderQueryForm extends Model {
         ];
         foreach ($ordered as $order_id) {
             $order = OrderService::queryOneOrder($order_id);
+            unset($order['opList']);
             if ($order !== null) {
                 $data['orders'][$order_id] = $order;
             }
         }
         foreach ($used as $order_id) {
             $order = OrderService::queryOneOrder($order_id);
+            unset($order['opList']);
             if ($order !== null) {
                 $data['orders'][$order_id] = $order;
             }
@@ -155,5 +167,36 @@ class OrderQueryForm extends Model {
         
         return $data;
 
+    }
+
+    /**
+     * 查询自己的预约记录
+     *
+     * @return Mixed|null 返回数据
+     */
+    public function getMyOrders() {
+        $user = Yii::$app->user->getIdentity()->getUser();
+
+        $now = time();
+        if(empty($this->start_date)){
+            $this->start_date = date('Y-m-d', strtotime("-31 day", $now));
+        }
+        if(empty($this->end_date)){
+            $this->end_date = date('Y-m-d', strtotime("+31 day", $now));
+        }
+
+        $data = OrderService::queryMyOrders($user, $this->start_date, $this->end_date);
+
+        return $data;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels() {
+        return [
+            'start_date' => '开始日期',
+            'end_date' => '结束日期',
+        ];
     }
 }
