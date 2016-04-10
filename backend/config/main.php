@@ -9,15 +9,28 @@ $params = array_merge(
 return [
     'id' => 'app-backend',
     'basePath' => dirname(__DIR__),
-    'controllerNamespace' => 'backend\controllers',
     'bootstrap' => ['log'],
+    'controllerNamespace' => 'backend\controllers',   
     'modules' => [],
     'components' => [
+        'urlManager' => [
+            'enablePrettyUrl' => true,
+            'showScriptName' => false,
+            'rules' => [
+                '' => 'site/index',
+                '/approve/auto' => 'approve/approve-auto-page',
+                '/approve/manager' => 'approve/approve-manager-page',
+                '/approve/school' => 'approve/approve-school-page',
+            ]
+        ],
         'user' => [
             'identityClass' => 'common\models\services\UserService',
             'enableAutoLogin' => true,
             'idParam' => '__id_admin',
             'loginUrl' => ['user/login'],
+        ],
+        'errorHandler' => [
+            'errorAction' => 'site/error',
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,

@@ -61,7 +61,7 @@ class ApproveService extends Component {
                 break;
             case static::TYPE_MANAGER:
                 $where[] = ['=', 'type', Order::TYPE_TWICE];
-                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED, Order::STATUS_MANAGER_REJECTED]];
+                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED, Order::STATUS_MANAGER_REJECTED, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
                 if ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
                 } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
                     $where[] = ['in', 'dept_id', $user->getApproveDeptList()];

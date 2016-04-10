@@ -1,5 +1,5 @@
 <?php
-namespace frontend\controllers;
+namespace backend\controllers;
 
 use Yii;
 use yii\base\InvalidParamException;
@@ -9,17 +9,17 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\filters\Cors;
-use common\models\services\RoomService;
+
+use common\models\services\ApproveService;
 use common\models\services\OrderService;
-use frontend\models\OrderQueryForm;
-use frontend\models\OrderSubmitForm;
+use backend\models\ApproveQueryForm;
+use backend\models\ApproveForm;
 
 /**
  * Order controller
  */
-class OrderController extends Controller
+class ApproveController extends Controller
 {
-
     /**
      * @inheritdoc
      */
@@ -29,19 +29,15 @@ class OrderController extends Controller
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => [
-                    'order-page', 'myorder-page', 
-                    'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getmyorders', 'submitorder'],
+                    'approve-auto-page', 'approve-manager-page', 'approve-school-page',
+                    'getorders', 'getdepts', 'approveorder', 'rejectorder', 'revokeorder',
+                ],
                 'rules' => [
                     [
-                        'actions' => [ ],
-                        'allow' => true,
-                        'roles' => ['?'],
-                    ],
-                    [
-
                         'actions' => [
-                            'order-page', 'myorder-page', 
-                            'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getmyorders', 'submitorder'],
+                            'approve-auto-page', 'approve-manager-page', 'approve-school-page',
+                            'getorders', 'getdepts', 'approveorder', 'rejectorder', 'revokeorder',
+                        ],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -50,11 +46,8 @@ class OrderController extends Controller
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
-                    'getrooms' => ['get'],
-                    'getdepts' => ['get'],
-                    'getroomtables' => ['get'],
-                    'getroomuse' => ['get'],
-                    'submitorder' => ['post'],
+                    'logout' => ['post'],
+                    'approveOrder' => ['post'],
                 ],
             ],
         ];
@@ -69,51 +62,51 @@ class OrderController extends Controller
             'error' => [
                 'class' => 'yii\web\ErrorAction',
             ],
-            'captcha' => [
-                'class' => 'frontend\actions\MyCaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-                'height' => 36,
-                'padding' => 0,
-            ],
         ];
     }
 
     /**
-     * 预约房间-页面
+     * 自动审批-页面
      *
      * @return mixed
      */
-    public function actionOrderPage()
+    public function actionApproveAutoPage()
     {
-        return $this->render('/page/order');
-    }
-
-    /**
-     * 我的预约-页面
-     *
-     * @return mixed
-     */
-    public function actionMyorderPage()
-    {
-        $dataRange = OrderQueryForm::getDateRange();
-        return $this->render('/page/myorder', [
+        $dataRange = ApproveQueryForm::getDateRange();
+        return $this->render('/page/approve', [
+            'apprveType' => 'auto',
             'start_date' => date('Y-m-d'),
             'end_date' => date('Y-m-d', $dataRange['end']),
         ]);
     }
 
-
     /**
-     * 查询room列表
+     * 负责人审批-页面
      *
      * @return mixed
      */
-    public function actionGetrooms() {
-        Yii::$app->response->format = Response::FORMAT_JSON;
+    public function actionApproveManagerPage()
+    {
+        $dataRange = ApproveQueryForm::getDateRange();
+        return $this->render('/page/approve', [
+            'apprveType' => 'manager',
+            'start_date' => date('Y-m-d'),
+            'end_date' => date('Y-m-d', $dataRange['end']),
+        ]);
+    }
 
-        $roomList = RoomService::queryRoomList();
-        return array_merge($roomList, [
-            'error' => 0,
+    /**
+     * 校级审批-页面
+     *
+     * @return mixed
+     */
+    public function actionApproveSchoolPage()
+    {
+        $dataRange = ApproveQueryForm::getDateRange();
+        return $this->render('/page/approve', [
+            'apprveType' => 'school',
+            'start_date' => date('Y-m-d'),
+            'end_date' => date('Y-m-d', $dataRange['end']),
         ]);
     }
 
@@ -132,41 +125,18 @@ class OrderController extends Controller
     }
 
     /**
-     * 查询Getroomtables
+     * 查询审批的预约
      *
      * @return mixed
      */
-    public function actionGetroomtables() {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $model = new OrderQueryForm(['scenario' => 'getRoomTables']);
-        $model->load(Yii::$app->request->get(), '');
-        if ($model->validate()) {
-            $data = $model->getRoomTables();
-            return array_merge($data, [
-                'error' => 0,
-            ]);
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
-    }
-
-    /**
-     * 查询room当日占用
-     *
-     * @return mixed
-     */
-    public function actionGetroomuse() {
+    public function actionGetorders() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $data = Yii::$app->request->get();
-        $model = new OrderQueryForm(['scenario' => 'getRoomUse']);
+        $model = new ApproveQueryForm(['scenario' => 'getApproveOrder']);
         $model->load($data, '');
         if ($model->validate()) {
-            $data = $model->getRoomUse();
+            $data = $model->getApproveOrder();
             return array_merge($data, [
                 'error' => 0,
             ]);
@@ -180,54 +150,24 @@ class OrderController extends Controller
     }
 
     /**
-     * 提交预约
+     * 审批预约
      *
      * @return mixed
      */
-    public function actionSubmitorder() {
+    public function actionApproveorder() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
+        $getData = Yii::$app->request->get();
         $data = Yii::$app->request->post();
-
-        $captchaAction = $this->createAction('captcha');
-        if (empty($data['captcha']) || !$captchaAction->validate($data['captcha'], false)) {
-            return [
-                'error' => 1,
-                'message' => '验证码错误',
-            ];
-        }
-            
-        $model = new OrderSubmitForm(['scenario' => 'submitOrder']);
-
-        if ($model->load($data, '') && $model->validate() && $result = $model->submitOrder()) {
-            return [
-                'error' => 0,
-                'message' => '提交成功',
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
-    }
-
-    /**
-     * 查询我的预约
-     *
-     * @return mixed
-     */
-    public function actionGetmyorders() {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $data = Yii::$app->request->get();
-        $model = new OrderQueryForm(['scenario' => 'getMyOrders']);
+        $data['type'] = $getData['type'];
+        
+        $model = new ApproveForm(['scenario' => 'approveOrder']);
         $model->load($data, '');
-        if ($model->validate()) {
-            $data = $model->getMyOrders();
-            return array_merge($data, [
+        if ($model->validate() && $model->approveOrder()) {
+            return [
                 'error' => 0,
-            ]);
+                'message' => '审批成功',
+            ];
         } else {
             return [
                 'error' => 1,
@@ -236,4 +176,63 @@ class OrderController extends Controller
         }
         return $data;
     }
+
+    /**
+     * 审批预约
+     *
+     * @return mixed
+     */
+    public function actionRejectorder() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $getData = Yii::$app->request->get();
+        $data = Yii::$app->request->post();
+        $data['type'] = $getData['type'];
+        
+        $model = new ApproveForm(['scenario' => 'rejectOrder']);
+        $model->load($data, '');
+        if ($model->validate() && $model->rejectOrder()) {
+            return [
+                'error' => 0,
+                'message' => '审批成功',
+            ];
+        } else {
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
+        }
+        return $data;
+    }
+
+    /**
+     * 审批预约
+     *
+     * @return mixed
+     */
+    public function actionRevokeorder() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        $getData = Yii::$app->request->get();
+        $data = Yii::$app->request->post();
+        $data['type'] = $getData['type'];
+        
+        $model = new ApproveForm(['scenario' => 'revokeOrder']);
+        $model->load($data, '');
+        if ($model->validate() && $model->revokeOrder()) {
+            return [
+                'error' => 0,
+                'message' => '撤回成功',
+            ];
+        } else {
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
+        }
+        return $data;
+    }
+
+
+    
 }

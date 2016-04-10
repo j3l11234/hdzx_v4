@@ -64,8 +64,7 @@ class OrderQueryForm extends Model {
     function dateRangeValidator($attribute, $params) {
         $range = static::getDateRange();
         
-        $date = strtotime($this->$attribute);
-        
+        $date = strtotime($this->$attribute);   
         if($date < $range['start']  || $date > $range['end']){
             $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内的记录');
         }

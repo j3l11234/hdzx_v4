@@ -1,5 +1,5 @@
 <?php
-namespace frontend\models;
+namespace backend\models;
 
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
@@ -78,9 +78,14 @@ class ApproveForm extends Model {
         }
 
         $numType = $this->getType($this->type);
-        
-        $data = ApproveService::approveOrder($order, $user, $numType, $this->comment);
-        return $order;
+
+        try {
+            ApproveService::approveOrder($order, $user, $numType, $this->comment);
+            return $order;
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        } 
     }
 
     /**
@@ -99,8 +104,13 @@ class ApproveForm extends Model {
 
         $numType = $this->getType($this->type);
         
-        $data = ApproveService::rejectOrder($order, $user, $numType, $this->comment);
-        return $order;
+        try {
+            ApproveService::rejectOrder($order, $user, $numType, $this->comment);
+            return $order;
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        } 
     }
 
     /**
@@ -119,7 +129,12 @@ class ApproveForm extends Model {
 
         $numType = $this->getType($this->type);
         
-        $data = ApproveService::revokeOrder($order, $user, $numType, $this->comment);
-        return $order;
+        try {
+            ApproveService::revokeOrder($order, $user, $numType, $this->comment);
+            return $order;
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        } 
     }
 }

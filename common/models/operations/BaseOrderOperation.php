@@ -107,7 +107,7 @@ class BaseOrderOperation extends Component {
     protected function checkRoomTable() {
         $hours = $this->order->getHours();
 
-        $locked = $this->roomTable->getUsed($hours);
+        $locked = $this->roomTable->getLocked($hours);
         if (!empty($locked)) {
             throw new OrderOperationException('该时段已被锁定', BaseOrderOperation::ERROR_ROOMTABLE_LOCKED);
         }

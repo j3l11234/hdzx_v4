@@ -24,11 +24,14 @@ AppAsset::register($this);
 </head>
 <body>
 <?php $this->beginBody() ?>
-
+<script>
+    var _Server_Data_ = {};
+    _Server_Data_.BASE_URL = '<?= Yii::$app->urlManager->createUrl('/') ?>';
+</script>
 <div class="wrap">
     <?php
     NavBar::begin([
-        'brandLabel' => 'My Company',
+        'brandLabel' => '学活场地申请后台系统',
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
             'class' => 'navbar-inverse navbar-fixed-top',
@@ -36,24 +39,40 @@ AppAsset::register($this);
     ]);
     $menuItems = [
         ['label' => 'Home', 'url' => ['/site/index']],
+        [
+            'label' => '审批预约',
+            'items'=>[
+                ['label' => '自动审批', 'url' => ['/approve/auto']],
+                ['label' => '负责人审批', 'url' => ['/approve/manager']],
+                ['label' => '校级审批', 'url' => ['/approve/school']],
+            ],
+        ],
+        ['label' => '房间锁', 'url' => ['/lock']],
     ];
     if (Yii::$app->user->isGuest) {
-        $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];
+        $menuItems[] = [
+            'label' => '未登录',
+            'url' => ['/login'],
+        ];
     } else {
         $menuItems[] = [
-            'label' => 'Logout (' . Yii::$app->user->identity->username . ')',
-            'url' => ['/site/logout'],
-            'linkOptions' => ['data-method' => 'post']
+            'label' => Yii::$app->user->identity->username.' ('. Yii::$app->user->identity->alias.')',
+            'items'=>[
+                ['label' => '注销', 'url' => ['/user/logout'], 'linkOptions' => ['data-method' => 'post']],
+                ['label' => '修改密码', 'url' => ['/user/request-password-reset']],
+            ],
         ];
     }
+
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
+        'route' => Yii::$app->request->getPathInfo(),
         'items' => $menuItems,
     ]);
     NavBar::end();
     ?>
 
-    <div class="container">
+    <div class="container-fluid">
         <?= Breadcrumbs::widget([
             'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
         ]) ?>

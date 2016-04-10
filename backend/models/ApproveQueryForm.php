@@ -1,5 +1,5 @@
 <?php
-namespace frontend\models;
+namespace backend\models;
 
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
@@ -47,20 +47,28 @@ class ApproveQueryForm extends Model {
             [['type'], 'required'],
             [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['start_date', 'end_date'], 'dateRangeValidator'],
-            [['type'], 'in', 'range' => ['auto', 'manager', 'school', ]],
+            [['type'], 'in', 'range' => ['auto', 'manager', 'school',]],
         ];
     }
 
     function dateRangeValidator($attribute, $params) {
+        $range = static::getDateRange();
+        
+        $date = strtotime($this->$attribute);   
+        if($date < $range['start']  || $date > $range['end']){
+            $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内的记录');
+        }
+    }
+
+    public static function getDateRange(){
         $today = strtotime(date('Y-m-d', time()));
         $start = strtotime("-31 day",$today);
         $end = strtotime("+31 day",$today);
-        
-        $date = strtotime($this->$attribute);
-        
-        if($date < $start  || $date > $end){
-            $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内');
-        }
+
+        return [
+            'start' => $start,
+            'end' => $end
+        ];
     }
 
     function getType($type) {
@@ -89,18 +97,20 @@ class ApproveQueryForm extends Model {
         //解析roomTable，用于分析冲突
         $roomTables = [];
         foreach ($data['orders'] as $id => $order) {
-            $roomTable = RoomService::queryRoomTable($order['date'], $order['room_id']);
-            //unset($roomTable['ordered']);
-            //unset($roomTable['used']);
+            $room_id = $order['room_id'];
+            $date = $order['date'];
+            if(!isset($roomTables[$room_id])){
+                $roomTables[$room_id] = [];
+            }
+            if (isset($roomTables[$room_id][$date])){
+                continue;
+            }
+
+            $roomTable = RoomService::queryRoomTable($date, $room_id);
             unset($roomTable['locked']);
             unset($roomTable['hourTable']);
             unset($roomTable['chksum']);
-            
-
-            if(!isset($roomTables[$order['room_id']])){
-                $roomTables[$order['room_id']] = [];
-            }
-            $roomTables[$order['room_id']][$order['date']] = $roomTable;
+            $roomTables[$room_id][$date] = $roomTable;
         }
         $data['roomTables'] = $roomTables;
 

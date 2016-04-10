@@ -150,7 +150,6 @@ class OrderService extends Component {
                 $operationList[] = $orderOp;
             }
             $data['opList'] = $operationList;
-            $data['chksum'] = substr(md5(json_encode($data)), 0, 6);
             
             $cache->set($cacheKey, $data);
         } else {
