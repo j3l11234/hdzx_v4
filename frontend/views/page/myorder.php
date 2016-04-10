@@ -9,7 +9,6 @@ $this->registerJsFile('@web/js/myorder.js', ['depends'=>[ReactAsset::className()
 $this->title = '我的预约';
 ?>
 <div id="myorder-page">
-
 </div>
 <script>
 	_Server_Data_.start_date = '<?= $start_date ?>';

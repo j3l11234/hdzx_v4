@@ -72,11 +72,11 @@ class ApproveController extends Controller
      */
     public function actionApproveAutoPage()
     {
-        $dataRange = ApproveQueryForm::getDateRange();
+        $dateRange = ApproveQueryForm::getDateRange();
         return $this->render('/page/approve', [
             'apprveType' => 'auto',
             'start_date' => date('Y-m-d'),
-            'end_date' => date('Y-m-d', $dataRange['end']),
+            'end_date' => date('Y-m-d', $dateRange['end']),
         ]);
     }
 
@@ -87,11 +87,11 @@ class ApproveController extends Controller
      */
     public function actionApproveManagerPage()
     {
-        $dataRange = ApproveQueryForm::getDateRange();
+        $dateRange = ApproveQueryForm::getDateRange();
         return $this->render('/page/approve', [
             'apprveType' => 'manager',
             'start_date' => date('Y-m-d'),
-            'end_date' => date('Y-m-d', $dataRange['end']),
+            'end_date' => date('Y-m-d', $dateRange['end']),
         ]);
     }
 
@@ -102,11 +102,11 @@ class ApproveController extends Controller
      */
     public function actionApproveSchoolPage()
     {
-        $dataRange = ApproveQueryForm::getDateRange();
+        $dateRange = ApproveQueryForm::getDateRange();
         return $this->render('/page/approve', [
             'apprveType' => 'school',
             'start_date' => date('Y-m-d'),
-            'end_date' => date('Y-m-d', $dataRange['end']),
+            'end_date' => date('Y-m-d', $dateRange['end']),
         ]);
     }
 

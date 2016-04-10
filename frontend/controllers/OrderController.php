@@ -33,17 +33,16 @@ class OrderController extends Controller
                     'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getmyorders', 'submitorder'],
                 'rules' => [
                     [
-                        'actions' => [ ],
-                        'allow' => true,
-                        'roles' => ['?'],
-                    ],
-                    [
-
                         'actions' => [
                             'order-page', 'myorder-page', 
                             'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getmyorders', 'submitorder'],
                         'allow' => true,
                         'roles' => ['@'],
+                    ],
+                    [
+                        'actions' => [''],
+                        'allow' => true,
+                        'roles' => ['?'],
                     ],
                 ],
             ],
@@ -85,7 +84,11 @@ class OrderController extends Controller
      */
     public function actionOrderPage()
     {
-        return $this->render('/page/order');
+        $dateRange = RoomService::queryDateRange();
+        return $this->render('/page/order', [
+            'start_date' => date('Y-m-d',$dateRange['start']),
+            'end_date' => date('Y-m-d', $dateRange['end']),
+        ]);
     }
 
     /**
@@ -95,10 +98,10 @@ class OrderController extends Controller
      */
     public function actionMyorderPage()
     {
-        $dataRange = OrderQueryForm::getDateRange();
+        $dateRange = OrderQueryForm::getDateRange();
         return $this->render('/page/myorder', [
             'start_date' => date('Y-m-d'),
-            'end_date' => date('Y-m-d', $dataRange['end']),
+            'end_date' => date('Y-m-d', $dateRange['end']),
         ]);
     }
 
