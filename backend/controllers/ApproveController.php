@@ -111,20 +111,6 @@ class ApproveController extends Controller
     }
 
     /**
-     * 查询dept列表
-     *
-     * @return mixed
-     */
-    public function actionGetdepts() {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $deptList = OrderService::queryDeptList();
-        return array_merge($deptList, [
-            'error' => 0,
-        ]);
-    }
-
-    /**
      * 查询审批的预约
      *
      * @return mixed
