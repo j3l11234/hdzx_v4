@@ -20,6 +20,28 @@ use common\models\services\RoomService;
 class LockService extends Component {
 
     /**
+     * 查询锁列表
+     *
+     * @return json
+     */
+    public static function getLockList() {
+        $data = [];
+        $result = Lock::find()->select(['id'])->all();
+        $lockList = [];
+        $locks = [];
+        foreach ($result as $key => $lock) {
+            $lock = static::queryOneLock($lock['id']);
+            $lockList[] = $lock['id'];
+            $locks[$lock['id']] = $lock;
+        }
+        $data = [
+            'lockList' => $lockList,
+            'locks' => $locks,
+        ];
+        return $data;
+    }
+
+    /**
      * 得到房间锁定的的日期(带缓存)
      *
      * @param Lock $lock_id 房间锁

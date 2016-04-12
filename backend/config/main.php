@@ -21,6 +21,7 @@ return [
                 '/approve/auto' => 'approve/approve-auto-page',
                 '/approve/manager' => 'approve/approve-manager-page',
                 '/approve/school' => 'approve/approve-school-page',
+                '/lock' => 'lock/lock-page',
             ]
         ],
         'user' => [
