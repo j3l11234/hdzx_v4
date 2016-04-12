@@ -80,7 +80,7 @@ class OrderQueryForm extends Model {
             'end' => $end
         ];
     }
-
+    
     /**
      * 查询房间使用表
      *
@@ -176,12 +176,12 @@ class OrderQueryForm extends Model {
     public function getMyOrders() {
         $user = Yii::$app->user->getIdentity()->getUser();
 
-        $now = time();
+        $range = static::getDateRange();
         if(empty($this->start_date)){
-            $this->start_date = date('Y-m-d', strtotime("-31 day", $now));
+            $this->start_date = date('Y-m-d', $range['start']);
         }
         if(empty($this->end_date)){
-            $this->end_date = date('Y-m-d', strtotime("+31 day", $now));
+            $this->end_date = date('Y-m-d', $range['end']);
         }
 
         $data = OrderService::queryMyOrders($user, $this->start_date, $this->end_date);
