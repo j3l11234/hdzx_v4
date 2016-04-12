@@ -92,6 +92,14 @@ class ApproveQueryForm extends Model {
     public function getApproveOrder() {
         $user = Yii::$app->user->getIdentity()->getUser();
         $numType = $this->getType($this->type);
+        $range = static::getDateRange();
+        if(empty($this->start_date)){
+            $this->start_date = date('Y-m-d', $range['start']);
+        }
+        if(empty($this->end_date)){
+            $this->end_date = date('Y-m-d', $range['end']);
+        }
+        
         $data = ApproveService::queryApproveOrder($user, $numType, $this->start_date, $this->end_date);
 
         //解析roomTable，用于分析冲突
