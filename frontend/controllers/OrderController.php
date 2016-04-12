@@ -10,7 +10,6 @@ use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\filters\Cors;
 use common\models\services\RoomService;
-use common\models\services\OrderService;
 use frontend\models\OrderQueryForm;
 use frontend\models\OrderSubmitForm;
 
@@ -102,35 +101,6 @@ class OrderController extends Controller
         return $this->render('/page/myorder', [
             'start_date' => date('Y-m-d'),
             'end_date' => date('Y-m-d', $dateRange['end']),
-        ]);
-    }
-
-
-    /**
-     * 查询room列表
-     *
-     * @return mixed
-     */
-    public function actionGetrooms() {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $roomList = RoomService::queryRoomList();
-        return array_merge($roomList, [
-            'error' => 0,
-        ]);
-    }
-
-    /**
-     * 查询dept列表
-     *
-     * @return mixed
-     */
-    public function actionGetdepts() {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $deptList = OrderService::queryDeptList();
-        return array_merge($deptList, [
-            'error' => 0,
         ]);
     }
 
