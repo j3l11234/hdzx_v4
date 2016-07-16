@@ -93,7 +93,7 @@ class OrderService extends Component {
      */
     public static function queryMyOrders($user, $start_date, $end_date) {
         $where = ['and'];
-        $where[] = ['=', 'user_id', $user->getLogicId()];
+        $where[] = ['=', 'user_id', $user->id];
         if ($start_date !== null){
             $where[] = ['>=', 'date', $start_date];
         }
@@ -136,7 +136,7 @@ class OrderService extends Component {
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效'); 
             $order = Order::findOne($order_id);
-            $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
+            $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
             $data = array_merge($data, $data['data']);
             unset($data['data']);
 

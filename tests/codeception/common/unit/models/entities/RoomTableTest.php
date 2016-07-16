@@ -4,37 +4,184 @@ namespace tests\codeception\common\unit\models;
 
 use Yii;
 use tests\codeception\common\unit\DbTestCase;
-use Codeception\Specify;
 use common\models\entities\RoomTable;
 use tests\codeception\common\fixtures\RoomTableFixture;
 
 /**
- * Room table test
+ * RoomTable test
  */
 class RoomTableTest extends DbTestCase {
 
-    use Specify;
+    public function testRW() {
+        $modelData = [
+            'date' => '2015-12-01',
+            'room_id' => '1',
+            'ordered' => [
+                "11" => [2],
+                "12" => [2],
+                "13" => [2],
+            ],
+            'used' => [
+                "8" => [1],
+                "9" => [1],
+                "10" => [1],
+            ],
+            'locked' => [],
+        ];
 
-    //throw new \yii\base\Exception(var_export($var,true));
-    public function testRead() {
-        $roomTable = RoomTable::findByDateRoom('2015-01-01', '1');
-        expect('can read', $roomTable)->notNull();
-        expect('can read roomTable->ordered', $roomTable->getOrdered([8]))->equals([1, 2, 3]);
-        expect('can read roomTable->ordered all hours', $roomTable->getOrdered())->equals([1, 2, 3, 4]);
+        $roomTable = new RoomTable();
+        $roomTable->load($modelData,'');
+
+        expect('save()', $roomTable->save())->true();
+
+        $newRoomTable = RoomTable::findOne($roomTable->getPrimaryKey());
+        expect('room->date', $newRoomTable->date)->equals($modelData['date']);
+        expect('room->room_id', $newRoomTable->room_id)->equals($modelData['room_id']);
+        expect('room->ordered', $newRoomTable->ordered)->equals($modelData['ordered']);
+        expect('room->used', $newRoomTable->used)->equals($modelData['used']);
+        expect('room->locked ', $newRoomTable->locked)->equals($modelData['locked']);
     }
 
-    public function testWrite() {
-        $roomTable = new RoomTable();
-        $roomTable->date = '2016-01-03';
-        $roomTable->room_id = 11;
-        $roomTable->addOrdered(1, [8,9,10,11]);
-        $roomTable->addOrdered(2, [9,10,11]);
-        $roomTable->addOrdered(3, [11,12,13]);
-        $roomTable->removeOrdered(2);
+    public function testAddTable() {
+        $modelData = [
+            'date' => '2015-12-01',
+            'room_id' => '1',
+            'ordered' => [
+                "11" => [2],
+                "12" => [2],
+                "13" => [2],
+            ],
+            'used' => [
+                "8" => [1],
+                "9" => [1],
+                "10" => [1],
+            ],
+            'locked' => [],
+        ];
 
-        expect('save() return true', $roomTable->save())->true();  
-        $this->tester->seeRecord(RoomTable::className(), ['date' => '2016-01-03', 'room_id' => '11']);
-        expect('can write roomTable->ordered', $roomTable->getOrdered())->equals([1,3]);
+        $roomTable = new RoomTable();
+        $roomTable->load($modelData,'');
+
+        $roomTable->addOrdered(8, [8,9,10,11]);
+        expect('room->ordered', $roomTable->ordered)->equals([
+            "8" => [8],
+            "9" => [8],
+            "10" => [8],
+            "11" => [2,8],
+            "12" => [2],
+            "13" => [2],
+        ]);
+
+        $roomTable->addUsed(8, [8,9,10,11]);
+        expect('room->used', $roomTable->used)->equals([
+            "8" => [1,8],
+            "9" => [1,8],
+            "10" => [1,8],
+            "11" => [8],
+        ]);
+
+        $roomTable->addLocked(8, [8,9,10,11]);
+        expect('room->locked', $roomTable->locked)->equals([
+            "8" => [8],
+            "9" => [8],
+            "10" => [8],
+            "11" => [8],
+        ]);
+    }
+
+    public function testRemoveTable() {
+        $modelData = [
+            'date' => '2015-12-01',
+            'room_id' => '1',
+            'ordered' => [
+                "8" => [8,9],
+                "9" => [8,9],
+                "10" => [8],
+                "11" => [2,8],
+                "12" => [2],
+                "13" => [2],
+            ],
+            'used' => [
+                "8" => [1,8],
+                "9" => [1,8,10],
+                "10" => [1,8,10],
+                "11" => [8],
+            ],
+            'locked' => [
+                "8" => [8,7],
+                "9" => [8,7],
+                "10" => [8],
+                "11" => [8],
+            ],
+        ];
+
+        $roomTable = new RoomTable();
+        $roomTable->load($modelData,'');
+
+        $roomTable->removeOrdered(8);
+        expect('room->ordered', $roomTable->ordered)->equals([
+            "8" => [9],
+            "9" => [9],
+            "10" => [],
+            "11" => [2],
+            "12" => [2],
+            "13" => [2],
+        ]);
+
+        $roomTable->removeUsed(10);
+        expect('room->used', $roomTable->used)->equals([
+            "8" => [1,8],
+            "9" => [1,8],
+            "10" => [1,8],
+            "11" => [8],
+        ]);
+
+        $roomTable->removeLocked(7);
+        expect('room->locked', $roomTable->locked)->equals([
+            "8" => [8],
+            "9" => [8],
+            "10" => [8],
+            "11" => [8],
+        ]);
+    }
+
+    public function testGetTable() {
+        $modelData = [
+            'date' => '2015-12-01',
+            'room_id' => '1',
+            'ordered' => [
+                "8" => [8,9],
+                "9" => [8,9],
+                "10" => [8],
+                "11" => [2,8],
+                "12" => [2],
+                "13" => [2],
+            ],
+            'used' => [
+                "8" => [1,8],
+                "9" => [1,8,10],
+                "10" => [1,8,10],
+                "11" => [8],
+            ],
+            'locked' => [
+                "8" => [8,7],
+                "9" => [8,7],
+                "10" => [8],
+                "11" => [8],
+            ],
+        ];
+
+        $roomTable = new RoomTable();
+        $roomTable->load($modelData,'');
+
+        expect('room->ordered', $roomTable->getOrdered())->equals([8,9,2]);
+        expect('room->ordered', $roomTable->getOrdered([10,11]))->equals([8,2]);
+
+        expect('room->used', $roomTable->getUsed())->equals([1,8,10]);
+        expect('room->used', $roomTable->getUsed([11]))->equals([8]);
+
+        expect('room->locked', $roomTable->getLocked())->equals([8,7]);
+        expect('room->locked', $roomTable->getLocked([11]))->equals([8]);
     }
 
     public function testGetHourTable() {
@@ -45,13 +192,12 @@ class RoomTableTest extends DbTestCase {
         $roomTable->addLocked(2, [9,10,11]);
         $roomTable->addUsed(3, [11,12,13]);
 
-        //codecept_debug($roomTable->toArray(['ordered', 'used', 'locked']));
         $hours = [];
         for ($i=8; $i <= 21; $i++) { 
             $hours[] = $i;
         }
         $hourTable = $roomTable->getHourTable($hours);
-        expect('can read roomTable->ordered all hours',  $hourTable)->equals([
+        expect('hourtable',  $hourTable)->equals([
             8 => RoomTable::STATUS_ORDERED,
             9 => RoomTable::STATUS_LOCKED,
             10 => RoomTable::STATUS_LOCKED,
@@ -67,11 +213,7 @@ class RoomTableTest extends DbTestCase {
             20 => RoomTable::STATUS_FREE,
             21 => RoomTable::STATUS_FREE
         ]);
-        //codecept_debug($hourTable);
     }
-
-
-
 
     /**
      * @inheritdoc
@@ -81,7 +223,7 @@ class RoomTableTest extends DbTestCase {
         return [
             'room_table' => [
                 'class' => RoomTableFixture::className(),
-                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/entities/roomtable.php'
+                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/roomtable.php'
             ],
         ];
     }

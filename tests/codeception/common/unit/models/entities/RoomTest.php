@@ -6,83 +6,73 @@ use Yii;
 use tests\codeception\common\unit\DbTestCase;
 use Codeception\Specify;
 use common\models\entities\Room;
+use tests\codeception\common\fixtures\RoomFixture;
 
 /**
- * OrderOperation test
+ * Room test
  */
 class RoomTest extends DbTestCase {
 
-    use Specify;
-
     public function testRW() {
-        $this->specify('can write Room', function () {
-            $data = [
-                'number' => '404',
-                'name' => '单机琴房1',
-                'type' => '1',
-                'align' => '1',
-                'status' => '1',
-            ];
-            $roomData = [
-                'secure' => 1,
-                'by_week' => 1,
-                'max_before' => 30,
-                'min_before' => 5,
+        $modelData = [
+            'number' => 405,
+            'name' => '单技琴房2',
+            'type' => Room::TYPE_AUTO,
+            'data' => [
+                'by_week' => 0, 
+                'max_before' => 15,
+                'min_before' => 1,
                 'max_hour' => 2,
-            ];
-
-            $room = new Room();
-            $room->load($data,'');
-            $room->setRoomData($roomData);
-
-            expect('save() return true', $room->save())->true();
-
-            $newRoom = Room::findOne($room->getPrimaryKey());
-
-            expect('room->number equal', $newRoom->number)->equals($data['number']);
-            expect('room->name equal', $newRoom->name)->equals($data['name']);
-            expect('room->type equal', $newRoom->type)->equals($data['type']);
-            expect('room->align equal', $newRoom->align)->equals($data['align']);
-            expect('room->status equal', $newRoom->status)->equals($data['status']);
-            expect('room->roomData equal', $newRoom->getRoomData())->equals($roomData);
-        });
-    }
-
-    public function testCheckOpen() {
-         $data = [
-            'number' => '404',
-            'name' => '单机琴房1',
-            'type' => '1',
-            'align' => '1',
-            'status' => '1',
-        ];
-        $roomData = [
-            'secure' => 1,
-            'by_week' => 1,
-            'max_before' => 10,
-            'min_before' => 5,
-            'max_hour' => 2,
+                'secure' => 0,
+            ],
+            'align' => '0',
+            'status' => Room::STATUS_OPEN,
         ];
 
         $room = new Room();
-        $room->load($data,'');
-        $room->setRoomData($roomData);
+        $room->load($modelData,'');
 
-        $now = strtotime('2015-12-15');
-        expect('2015-12-19 false', $room->checkOpen('2015-12-19',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->false();
-        expect('2015-12-20 true', $room->checkOpen('2015-12-20',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->true();
-        expect('2015-12-21 true', $room->checkOpen('2015-12-21',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->true();
-        expect('2015-12-23 true', $room->checkOpen('2015-12-23',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->true();
-        expect('2015-12-27 true', $room->checkOpen('2015-12-27',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->true();
-        expect('2015-12-28 false', $room->checkOpen('2015-12-28',$roomData['max_before'], $roomData['min_before'], $roomData['by_week'],$now))->false();
+        expect('save()', $room->save())->true();
+
+        $newRoom = Room::findOne($room->getPrimaryKey());
+        expect('room->number', $newRoom->number)->equals($modelData['number']);
+        expect('room->name', $newRoom->name)->equals($modelData['name']);
+        expect('room->type', $newRoom->type)->equals($modelData['type']);
+        expect('room->data', $newRoom->data)->equals($modelData['data']);
+        expect('room->align ', $newRoom->align)->equals($modelData['align']);
+        expect('room->status', $newRoom->status)->equals($modelData['status']);
+    }
+
+    public function testGetDateRange() {
+        $dateRange = Room::getDateRange(10, 5, 0, strtotime('2016-03-01'));
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-03-06 00:00:00'),
+            'end' => strtotime('2016-03-11 23:59:59'),
+        ]);
+
+
+        $dateRange = Room::getDateRange(10, 5, 1, strtotime('2016-03-01'));
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-03-06 00:00:00'),
+            'end' => strtotime('2016-03-13 23:59:59'),
+        ]);
+
+        $dateRange = Room::getDateRange(5, 5, 1, strtotime('2016-03-01'));
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-03-06 00:00:00'),
+            'end' => strtotime('2016-03-06 23:59:59'),
+        ]);
     }
 
     /**
      * @inheritdoc
      */
-    public function fixtures()
-    {
+    public function fixtures(){
         return [
+            'room' => [
+                'class' => RoomFixture::className(),
+                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/room.php'
+            ],
         ];
     }
 }

@@ -10,6 +10,7 @@ namespace common\models\entities;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
+use common\behaviors\JsonBehavior;
 
 /**
  * Order
@@ -20,13 +21,13 @@ use yii\db\ActiveRecord;
  * @property integer $id
  * @property date $date 申请日期
  * @property integer $room_id 房间id
- * @property string $hours 申请的小时
+ * @property json $hours 申请的小时
  * @property integer $user_id 申请id(如果是普通账号)
- * @property integer $dept_id 部门id
+ * @property json $managers 负责人审批者
  * @property integer $type 申请类型(普通申请 后台申请)
  * @property integer $status 申请状态
  * @property integer $submit_time 提交时间
- * @property string $data 申请具体数据
+ * @property json $data 申请具体数据
  * @property integer $issue_time 开门条发放时间
  * @property integer $updated_at
  * @property integer $ver
@@ -103,9 +104,6 @@ class Order extends ActiveRecord {
      */
     const ROOMTABLE_NONE = 00;
 
-    protected $_hours = [];
-    protected $_data = [];
-
     /**
      * @inheritdoc
      */
@@ -122,6 +120,9 @@ class Order extends ActiveRecord {
             [
                 'class' => TimestampBehavior::className(),
                 'createdAtAttribute' => false,
+            ],[
+                'class' => JsonBehavior::className(),
+                'attributes' => ['hours', 'managers', 'data'],
             ],
         ];
     }
@@ -132,9 +133,9 @@ class Order extends ActiveRecord {
     public function rules()
     {
         return [
-            [['date', 'room_id', 'dept_id', 'type', 'status'], 'required'],
-            [['hours', 'data'], 'safe'],
-            [['room_id', 'dept_id', 'submit_time', 'issue_time'], 'integer'],
+            [['date', 'user_id', 'room_id', 'type', 'status'], 'required'],
+            [['hours', 'data','managers'], 'safe'],
+            [['room_id', 'submit_time', 'issue_time'], 'integer'],
             [['status'], 'in', 'range' => [
                 self::STATUS_INIT, self::STATUS_PASSED, self::STATUS_CANCELED,
                 self::STATUS_MANAGER_PENDING, self::STATUS_MANAGER_APPROVED, self::STATUS_MANAGER_REJECTED,
@@ -151,85 +152,8 @@ class Order extends ActiveRecord {
         return 'ver';
     }
 
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function afterFind(){
-        $this->_hours = json_decode($this->hours, true);
-        $this->_data = json_decode($this->data, true);
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function beforeSave($insert) {
-        if (parent::beforeSave($insert)) {
-            $this->hours = json_encode($this->_hours);
-            $this->data = json_encode($this->_data);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function fields() {
-        $fields = parent::fields();
-
-        $fields['hours'] = function () {
-            return $this->_hours;
-        };
-        $fields['data'] = function () {
-            return $this->_data;
-        };
-
-        return $fields;
-    }
-
     public static function getCacheKey($order_id){
         return 'Order'.'_'.$order_id;
-    }
-
-    /**
-     * 得到预约的小时数组
-     *
-     * @return array 小时
-     */
-    public function getHours(){
-        return $this->_hours;
-    }
-
-    /**
-     * 写入预约的小时数组
-     *
-     * @param array 小时
-     */
-    public function setHours($hours){
-        $this->_hours = $hours;
-    }
-
-    /**
-     * 得到预约信息
-     *
-     * @return array 预约信息
-     */
-    public function getOrderData(){
-        return $this->_data;
-    }
-
-    /**
-     * 写入预约信息
-     *
-     * @param array 预约信息
-     */
-    public function setOrderData($data){
-        $this->_data = $data;
     }
 
     /**
@@ -247,6 +171,16 @@ class Order extends ActiveRecord {
         }
 
         return $find->all();
+    }
+
+    /**
+     * 检查该order是否能被该用户审批
+     *
+     * @param string $user_id 用户id
+     * @return boolean 是否可以
+     */
+    public function checkManager($user_id) {
+        return in_array($user_id, $this->managers);
     }
 
     /**

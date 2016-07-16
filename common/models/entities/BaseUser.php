@@ -10,6 +10,7 @@ namespace common\models\entities;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
+use common\behaviors\JsonBehavior;
 
 /**
  * 普通用户
@@ -22,7 +23,7 @@ use yii\db\ActiveRecord;
  * @property integer $dept_id 部门id
  * @property string $email
  * @property string $alias 显示用户名
- * @property string $approve_dept 可以审批的部门
+ * @property string $managers 可以审批的部门
  * @property integer $privilege 权限表
  * @property integer $status 用户状态
  * @property integer $created_at
@@ -46,12 +47,17 @@ class BaseUser extends ActiveRecord {
      * 用户状态 未激活
      */
     const STATUS_UNACTIVE = 0x004;
+
     /**
      * @inheritdoc
      */
     public function behaviors() {
         return [
             TimestampBehavior::className(),
+            [
+                'class' => JsonBehavior::className(),
+                'attributes' => ['managers'],
+            ],
         ];
     }
 
@@ -59,10 +65,7 @@ class BaseUser extends ActiveRecord {
      * @inheritdoc
      */
     public function rules() {
-        return [
-            ['status', 'default', 'value' => self::STATUS_ACTIVE],
-            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED, self::STATUS_BLOCKED, self::STATUS_UNACTIVE]],
-        ];
+        return [];
     }
 
     /**

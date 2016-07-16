@@ -11,7 +11,7 @@ use Yii;
  * @property string $auth_key
  * @property string $password_hash
  * @property string $password_reset_token
- * @property integer $dept_id
+ * @property json $managers 负责人List
  * @property string $email
  * @property string $alias
  * @property integer $status
@@ -33,13 +33,6 @@ class StudentUser extends BaseUser {
      */
     public function isStudent() {
         return true;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getLogicId() {
-        return 'S'.$this->getPrimaryKey();
     }
     
     /**

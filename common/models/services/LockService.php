@@ -173,8 +173,8 @@ class LockService extends Component {
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效');
 
-            $order = Lock::findOne($lock_id);
-            $data = $order->toArray(['id', 'rooms', 'hours', 'start_date', 'end_date', 'status', 'data']);
+            $lock = Lock::findOne($lock_id);
+            $data = $lock->toArray(['id', 'rooms', 'hours', 'start_date', 'end_date', 'status', 'data']);
             $data = array_merge($data, $data['data']);
             unset($data['data']);
 

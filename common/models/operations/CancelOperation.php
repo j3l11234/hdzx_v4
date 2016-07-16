@@ -28,7 +28,7 @@ class CancelOperation extends BaseOrderOperation {
      * @throws OrderOperationException 如果出现错误
      */
     protected function checkAuth() {
-        if ($this->user->getLogicId() != $this->order->user_id) {
+        if ($this->user->id != $this->order->user_id) {
             throw new OrderOperationException('该账户不能取消此预约', BaseOrderOperation::ERROR_AUTH_FAILED);
         }
     }

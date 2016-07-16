@@ -20,7 +20,7 @@ return [
                 '/login' => 'user/login-page',
                 '/order' => 'order/order-page',
                 '/myorder' => 'order/myorder-page',
-                'OPTIONS <path:.*>' => 'options/index',
+                '/lock' => 'lock/lock-page',
             ]
         ],
         'user' => [

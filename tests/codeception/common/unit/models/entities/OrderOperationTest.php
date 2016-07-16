@@ -16,33 +16,47 @@ class OrderOperationTest extends DbTestCase {
     use Specify;
 
     public function testRW() {
-
-        $this->specify('can write Order Operation', function () {
-            $data = [
-                'order_id' => '1',
-                'user_id' => '2',
-                'type' => '1',
-            ];
-            $opData = [
+        $modelData = [
+            'order_id' => '1',
+            'user_id' => '2',
+            'type' => '1',
+            'data' => [
                 'name' => '李鹏翔',
                 'student_no' => '12301119',
                 'phone' => '15612322',
                 'title' => '学习',
-            ];
+            ]
+        ];
+        $orderOp = new OrderOperation();
+        $orderOp->load($modelData ,'');
 
-            $orderOp = new OrderOperation();
-            $orderOp->load($data,'');
-            $orderOp->setOpData($opData);
+        expect('save()', $orderOp->save())->true();
+        expect('orderOp->data', $orderOp->data)->equals($modelData['data']);
 
-            expect('save() return true', $orderOp->save())->true();
+        $newOrderOp = OrderOperation::findOne($orderOp->getPrimaryKey());
 
-            $newOrderOp = OrderOperation::findOne($orderOp->getPrimaryKey());
+        expect('orderOp->order_id', $newOrderOp->order_id)->equals($modelData['order_id']);
+        expect('orderOp->user_id', $newOrderOp->user_id)->equals($modelData['user_id']);
+        expect('orderOp->type', $newOrderOp->type)->equals($modelData['type']);
+        expect('orderOp->data', $newOrderOp->data)->equals($modelData['data']);
+    }
 
-            expect('orderOp->order_id equal', $newOrderOp->order_id)->equals($data['order_id']);
-            expect('orderOp->user_id equal', $newOrderOp->user_id)->equals($data['user_id']);
-            expect('orderOp->type equal', $newOrderOp->type)->equals($data['type']);
-            expect('orderOp->operationData equal', $newOrderOp->getOpData())->equals($opData);
-        });
+    public function testFields(){
+        $orderOp = OrderOperation::findOne(1);
+        $exportData = $orderOp->toArray();
+        expect('exportData', $exportData)->equals([
+            'id' => '1',
+            'order_id' => '1',
+            'user_id' => '2',
+            'time' => '1',
+            'type' => '1',
+            'data' => [
+                'name' => '李鹏翔',
+                'student_no' => '12301119',
+                'phone' => '15612322',
+                'title' => '学习',
+            ]
+        ]);
     }
 
     /**
@@ -53,7 +67,7 @@ class OrderOperationTest extends DbTestCase {
         return [
             'user' => [
                 'class' => OrderOperationFixture::className(),
-                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/entities/order_opt.php'
+                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/order_op.php'
             ],
         ];
     }

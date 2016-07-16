@@ -40,6 +40,7 @@ AppAsset::register($this);
     $menuItems = [
         ['label' => '房间预约', 'url' => ['/order']],
         ['label' => '我的预约', 'url' => ['/myorder']],
+        ['label' => '房间锁', 'url' => ['/lock']],
         ['label' => 'Contact', 'url' => ['/site/contact']],
     ];
     if (Yii::$app->user->isGuest) {

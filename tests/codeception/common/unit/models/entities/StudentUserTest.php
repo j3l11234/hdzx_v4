@@ -9,7 +9,7 @@ use tests\codeception\common\unit\DbTestCase;
 use tests\codeception\common\fixtures\StudentUserFixture;
 
 /**
- * User test
+ * StudentUser test
  */
 class StudentUserTest extends DbTestCase {
 

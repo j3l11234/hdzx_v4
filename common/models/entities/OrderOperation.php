@@ -10,6 +10,7 @@ namespace common\models\entities;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
+use common\behaviors\JsonBehavior;
 
 /**
  * 预约操作类
@@ -83,8 +84,6 @@ class OrderOperation extends ActiveRecord {
      */
     const TYPE_ISSUE      = 40;
 
-    protected $_data = [];
-
     /**
      * @inheritdoc
      */
@@ -117,61 +116,12 @@ class OrderOperation extends ActiveRecord {
                 'class' => TimestampBehavior::className(),
                 'createdAtAttribute' => 'time',
                 'updatedAtAttribute' => false,
+            ],[
+                'class' => JsonBehavior::className(),
+                'attributes' => ['data'],
             ],
+
         ];
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function afterFind(){
-        $this->_data = json_decode($this->data, true);
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function beforeSave($insert) {
-        if (parent::beforeSave($insert)) {
-            $this->data = json_encode($this->_data);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * 得到操作信息
-     *
-     * @return array 操作信息
-     */
-    public function getOpData(){
-        return $this->_data;
-    }
-
-    /**
-     * 写入操作信息
-     *
-     * @param array 操作信息
-     */
-    public function setOpData($data){
-        $this->_data = $data;
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function fields() {
-        $fields = parent::fields();
-        $fields['data'] = function () {
-            return $this->_data;
-        };
-
-        return $fields;
     }
 
     /**

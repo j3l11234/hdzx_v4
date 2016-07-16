@@ -10,6 +10,7 @@ namespace common\models\entities;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
+use common\behaviors\JsonBehavior;
 
 /**
  * 房间
@@ -56,7 +57,6 @@ class Room extends ActiveRecord {
      */
     const STATUS_OPEN   = 01;
 
-    protected $_data = [];
 
     /**
      * @inheritdoc
@@ -72,31 +72,11 @@ class Room extends ActiveRecord {
         return [
             [
                 'class' => TimestampBehavior::className(),
+            ],[
+                'class' => JsonBehavior::className(),
+                'attributes' => ['data'],
             ],
         ];
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function afterFind() {
-        $this->_data = json_decode($this->data, true);
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function beforeSave($insert) {
-        if (parent::beforeSave($insert)) {
-            $this->data = json_encode($this->_data);
-            return true;
-        } else {
-            return false;
-        }
     }
 
     /**
@@ -107,74 +87,13 @@ class Room extends ActiveRecord {
             [['number', 'name', 'type','status'], 'required'],
             [['number', 'align'], 'integer'],
             [['data', 'align'], 'safe'],
-            [['type'], 'in', 'range' => [self::TYPE_AUTO, self::TYPE_TWICE]],
-            [['status'], 'in', 'range' => [self::STATUS_CLOSE, self::STATUS_OPEN]],
+            // [['type'], 'in', 'range' => [self::TYPE_AUTO, self::TYPE_TWICE, self::TYPE_SCHOOL_AUTO]],
+            // [['status'], 'in', 'range' => [self::STATUS_CLOSE, self::STATUS_OPEN]],
         ];
     }
 
     /**
-     * 得到操作信息
-     *
-     * @return array 操作信息
-     */
-    public function getRoomData(){
-        return $this->_data;
-    }
-
-    /**
-     * 写入操作信息
-     *
-     * @param array 操作信息
-     */
-    public function setRoomData($data){
-        $this->_data = $data;
-    }
-
-    /**
-     * 验证日期是否在可申请范围内
-     *
-     * @param string $date 测试日期 形如'2015-12-15'
-     * @param int $now 参考时间，默认为当前时间
-     * @return boolean 是否可以申请
-     */
-    public function checkOpenSelf($date, $now = null) {
-        return self::checkOpen($date, $this->_data['max_before'], $this->_data['min_before'], $this->_data['by_week'], $now);
-    }
-
-    /**
-     * 验证日期是否在可申请范围内(静态)
-     *
-     * @param string $date 测试日期 形如'2015-12-15'
-     * @param int $max_before 最大提前日期
-     * @param int $min_before 最小提前日期
-     * @param int $by_week 是否按周开放，1为是
-     * @param int $now 参考时间，默认为当前时间
-     * @return boolean 是否可以申请
-     */
-    public static function checkOpen($date, $max_before, $min_before, $by_week, $now = null) {
-        $date = strtotime($date);
-        $range = self::getDateRange($max_before, $min_before, $by_week, $now);
-
-        return ($date >= $range['start'] && $date <= $range['end']);
-    }
-
-
-    /**
      * 得到允许申请的日期
-     *
-     * @param int $now 参考时间，默认为当前时间
-     * @return array 返回的格式
-     * [
-     *      'start' => $limitStart,
-     *      'end' => $limitEnd
-     * ]
-     */
-    public function getDateRangeSelf($now = null) {
-        return self::getDateRange($this->_data['max_before'], $this->_data['min_before'], $this->_data['by_week'], $now);
-    }
-
-    /**
-     * 得到允许申请的日期(静态)
      *
      * @param int $max_before 最大提前日期
      * @param int $min_before 最小提前日期
@@ -211,6 +130,23 @@ class Room extends ActiveRecord {
     }
 
     /**
+     * 验证日期是否在可申请范围内
+     *
+     * @param string $date 测试日期 形如'2015-12-15'
+     * @param int $max_before 最大提前日期
+     * @param int $min_before 最小提前日期
+     * @param int $by_week 是否按周开放，1为是
+     * @param int $now 参考时间，默认为当前时间
+     * @return boolean 是否可以申请
+     */
+    public static function checkOpen($date, $max_before, $min_before, $by_week, $now = null) {
+        $date = strtotime($date);
+        $range = self::getDateRange($max_before, $min_before, $by_week, $now);
+
+        return ($date >= $range['start'] && $date <= $range['end']);
+    }
+
+    /**
      * 得到所有开启的房间
      *
      * @return static|null
@@ -220,18 +156,6 @@ class Room extends ActiveRecord {
             ->where(['status' => self::STATUS_OPEN])
             ->orderBy('align')
             ->all();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function fields() {
-        $fields = parent::fields();
-        $fields['data'] = function () {
-            return $this->_data;
-        };
-
-        return $fields;
     }
 
     /**

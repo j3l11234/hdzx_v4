@@ -19,10 +19,9 @@ use yii\db\ActiveRecord;
  * @property string $auth_key
  * @property string $password_hash
  * @property string $password_reset_token
- * @property integer $dept_id 部门id
  * @property string $email
  * @property string $alias 显示用户名
- * @property string $approve_dept 可以审批的部门
+ * @property json $managers 负责人List
  * @property integer $privilege 权限表
  * @property integer $status 用户状态
  * @property integer $created_at
@@ -55,10 +54,6 @@ class User extends BaseUser{
      * 开门条发放权限
      */
     const PRIV_TYPE_ISSUE           = 0b0000100000;
-    
-
-    //可审批dept_id表
-    protected $_approve_dept = [];
 
     /**
      * @inheritdoc
@@ -74,8 +69,8 @@ class User extends BaseUser{
     public function scenarios() {
         return [
             'default' => [],
-            'create' => ['username', 'password', 'dept_id', 'email', 'alias', 'approve_dept', 'privilege', 'status'],
-            'update' => ['password', 'dept_id', 'email', 'alias', 'approve_dept', 'privilege', 'status']
+            'create' => ['username', 'password', 'managers', 'email', 'alias', 'privilege', 'status'],
+            'update' => ['password', 'managers', 'email', 'alias', 'privilege', 'status']
         ];
     }
 
@@ -88,57 +83,6 @@ class User extends BaseUser{
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED, self::STATUS_BLOCKED]],
         ];
     }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function afterFind(){
-        $this->_approve_dept = json_decode($this->approve_dept, true);
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function beforeSave($insert) {
-        if (parent::beforeSave($insert)) {
-            $this->approve_dept = json_encode($this->_approve_dept);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * 获取该账号可审批的dept的id列表
-     *
-     * @return array 列表
-     */
-    public function getApproveDeptList() {
-        return $this->_approve_dept;
-    }
-
-    /**
-     * 设置该账号可审批的dept的id列表
-     *
-     * @return null
-     */
-    public function setApproveDeptList($_approve_dept) {
-        $this->_approve_dept = $_approve_dept;
-    }
-
-    /**
-     * 检查该用户是否能够审批该dept的order
-     *
-     * @return boolean 是否可以
-     */
-    public function checkApproveDept($dept_id) {
-        return in_array($dept_id, $this->_approve_dept);
-    }
-
 
     /**
      * 添加权限
@@ -178,16 +122,6 @@ class User extends BaseUser{
     public function isStudent(){
         return false;
     }
-
-    /**
-     * 得到逻辑上的id
-     * 如果是学生用户，id前会有"S"
-     *
-     * @return boolean
-     */
-    public function getLogicId(){
-        return $this->getPrimaryKey();
-    } 
 
     /**
      * just for the ActiveForm

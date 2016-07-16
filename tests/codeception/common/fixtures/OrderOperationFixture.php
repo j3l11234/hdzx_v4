@@ -5,7 +5,7 @@ namespace tests\codeception\common\fixtures;
 use yii\test\ActiveFixture;
 
 /**
- * Order fixture
+ * OrderOperation fixture
  */
 class OrderOperationFixture extends ActiveFixture
 {

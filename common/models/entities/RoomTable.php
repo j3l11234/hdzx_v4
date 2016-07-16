@@ -10,6 +10,7 @@ namespace common\models\entities;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
+use common\behaviors\JsonBehavior;
 
 /**
  * RoomTable
@@ -42,13 +43,6 @@ class RoomTable extends ActiveRecord {
      */
     const STATUS_LOCKED     = 0x04;
 
-    //申请表
-    protected $_ordered = [];
-    //占用表
-    protected $_used = [];
-    //锁定表
-    protected $_locked = [];
-
     public $useOptimisticLock = true;
 
     /**
@@ -68,6 +62,9 @@ class RoomTable extends ActiveRecord {
                 'class' => TimestampBehavior::className(),
                 'createdAtAttribute' => 'created_at',
                 'updatedAtAttribute' => 'updated_at',
+            ],[
+                'class' => JsonBehavior::className(),
+                'attributes' => ['ordered', 'used', 'locked'],
             ],
         ];
     }
@@ -81,50 +78,6 @@ class RoomTable extends ActiveRecord {
             [['date', 'room_id'], 'required'],
             [['ordered', 'used', 'locked'], 'safe'],
             [['room_id'], 'integer'], 
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function afterFind(){
-        $this->_ordered = json_decode($this->ordered, true);
-        $this->_used = json_decode($this->used, true);
-        $this->_locked = json_decode($this->locked, true);
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function beforeSave($insert) {
-        if (parent::beforeSave($insert)) {
-            $this->ordered = json_encode($this->_ordered);
-            $this->used = json_encode($this->_used);
-            $this->locked = json_encode($this->_locked);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function fields() {
-        return [
-            'ordered' => function () {
-                return $this->_ordered;
-            },
-            'used' => function () {
-                return $this->_used;
-            },
-            'locked' => function () {
-                return $this->_locked;
-            },
         ];
     }
 
@@ -154,14 +107,15 @@ class RoomTable extends ActiveRecord {
     /**
      * 增加一个id到表
      *
-     * @param string $name _ordered|_used|_locled
+     * @param minxed $table 数据表
      * @param integer $id 插入的id
      * @param array $hours 插入的小时数组
      * @return null
      */
-    public static function addTable(&$table, $id, $hours){
+    public static function addTable($table, $id, $hours){
         if ($hours != null) {
             foreach ($hours as $hour) {
+                $hour = (string)$hour;
                 if (isset($table[$hour])) {
                     if (!in_array($id, $table[$hour])) {
                         $table[$hour][] = $id;
@@ -170,29 +124,31 @@ class RoomTable extends ActiveRecord {
                     $table[$hour] = [$id];
                 }
             }
-        }     
+        }
+        return $table;
     }
 
     /**
      * 从表移除一个id
      *
-     * @param string $name _ordered|_used|_locled
+     * @param minxed $table 数据表
      * @param integer $id 插入的id
      * @return null
      */
-    protected function removeTable($name, $id) {
-        foreach ($this->{$name} as $hour=>$hourTable) {
-            $index = array_search($id,$hourTable);
+    public static function removeTable($table, $id) {
+        foreach ($table as &$idList) {
+            $index = array_search($id, $idList);
             if ($index !== false) {
-                array_splice($this->{$name}[$hour], $index, 1);
+                array_splice($idList, $index, 1);
             }
         }
+        return $table;
     }
 
     /**
      * 获取一个时段内的id(静态)
      *
-     * @param string $name _ordered|_used|_locled
+     * @param minxed $table 数据表
      * @param array $hours 查找的小时数组 为null则为全部
      * @return array idList
      */
@@ -218,7 +174,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function addOrdered($id, $hours) {
-        return self::addTable($this->_ordered, $id, $hours);
+        $this->ordered = self::addTable($this->ordered, $id, $hours);
     }
 
     /**
@@ -228,7 +184,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function removeOrdered($id) {
-        return $this->removeTable('_ordered', $id);
+        $this->ordered = self::removeTable($this->ordered, $id);
     }
 
     /**
@@ -239,7 +195,7 @@ class RoomTable extends ActiveRecord {
      * @return array
      */
     public function getOrdered($hours = null) {
-        return self::getTable($this->_ordered, $hours);
+        return self::getTable($this->ordered, $hours);
     }
 
     /**
@@ -250,7 +206,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function addUsed($id, $hours) {
-        return self::addTable($this->_used, $id, $hours);
+        $this->used = self::addTable($this->used, $id, $hours);
     }
 
     /**
@@ -260,7 +216,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function removeUsed($id) {
-        return $this->removeTable('_used', $id);
+        $this->used = self::removeTable($this->used, $id);
     }
     
     /**
@@ -271,7 +227,7 @@ class RoomTable extends ActiveRecord {
      * @return array
      */
     public function getUsed($hours = null) {
-        return self::getTable($this->_used, $hours);
+        return self::getTable($this->used, $hours);
     }
 
     /**
@@ -282,7 +238,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function addLocked($id, $hours) {
-        return self::addTable($this->_locked, $id, $hours);
+        $this->locked = self::addTable($this->locked, $id, $hours);
     }
 
     /**
@@ -292,7 +248,7 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public function removeLocked($id) {
-        return $this->removeTable('_locked', $id);
+        $this->locked = self::removeTable($this->locked, $id);
     }
 
     /**
@@ -303,11 +259,7 @@ class RoomTable extends ActiveRecord {
      * @return array
      */
     public function getLocked($hours = null) {
-        return self::getTable($this->_locked, $hours);
-    }
-
-    public function setLocked($locked) {
-        $this->_locked = $locked;
+        return self::getTable($this->locked, $hours);
     }
 
     /**
@@ -321,11 +273,11 @@ class RoomTable extends ActiveRecord {
         $hourTable = [];
 
         foreach ($hours as $hour) {
-            if(isset($this->_locked[$hour]) && sizeof($this->_locked[$hour]) > 0){
+            if(isset($this->locked[$hour]) && sizeof($this->locked[$hour]) > 0){
                 $hourTable[$hour] = self::STATUS_LOCKED;
-            }else if(isset($this->_used[$hour]) && sizeof($this->_used[$hour]) > 0){
+            }else if(isset($this->used[$hour]) && sizeof($this->used[$hour]) > 0){
                 $hourTable[$hour] = self::STATUS_USED;
-            }else if(isset($this->_ordered[$hour]) && sizeof($this->_ordered[$hour]) > 0){
+            }else if(isset($this->ordered[$hour]) && sizeof($this->ordered[$hour]) > 0){
                 $hourTable[$hour] = self::STATUS_ORDERED;
             }else{
                 $hourTable[$hour] = self::STATUS_FREE;

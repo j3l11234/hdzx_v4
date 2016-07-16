@@ -10,6 +10,7 @@ namespace common\models\entities;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
+use common\behaviors\JsonBehavior;
 
 /**
  * 房间锁
@@ -36,29 +37,25 @@ class Lock extends ActiveRecord {
     /**
      * 循环类型 按日循环
      */
-    const LOOK_DAY      = 0x01;
+    const LOOP_DAY      = 1;
     /**
      * 循环类型 按周循环
      */
-    const LOOK_WEEK     = 0x02;
+    const LOOP_WEEK     = 2;
     /**
      * 循环类型 按月循环
      */
-    const LOOK_MONTH    = 0x03;
+    const LOOP_MONTH    = 3;
 
     /**
      * 房间锁状态 启用
      */
-    const STATUS_ENABLE  = 0x01;
+    const STATUS_ENABLE  = 1;
     /**
      * 房间锁状态 禁用
      */
-    const STATUS_DISABLE   = 0x02;
+    const STATUS_DISABLE   = 2;
 
-
-    protected $_data = [];
-    protected $_rooms = [];
-    protected $_hours = [];
 
     /**
      * @inheritdoc
@@ -74,66 +71,23 @@ class Lock extends ActiveRecord {
         return [
             [
                 'class' => TimestampBehavior::className(),
+            ],[
+                'class' => JsonBehavior::className(),
+                'attributes' => ['rooms', 'hours', 'data'],
             ],
         ];
     }
 
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function afterFind() {
-        $this->_data = json_decode($this->data, true);
-        $this->_rooms = json_decode($this->rooms, true);
-        $this->_hours = json_decode($this->hours, true);
-    }
-
-    /**
-     * @inheritdoc
-     * 
-     * json转换
-     */
-    public function beforeSave($insert) {
-        if (parent::beforeSave($insert)) {
-            $this->data = json_encode($this->_data);
-            $this->rooms = json_encode($this->_rooms);
-            $this->hours = json_encode($this->_hours);
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     /**
      * @inheritdoc
      */
     public function rules() {
         return [
-            [['number', 'name', 'type','status'], 'required'],
-            [['number', 'align'], 'integer'],
-            [['data', 'align'], 'safe'],
-            [['type'], 'in', 'range' => [self::TYPE_AUTO, self::TYPE_TWICE]],
-            [['status'], 'in', 'range' => [self::STATUS_CLOSE, self::STATUS_OPEN]],
+            [['status', 'start_date', 'end_date'], 'required'],
+            [['rooms', 'hours', 'data'], 'safe'],
+            [['status'], 'in', 'range' => [self::STATUS_ENABLE, self::STATUS_DISABLE]],
         ];
-    }
-
-    /**
-     * 得到房间锁额外数据
-     *
-     * @return array 操作信息
-     */
-    public function getLockData(){
-        return $this->_data;
-    }
-
-    /**
-     * 写入房间锁额外数据
-     *
-     * @param array 操作信息
-     */
-    public function setLockData($data){
-        $this->_data = $data;
     }
 
     /**
@@ -149,72 +103,32 @@ class Lock extends ActiveRecord {
         $startDateTs = strtotime($start_date);
         $endDateTs = strtotime($end_date);
 
-        //根据循环确定开始和结束
-        if ($loop_type == static::LOOK_DAY) {
-            $startTs = $startDateTs;
-            $endTs = $endDateTs;
-            $step = '1 days';
-        } else if ($loop_type == static::LOOK_WEEK) {
-            $startTs = strtotime((($loop_day - date('w', $startDateTs) + 7) % 7).' days', $startDateTs);
-            $endTs = $endDateTs;
-            $step = '1 weeks';
-        } else if ($loop_type == static::LOOK_MONTH) {
-            $startTs = strtotime(($loop_day - $day).' days'.($loop_day < $day ? ' 1 months' : ''), $startDateTs);
-            $endTs = $endDateTs;
-            $step = '1 months';
-        }
-
         $dateList = [];
-        for ($iTs=$startTs; $iTs <= $endTs; $iTs = strtotime($step, $iTs)) {
-            $iDate = date('Y-m-d', $iTs);
-            $dateList[] = $iDate;
+        if ($loop_type == static::LOOP_DAY) {
+            for ($iTs=$startDateTs; $iTs <= $endDateTs; $iTs = strtotime('1 days', $iTs)) {
+                $iDate = date('Y-m-d', $iTs);
+                $dateList[] = $iDate;
+            }
+        } else if ($loop_type == static::LOOP_WEEK) {
+            for ($iTs=$startDateTs; $iTs <= $endDateTs; $iTs = strtotime('1 days', $iTs)) {
+                if(date('w', $iTs) == $loop_day){
+                    $iDate = date('Y-m-d', $iTs);
+                    $dateList[] = $iDate;
+                }
+            }
+        } else if ($loop_type == static::LOOP_MONTH) {
+            for ($iTs=$startDateTs; $iTs <= $endDateTs; $iTs = strtotime('1 days', $iTs)) {
+                if(date('d', $iTs) == $loop_day){
+                    $iDate = date('Y-m-d', $iTs);
+                    $dateList[] = $iDate;
+                }
+            }
         }
         return $dateList;
     }
 
-    /**
-     * 得到房间锁定的的日期
-     *
-     * @param date $start_date 开始日期
-     * @param date $end_date 结束日期
-     * @return Array 日期List
-     */
-    public function getDateListSelf($start_date = null, $end_date = null) {
-        if(!empty($start_date)) {
-            $start_date = strtotime($start_date) > strtotime($this->start_date) ? $start_date : $this->start_date;
-        }else{
-            $start_date = $this->start_date;
-        }
-
-        if(!empty($end_date)) {
-            $end_date = strtotime($end_date) < strtotime($this->end_date) ? $end_date : $this->end_date;
-        }else{
-            $end_date = $this->end_date;
-        }
-
-        return self::getDateList($this->_data['loop_type'], $this->_data['loop_day'], $start_date, $end_date);
-    }
-
     public static function getCacheKey($lock_id){
         return 'Lock'.'_'.$lock_id;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function fields() {
-        $fields = parent::fields();
-        $fields['data'] = function () {
-            return $this->_data;
-        };
-        $fields['rooms'] = function () {
-            return $this->_rooms;
-        };
-        $fields['hours'] = function () {
-            return $this->_hours;
-        };
-
-        return $fields;
     }
 
     /**

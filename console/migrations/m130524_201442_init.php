@@ -22,7 +22,8 @@ class m130524_201442_init extends Migration
             'password_reset_token' => $this->string()->unique(),
             'dept_id' => $this->integer()->notNull(),
             'email' => $this->string()->notNull()->unique(),
-            'alias' => $this->string()->notNull(),  
+            'alias' => $this->string()->notNull(), 
+            'parent_id' => $this->integer()->notNull(),
             'approve_dept' => $this->text()->notNull(),
             'privilege' => $this->integer()->notNull(),
             'status' => $this->smallInteger()->notNull()->defaultValue(10),
@@ -223,7 +224,6 @@ class m130524_201442_init extends Migration
             'hours' => $this->text()->notNull(),
 
             'user_id' => $this->string(10)->notNull(),
-            'dept_id' => $this->integer()->notNull(),
 
             'type' => $this->integer()->notNull(), //申请类型 琴房申请，活动室申请
             'status' => $this->integer()->notNull(), //申请状态

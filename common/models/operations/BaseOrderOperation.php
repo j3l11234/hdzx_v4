@@ -153,7 +153,7 @@ class BaseOrderOperation extends Component {
         $opData = $this->getOpData();     
         $orderOp = new OrderOperation();
         $orderOp->order_id = $this->order->id;   
-        $orderOp->user_id = $this->user->getLogicId();
+        $orderOp->user_id = $this->user->id;
         $orderOp->type = static::$type;
         $orderOp->setOpData($opData);
         if($orderOp->save() !== true){

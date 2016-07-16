@@ -1,14 +1,11 @@
 <?php
-namespace backend\controllers;
+namespace frontend\controllers;
 
 use Yii;
-use yii\base\InvalidParamException;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\Response;
-use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-use yii\filters\Cors;
 
 use backend\models\LockQueryForm;
 use backend\models\LockForm;
@@ -27,7 +24,7 @@ class LockController extends Controller
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => [
-                    'lock-page', 'getlocks', 'approveorder', 'rejectorder', 'revokeorder',
+                    'lock-page', 'getlocks',
                 ],
                 'rules' => [
                     [
@@ -37,13 +34,6 @@ class LockController extends Controller
                         'allow' => true,
                         'roles' => ['@'],
                     ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'logout' => ['post'],
-                    'approveOrder' => ['post'],
                 ],
             ],
         ];
@@ -69,7 +59,7 @@ class LockController extends Controller
     public function actionLockPage()
     {
         return $this->render('/page/lock', [
-            'type' => 'admin',
+            'type' => 'user',
         ]);
     }
 
@@ -97,35 +87,4 @@ class LockController extends Controller
         }
         return $data;
     }
-
-    // /**
-    //  * 审批预约
-    //  *
-    //  * @return mixed
-    //  */
-    // public function actionApproveorder() {
-    //     Yii::$app->response->format = Response::FORMAT_JSON;
-
-    //     $getData = Yii::$app->request->get();
-    //     $data = Yii::$app->request->post();
-    //     $data['type'] = $getData['type'];
-        
-    //     $model = new ApproveForm(['scenario' => 'approveOrder']);
-    //     $model->load($data, '');
-    //     if ($model->validate() && $model->approveOrder()) {
-    //         return [
-    //             'error' => 0,
-    //             'message' => '审批成功',
-    //         ];
-    //     } else {
-    //         return [
-    //             'error' => 1,
-    //             'message' => $model->getErrorMessage(),
-    //         ];
-    //     }
-    //     return $data;
-    // }
-
-
-    
 }

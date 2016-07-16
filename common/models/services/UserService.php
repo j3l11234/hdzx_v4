@@ -43,7 +43,7 @@ class UserService implements IdentityInterface {
      */
     public static function findIdentity($id) {
     	if (substr($id, 0, 1) === 'S') {
-    		$user = StudentUser::findOne(['id' => substr($id, 1), 'status' => User::STATUS_ACTIVE]);
+    		$user = StudentUser::findOne(['id' => $id, 'status' => User::STATUS_ACTIVE]);
     	} else {
     		$user = User::findOne(['id' => $id, 'status' => User::STATUS_ACTIVE]);
     	}
@@ -63,7 +63,7 @@ class UserService implements IdentityInterface {
      * @inheritdoc
      */
     public function getId() {
-        return $this->user->getLogicId();
+        return $this->user->id;
     }
 
     /**

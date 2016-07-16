@@ -11,7 +11,7 @@ return [
         'end_date' => '2016-06-30',
         'status' => Lock::STATUS_ENABLE,
         'data' => json_encode([
-            'loop_type' => Lock::LOOK_DAY, 
+            'loop_type' => Lock::LOOP_DAY, 
             'loop_day' => 1,
             'title' => '中午休息',
             'comment' => '规定！',
@@ -25,7 +25,7 @@ return [
         'end_date' => '2016-06-30',
         'status' => Lock::STATUS_ENABLE,
         'data' => json_encode([
-            'loop_type' => Lock::LOOK_WEEK, 
+            'loop_type' => Lock::LOOP_WEEK, 
             'loop_day' => 2,
             'title' => '周二占用',
             'comment' => '规定！',
