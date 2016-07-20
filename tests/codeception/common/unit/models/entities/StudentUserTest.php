@@ -3,7 +3,6 @@
 namespace tests\codeception\common\unit\models\entities;
 
 use Yii;
-use Codeception\Specify;
 use common\models\entities\StudentUser;
 use tests\codeception\common\unit\DbTestCase;
 use tests\codeception\common\fixtures\StudentUserFixture;
@@ -12,8 +11,6 @@ use tests\codeception\common\fixtures\StudentUserFixture;
  * StudentUser test
  */
 class StudentUserTest extends DbTestCase {
-
-    use Specify;
 
     public function testFindByUsername() {
         $user = StudentUser::findByUsername('12301120');

@@ -108,7 +108,8 @@ class RoomService extends Component {
 
             $roomList = Room::getOpenRooms();
             foreach ($roomList as $room) {
-                $dateRange = $room->getDateRangeSelf();
+                $roomData = $room->data;
+                $dateRange = Room::getDateRange($roomData['max_before'], $roomData['min_before'], $roomData['by_week']);
                 $endDate = max($endDate, $dateRange['end']);
             }
             $data = [

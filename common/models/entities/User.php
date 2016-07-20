@@ -37,7 +37,7 @@ class User extends BaseUser{
      * 负责人审批权限_按dept_id (审批/驳回/撤销)
      * 只能审批在approve里列举出来的dept_id的order
      */
-    const PRIV_APPROVE_MANAGER_DEPT  = 0b0000000010; 
+    const PRIV_APPROVE_MANAGER_DEPT = 0b0000000010; 
     /**
      * 负责人审批权限_全部(审批/驳回/撤销) (覆盖上一条权限)
      */
@@ -54,6 +54,15 @@ class User extends BaseUser{
      * 开门条发放权限
      */
     const PRIV_TYPE_ISSUE           = 0b0000100000;
+    /**
+     * 琴房申请权限
+     */
+    const PRIV_ORDER_SIMPLE         = 0b0001000000;
+    /**
+     * 活动室申请权限
+     */
+    const PRIV_ORDER_ACTIVITY       = 0b0010000000;
+
 
     /**
      * @inheritdoc

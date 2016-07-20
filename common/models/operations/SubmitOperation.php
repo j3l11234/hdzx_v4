@@ -43,8 +43,9 @@ class SubmitOperation extends BaseOrderOperation {
      * @throws OrderOperationException 如果出现错误
      */
     protected function applyRoomTable() {
-        $hours = $this->order->getHours();
-        RoomService::applyOrder($this->roomTable, $this->order->id, $hours, false);
+        $hours = $this->order->hours;
+        $order_id = $this->order->id;
+        $this->roomTable->addOrdered($order_id, $hours);
     }
 
     /**

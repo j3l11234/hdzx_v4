@@ -44,8 +44,10 @@ class SchoolApproveOperation extends BaseOrderOperation {
     }
 
     protected function applyRoomTable() {
-        $hours = $this->order->getHours();
-        RoomService::applyOrder($this->roomTable, $this->order->id, $hours, true);
+        $hours = $this->order->hours;
+        $order_id = $this->order->id;
+        $this->roomTable->removeOrdered($order_id);
+        $this->roomTable->addUsed($order_id, $hours);
     }
 
     /**

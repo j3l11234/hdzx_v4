@@ -99,7 +99,7 @@ class Lock extends ActiveRecord {
      * @param date $end_date 结束日期
      * @return Array 日期List
      */
-    public static function getDateList($loop_type, $loop_day, $start_date = null, $end_date = null) {
+    public static function getDateList($loop_type, $loop_day, $start_date, $end_date) {
         $startDateTs = strtotime($start_date);
         $endDateTs = strtotime($end_date);
 

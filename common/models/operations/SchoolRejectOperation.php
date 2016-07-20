@@ -54,7 +54,9 @@ class SchoolRejectOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function applyRoomTable() {
-        RoomService::applyOrder($this->roomTable, $this->order->id, null, false);
+        $hours = $this->order->hours;
+        $order_id = $this->order->id;
+        $this->roomTable->removeOrdered($order_id);
     }
 
     /**

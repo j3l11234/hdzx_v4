@@ -83,11 +83,7 @@ class OrderController extends Controller
      */
     public function actionOrderPage()
     {
-        $dateRange = RoomService::queryDateRange();
-        return $this->render('/page/order', [
-            'start_date' => date('Y-m-d',$dateRange['start']),
-            'end_date' => date('Y-m-d', $dateRange['end']),
-        ]);
+        return $this->render('/page/order');
     }
 
     /**

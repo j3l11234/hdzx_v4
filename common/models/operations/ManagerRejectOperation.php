@@ -33,7 +33,7 @@ class ManagerRejectOperation extends BaseOrderOperation {
             if(!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
                 throw new OrderOperationException('该账户无负责人审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
             }else{
-                if(!$this->user->checkApproveDept($this->order->dept_id)){
+                if(!$this->order->checkManager($this->user->id)){
                     throw new OrderOperationException('该账户对该预约无负责人审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
                 }
             }
@@ -53,14 +53,15 @@ class ManagerRejectOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkRoomTable() {
-        return;
     }
 
     /**
      * @inheritdoc
      */
     protected function applyRoomTable() {
-        RoomService::applyOrder($this->roomTable, $this->order->id, null, false);
+        $hours = $this->order->hours;
+        $order_id = $this->order->id;
+        $this->roomTable->removeOrdered($order_id);
     }
 
     /**

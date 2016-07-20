@@ -4,7 +4,6 @@ namespace tests\codeception\common\unit\models\entities;
 
 use Yii;
 use tests\codeception\common\unit\DbTestCase;
-use Codeception\Specify;
 use common\models\entities\OrderOperation;
 use tests\codeception\common\fixtures\OrderOperationFixture;
 
@@ -12,8 +11,6 @@ use tests\codeception\common\fixtures\OrderOperationFixture;
  * OrderOperation test
  */
 class OrderOperationTest extends DbTestCase {
-
-    use Specify;
 
     public function testRW() {
         $modelData = [

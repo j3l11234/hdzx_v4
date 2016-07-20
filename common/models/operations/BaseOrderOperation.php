@@ -22,38 +22,38 @@ class BaseOrderOperation extends Component {
     /**
      * 错误信息 权限认证失败
      */
-    const ERROR_AUTH_FAILED         = 0x0001;
+    const ERROR_AUTH_FAILED         = 0001;
 
     /**
      * 错误信息 预约状态异常
      */
-    const ERROR_INVALID_ORDER_STATUS    = 0x0101;
+    const ERROR_INVALID_ORDER_STATUS    = 0101;
     /**
-     * 错误信息 预约状态异常
+     * 错误信息 预约类型异常
      */
-    const ERROR_INVALID_ORDER_TYPE      = 0x0102;
+    const ERROR_INVALID_ORDER_TYPE      = 0102;
 
     /**
      * 错误信息 时间表已经被占用
      */
-    const ERROR_ROOMTABLE_USED      = 0x0201;
+    const ERROR_ROOMTABLE_USED      = 0201;
         /**
      * 错误信息 时间表已经被锁定
      */
-    const ERROR_ROOMTABLE_LOCKED    = 0x0201;
+    const ERROR_ROOMTABLE_LOCKED    = 0201;
 
     /**
      * 错误信息 时间表写入失败
      */
-    const ERROR_SAVE_ROOMTABLE  = 0x0301;
+    const ERROR_SAVE_ROOMTABLE  = 0301;
     /**
      * 错误信息 保存预约异常
      */
-    const ERROR_SVAE_ORDER      = 0x0302;
+    const ERROR_SVAE_ORDER      = 0302;
     /**
      * 错误信息 保存预约操作时异常
      */
-    const ERROR_SVAE_ORDEROP    = 0x0303;
+    const ERROR_SVAE_ORDEROP    = 0303;
 
     protected $order;
     protected $user;
@@ -89,7 +89,6 @@ class BaseOrderOperation extends Component {
      * @throws OrderOperationException 如果出现错误
      */
     protected function checkPreStatus() {
-        return true;
     }
 
     /**
@@ -97,7 +96,6 @@ class BaseOrderOperation extends Component {
      * @throws OrderOperationException 如果出现错误
      */
     protected function setPostStatus() {
-        return true;
     }
 
     /**
@@ -105,7 +103,7 @@ class BaseOrderOperation extends Component {
      * @throws OrderOperationException 如果出现错误
      */
     protected function checkRoomTable() {
-        $hours = $this->order->getHours();
+        $hours = $this->order->hours;
 
         $locked = $this->roomTable->getLocked($hours);
         if (!empty($locked)) {
@@ -139,11 +137,16 @@ class BaseOrderOperation extends Component {
 
         // 检查时间表
         $this->checkRoomTable();
-        // 写入时间表(乐观锁并发回滚)
+
+        // 写入时间表
         $this->applyRoomTable();
         
-        // 保存预约状态(设置后置状态);
+        // 设置后置状态
         $this->setPostStatus();
+
+        if($this->roomTable->save() !== true){
+            throw new OrderOperationException('时间表保存错误'."\n".var_export($this->roomTable->getErrors(), true), BaseOrderOperation::ERROR_SVAE_ORDER);
+        }
 
         if($this->order->save() !== true){
             throw new OrderOperationException('预约状态保存错误'."\n".var_export($this->order->getErrors(), true), BaseOrderOperation::ERROR_SVAE_ORDER);
@@ -155,7 +158,7 @@ class BaseOrderOperation extends Component {
         $orderOp->order_id = $this->order->id;   
         $orderOp->user_id = $this->user->id;
         $orderOp->type = static::$type;
-        $orderOp->setOpData($opData);
+        $orderOp->data = $opData;
         if($orderOp->save() !== true){
             throw new OrderOperationException('预约操作记录保存错误'."\n".var_export($orderOp->getErrors(), true), BaseOrderOperation::ERROR_SVAE_ORDEROP);
         }

@@ -55,7 +55,7 @@ class LockService extends Component {
             Yii::trace($cacheKey.':缓存失效');
 
             $lock = Lock::findOne($lock_id);
-            $dateList = $lock->getDateListSelf();
+            $dateList = Lock::getDateList($lock->data['loop_type'], $lock->data['loop_day'], $lock->start_date, $lock->end_date);
             
             $data = $dateList;
             $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => Lock::getCacheKey($lock_id)]));

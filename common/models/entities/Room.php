@@ -36,17 +36,13 @@ use common\behaviors\JsonBehavior;
  */
 class Room extends ActiveRecord {
     /**
-     * 操作类型 自动审批类房间
+     * 房间类型 琴房
      */
-    const TYPE_AUTO     = 01;
+    const TYPE_SIMPLE     = 01;
     /**
-     * 操作类型 手动审批类房间
+     * 房间类型 活动室
      */
-    const TYPE_TWICE        = 02;
-    /**
-     * 操作类型 负责人手动审批 校级自动审批
-     */
-    const TYPE_SCHOOL_AUTO  = 03;
+    const TYPE_ACTIVITY   = 02;
 
     /**
      * 房间状态 关闭

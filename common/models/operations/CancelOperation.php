@@ -8,7 +8,6 @@
 namespace common\models\operations;
 
 use Yii;
-use yii\base\Component;
 use common\exceptions\OrderOperationException;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -37,15 +36,23 @@ class CancelOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkPreStatus() {
-        return;
+
     }
 
     /**
-     * 设置时间表
-     * @throws OrderOperationException 如果出现错误
+     * @inheritdoc
      */
     protected function applyRoomTable() {
-        RoomService::applyOrder($this->roomTable, $this->order->id, null, false);
+        $order_id = $this->order->id;
+        $this->roomTable->removeOrdered($order_id);
+        $this->roomTable->removeUsed($order_id);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function checkRoomTable() {
+        
     }
 
     /**

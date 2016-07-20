@@ -4,7 +4,7 @@ use common\models\entities\User;
 
 return [
     [
-        'id' => '12301120',
+        'id' => 'S12301120',
         'username' => '12301120',
         'auth_key' => '3P8HQa4cb5_KDuL8tbGkSFOClcwoznx8',
         'password_hash' => '$2y$13$PzJIiAaEOJ19Ade9gsOvPupX67CZYbXWNN8BXnrzuUEgMbE6djWg2',
@@ -17,7 +17,7 @@ return [
         'updated_at' => 1450067555,
     ],
     [
-        'id' => '12301121',
+        'id' => 'S12301121',
         'username' => '12301121',
         'auth_key' => '20kdfbHyfoA5tEJqXOiYo_3faEBz3Of7',
         'password_hash' => '$2y$13$bZFmDWjbN2NQRDzh6gV3x.t2hsmT9fu6zRBtG/rFOY7BXHsUWo2h2',

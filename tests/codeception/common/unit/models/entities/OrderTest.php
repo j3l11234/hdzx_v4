@@ -19,7 +19,7 @@ class OrderTest extends DbTestCase {
             'room_id' => '99',
             'hours' => [8,9,10],
             'user_id' => '1',
-            'managers' => [0,1],
+            'managers' => [1,2],
             'type' => '1',
             'status' => '1',
             'submit_time' => 12312312,

@@ -3,7 +3,6 @@
 namespace tests\codeception\common\unit\models;
 
 use Yii;
-use Codeception\Specify;
 use common\exceptions\OrderOperationException;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -24,92 +23,84 @@ use tests\codeception\common\unit\DbTestCase;
  */
 class SchoolApproveOperationTest extends DbTestCase {
 
-    use Specify;
-
     public function testCheckAuth() {
         //认证异常
-        $this->specify('stop on status error', function () {
-            $order = Order::findOne(30);
-            $user = UserService::findIdentity(1)->getUser();
-            $user->removePrivilege(User::PRIV_APPROVE_SCHOOL);
-            $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
+        $order = Order::findOne(30);
+        $user = UserService::findIdentity(1)->getUser();
+        $user->removePrivilege(User::PRIV_APPROVE_SCHOOL);
+        $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
 
-            $connection = Yii::$app->db;
-            $transaction=$connection->beginTransaction();
-     
-            $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
-            try {
-                $submitOp->doOperation();
-                expect('should throw exception', false)->true();
-                $transaction->commit();
-            } catch (OrderOperationException $e) {
-                expect('exception should be ERROR_AUTH_FAILED', $e->getCode())->equals(BaseOrderOperation::ERROR_AUTH_FAILED);
-                $transaction->rollBack();
-            }
-        });  
+        $connection = Yii::$app->db;
+        $transaction=$connection->beginTransaction();
+ 
+        $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
+        try {
+            $submitOp->doOperation();
+            expect('should throw exception', false)->true();
+            $transaction->commit();
+        } catch (OrderOperationException $e) {
+            expect('exception should be ERROR_AUTH_FAILED', $e->getCode())->equals(BaseOrderOperation::ERROR_AUTH_FAILED);
+            $transaction->rollBack();
+        } 
     }
 
     public function testCheckStatus() {
         //状态异常
-        $this->specify('stop on status error', function () {
-            $order = Order::findOne(30);
-            $order->status = Order::STATUS_PASSED;
-            $user = UserService::findIdentity(1)->getUser();
-            $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
+        $order = Order::findOne(30);
+        $order->status = Order::STATUS_PASSED;
+        $user = UserService::findIdentity(1)->getUser();
+        $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
 
-            $connection = Yii::$app->db;
-            $transaction=$connection->beginTransaction();  
+        $connection = Yii::$app->db;
+        $transaction=$connection->beginTransaction();  
 
-            $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
-            try {
-                $submitOp->doOperation();
-                expect('should throw exception', false)->true();
-                $transaction->commit();
-            } catch (OrderOperationException $e) {
-                expect('exception should be ERROR_INVALID_ORDER_STATUS', $e->getCode())->equals(BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
-                $transaction->rollBack();
-            }
+        $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
+        try {
+            $submitOp->doOperation();
+            expect('should throw exception', false)->true();
+            $transaction->commit();
+        } catch (OrderOperationException $e) {
+            expect('exception should be ERROR_INVALID_ORDER_STATUS', $e->getCode())->equals(BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
+            $transaction->rollBack();
+        }
 
-             $newOrder = Order::findOne($order->id);
-             expect('order->status should be STATUS_INIT', $newOrder->status)->equals(Order::STATUS_SCHOOL_PENDING);
-        });
+         $newOrder = Order::findOne($order->id);
+         expect('order->status should be STATUS_INIT', $newOrder->status)->equals(Order::STATUS_SCHOOL_PENDING);
     }
 
     public function testOperation() {
-         //状态正常
-        $this->specify('should do operation ok', function () {
-            $order = Order::findOne(30);
-            $user = UserService::findIdentity(1)->getUser();
-            $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
+        //状态正常
+        $order = Order::findOne(30);
+        $user = UserService::findIdentity(1)->getUser();
+        $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
 
-            $connection = Yii::$app->db;
-            $transaction=$connection->beginTransaction();
-  
-            $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
-            try {
-                $submitOp->doOperation();
-                $transaction->commit();
-            } catch (OrderOperationException $e) {
-                $transaction->rollBack();
-                throw $e;    
-            }
+        $connection = Yii::$app->db;
+        $transaction=$connection->beginTransaction();
 
-            $newOrder = Order::findOne($order->id);
-            expect('$order->status', $newOrder->status)->equals(Order::STATUS_SCHOOL_APPROVED);
+        $submitOp = new SchoolApproveOperation($order, $user, $roomTable);
+        try {
+            $submitOp->doOperation();
+            $transaction->commit();
+        } catch (OrderOperationException $e) {
+            $transaction->rollBack();
+            throw $e;    
+        }
 
-            $orderOp = OrderOperation::findOne([
-                'order_id' => $order->id,
-                'user_id' => $user->getLogicId(),
-                'type' => OrderOperation::TYPE_SCHOOL_APPROVE
-                ]);
-            expect('can find $orderOp', $orderOp)->notNull();
+        $newOrder = Order::findOne($order->id);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_SCHOOL_APPROVED);
 
-            $newRoomTable = RoomService::getRoomTable($order->date, $order->room_id);
-            $ordered = $newRoomTable->getOrdered($order->getHours());
-            $used = $newRoomTable->getUsed($order->getHours());
-            expect('roomTable->ordered have not order', in_array($order->id, $ordered))->false();
-            expect('roomTable->used have order', in_array($order->id, $used))->true();
-        });
+        $orderOp = OrderOperation::findOne([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'type' => OrderOperation::TYPE_SCHOOL_APPROVE
+            ]);
+        expect('can find $orderOp', $orderOp)->notNull();
+
+        $newRoomTable = RoomService::getRoomTable($order->date, $order->room_id);
+        $ordered = $newRoomTable->getOrdered($order->hours);
+        $used = $newRoomTable->getUsed($order->hours);
+        expect('roomTable->ordered have not order', in_array($order->id, $ordered))->false();
+        expect('roomTable->used have order', in_array($order->id, $used))->true();
     }
 
     /**
