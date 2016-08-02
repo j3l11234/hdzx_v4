@@ -4,13 +4,13 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\entities\Room */
+/* @var $model common\models\entities\Carousel */
 
-$this->title = $model->name;
-$this->params['breadcrumbs'][] = ['label' => 'Rooms', 'url' => ['index']];
+$this->title = $model->title;
+$this->params['breadcrumbs'][] = ['label' => 'Carousels', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="room-view">
+<div class="carousel-view">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
@@ -29,12 +29,10 @@ $this->params['breadcrumbs'][] = $this->title;
         'model' => $model,
         'attributes' => [
             'id',
-            'number',
-            'name',
-            'type',
-            'data:ntext',
+            'title',
+            'content',
+            'picture',
             'align',
-            'status',
             'created_at',
             'updated_at',
         ],

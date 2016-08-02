@@ -144,12 +144,14 @@ class RoomService extends Component {
             //应用预约
             if ($applyOrder) {
                 $orderList = Order::findByDateRoom($date, $room_id);
+                //codecept_debug($orderList);
+                
                 foreach ($orderList as $key => $order) {
                     $rtStatus = Order::getRoomTableStatus($order->status);
                     if ($rtStatus == Order::ROOMTABLE_ORDERED) {
-                        $roomTable->addOrdered($order->id, $order->getHours());
+                        $roomTable->addOrdered($order->id, $order->hours);
                     } if ($rtStatus == Order::ROOMTABLE_USED) {
-                        $roomTable->addUsed($order->id, $order->getHours());
+                        $roomTable->addUsed($order->id, $order->hours);
                     } 
                 }
             };
@@ -162,7 +164,7 @@ class RoomService extends Component {
                     $roomTable->addLocked($lock_id, $lock['hours']);
                 }
             }
-            
+            //codecept_debug($roomTable->toArray(['ordered','used','locked']));
             $roomTable->save();
 
             //重新查找，保证并发唯一

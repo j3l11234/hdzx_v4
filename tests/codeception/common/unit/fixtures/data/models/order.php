@@ -6,7 +6,7 @@ return [
     [
         'id' => 1,
         'date' => '2015-12-01',
-        'room_id' => 1,
+        'room_id' => 301,
         'hours' => json_encode([8,9,10]),
         'user_id' => '1',
         'managers' => json_encode([1,2]),
@@ -27,7 +27,27 @@ return [
     [
         'id' => 2,
         'date' => '2015-12-01',
-        'room_id' => 1,
+        'room_id' => 301,
+        'hours' => json_encode([11,12,13]),
+        'user_id' => '1',
+        'managers' => json_encode([1,2]),
+        'type' => Order::TYPE_AUTO,
+        'status' => Order::STATUS_AUTO_PENDING,
+        'submit_time' => 12312312,
+        'data' => json_encode([
+            'name' => '李鹏翔',
+            'student_no' => '12301119',
+            'phone' => '15612322',
+            'title' => '学习',
+            'content' => '学习',
+            'number' => '1',
+            'secure' => '做好了',
+        ]),
+    ],
+    [
+        'id' => 3,
+        'date' => '2015-12-01',
+        'room_id' => 404,
         'hours' => json_encode([11,12,13]),
         'user_id' => '1',
         'managers' => json_encode([1,2]),
@@ -47,7 +67,7 @@ return [
     [
         'id' => 20,
         'date' => '2015-12-02',
-        'room_id' => 1,
+        'room_id' => 301,
         'hours' => json_encode([8,9,10]),
         'user_id' => '1',
         'managers' => json_encode([1,2]),
@@ -67,7 +87,7 @@ return [
     [
         'id' => 21,
         'date' => '2015-12-02',
-        'room_id' => 1,
+        'room_id' => 301,
         'hours' => json_encode([14,15,16]),
         'user_id' => '1',
         'managers' => json_encode([1,2]),
@@ -87,7 +107,7 @@ return [
     [
         'id' => 30,
         'date' => '2015-12-03',
-        'room_id' => 1,
+        'room_id' => 301,
         'hours' => json_encode([8,9,10]),
         'user_id' => '1',
         'managers' => json_encode([1,2]),
@@ -107,7 +127,7 @@ return [
     [
         'id' => 31,
         'date' => '2015-12-03',
-        'room_id' => 1,
+        'room_id' => 301,
         'hours' => json_encode([14,15,16]),
         'user_id' => '1',
         'managers' => json_encode([1,2]),
@@ -127,7 +147,7 @@ return [
     [
         'id' => 40,
         'date' => '2015-12-04',
-        'room_id' => 1,
+        'room_id' => 301,
         'hours' => json_encode([8,9,10]),
         'user_id' => '1',
         'managers' => json_encode([1,2]),
@@ -147,7 +167,7 @@ return [
     [
         'id' => 41,
         'date' => '2015-12-04',
-        'room_id' => 1,
+        'room_id' => 301,
         'hours' => json_encode([14,15,16]),
         'user_id' => '1',
         'managers' => json_encode([1,2]),

@@ -17,7 +17,7 @@ class RoomTest extends DbTestCase {
         $modelData = [
             'number' => 405,
             'name' => '单技琴房2',
-            'type' => Room::TYPE_AUTO,
+            'type' => Room::TYPE_SIMPLE,
             'data' => [
                 'by_week' => 0, 
                 'max_before' => 15,

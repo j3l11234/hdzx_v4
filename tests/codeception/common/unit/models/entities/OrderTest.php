@@ -54,7 +54,7 @@ class OrderTest extends DbTestCase {
     }
 
     public function testFindByDateRoom() {
-        $orderList = Order::findByDateRoom('2015-12-01', 1);
+        $orderList = Order::findByDateRoom('2015-12-01', 301);
         expect('the count', count($orderList))->equals(2);
     }
 
@@ -64,7 +64,7 @@ class OrderTest extends DbTestCase {
         expect('exportData', $exportData)->equals([
             'id' => 1,
             'date' => '2015-12-01',
-            'room_id' => 1,
+            'room_id' => 301,
             'hours' => [8,9,10],
             'user_id' => '1',
             'managers' => [1,2],

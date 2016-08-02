@@ -4,10 +4,10 @@ use common\models\entities\Room;
 
 return [
     [
-        'id' => 1,
+        'id' => 301,
         'number' => 301,
         'name' => '多功能厅',
-        'type' => Room::TYPE_SCHOOL_AUTO,
+        'type' => Room::TYPE_ACTIVITY,
         'data' => json_encode([
             'by_week' => 1, 
             'max_before' => 14,
@@ -18,10 +18,10 @@ return [
         'align' => '1',
         'status' => Room::STATUS_OPEN,
     ],[
-        'id' => 2,
+        'id' => 302,
         'number' => 302,
         'name' => '小剧场',
-        'type' => Room::TYPE_SCHOOL_AUTO,
+        'type' => Room::TYPE_ACTIVITY,
         'data' => json_encode([
             'by_week' => 1, 
             'max_before' => 14,
@@ -32,10 +32,10 @@ return [
         'align' => '1',
         'status' => Room::STATUS_OPEN,
     ],[
-        'id' => 3,
+        'id' => 404,
         'number' => 404,
         'name' => '单技琴房1',
-        'type' => Room::TYPE_AUTO,
+        'type' => Room::TYPE_SIMPLE,
         'data' => json_encode([
             'by_week' => 0, 
             'max_before' => 15,

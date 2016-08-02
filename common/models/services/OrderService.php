@@ -32,7 +32,7 @@ class OrderService extends Component {
      */
     public static function submitOrder($order, $user) {
         $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
-
+        $order->managers = $user->managers;
         $connection = Yii::$app->db;
         $transaction = $connection->beginTransaction();
 
@@ -126,4 +126,55 @@ class OrderService extends Component {
         return $data;
     }
 
+    /**
+     * 查询单个用户的一周房间使用情况
+     * 优先使用缓存
+     *
+     * @param string $user_id 用户id
+     * @param data $date 查询时间
+     * @return json
+     */
+    public static function queryWeekUsage($user_id, $now = null) {
+        if (empty($now)) {
+            $now = time();
+        }
+        $weekDay = date('w', $now);
+        $start_date = date('Y-m-d', strtotime('-'.(($weekDay + 6) % 7).' days', $now));
+        $end_date = date('Y-m-d', strtotime((6 - ($weekDay + 6) % 7).' days', $now));
+
+        $cache = Yii::$app->cache;
+        $cacheKey = 'WeekUsage_'.$user_id.'_'.$start_date;
+        $data = $cache->get($cacheKey);
+        if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效'); 
+            $where = ['and'];
+            $where[] = ['>=', 'date', $start_date];
+            $where[] = ['<=', 'date', $end_date];
+            $where[] = ['=', 'user_id', $user_id];
+            $where[] = ['in', 'status', [
+                Order::STATUS_AUTO_PENDING, Order::STATUS_AUTO_APPROVED,
+                Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED,
+                Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED,
+            ]];
+            $where[] = ['=', 'status', Order::STATUS_PASSED];
+            $result = Order::find()->select(['id', 'room_id', 'hours'])->where($where)->all();
+
+            $usage = [];
+            foreach ($result as $order) {
+                $hours = $order->hours;
+                $room_id = (string)$order->room_id;
+                if (!isset($usage[$room_id])) {
+                    $usage[$room_id] = 0;
+                }
+                $usage[$room_id] += count($hours);
+            }
+            $data = $usage;
+            
+            $cache->set($cacheKey, $data);
+        } else {
+            Yii::trace($cacheKey.':缓存命中'); 
+        }
+        return $data;
+       
+    }
 }

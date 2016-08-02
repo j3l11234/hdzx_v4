@@ -131,6 +131,28 @@ class UserController extends Controller {
 
 
     /**
+     * 获取自动登录信息
+     *
+     * @return mixed
+     */
+    public function actionGetlogin() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        if (\Yii::$app->user->isGuest) {
+            $user = null;
+        }else {
+            $user = Yii::$app->user->getIdentity()->getUser()->toArray(['email', 'alias', 'privilege']);
+        }
+
+        return [
+            'error' => 0,
+            'user' => $user,
+        ];
+    }
+   
+
+
+    /**
      * 申请重设密码
      *
      * @return mixed

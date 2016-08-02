@@ -100,8 +100,6 @@ class OrderQueryForm extends Model {
             if(!in_array($room_id, $roomList) && !empty($this->rooms)){
                 continue;
             }
-
-            $roomTables[$room_id] = [];
             for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {
                 $date = date('Y-m-d', $time);
                 $roomTable = RoomService::queryRoomTable($date, $room_id);
@@ -110,7 +108,7 @@ class OrderQueryForm extends Model {
                     unset($roomTable['used']);
                     unset($roomTable['locked']);
                 }
-                $roomTables[$room_id][$date] = $roomTable;
+                $roomTables[$room_id.'_'.$date] = $roomTable;
             }
         }
 
@@ -133,7 +131,7 @@ class OrderQueryForm extends Model {
      */
     public function getRoomUse() {
         $data = RoomService::queryRoomTable($this->date, $this->room);
-
+        Yii::trace($data);
         $ordered = RoomTable::getTable($data['ordered']);
         $used = RoomTable::getTable($data['used']);
         $locked = RoomTable::getTable($data['locked']);

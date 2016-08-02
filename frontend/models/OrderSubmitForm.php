@@ -16,7 +16,6 @@ class OrderSubmitForm extends Model {
     public $date;
     public $room_id;
     public $hours;
-    
     public $name;
     public $phone;
     public $title;
@@ -24,8 +23,6 @@ class OrderSubmitForm extends Model {
     public $dept;
     public $number;
     public $secure;
-    
-    
 
     /**
      * @inheritdoc
@@ -41,7 +38,7 @@ class OrderSubmitForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios['submitOrder'] = ['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'dept', 'number', 'secure'];
+        $scenarios['submitOrder'] = ['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'number', 'secure'];
         return $scenarios;
     }
 
@@ -50,7 +47,7 @@ class OrderSubmitForm extends Model {
      */
     public function rules() {
         return [
-            [['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'dept', 'number', 'secure'], 'required'],
+            [['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
             [['date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['hours'], 'jsonValidator'],
         ];
@@ -85,31 +82,29 @@ class OrderSubmitForm extends Model {
                 break;
         }
         //验证日期
-        if(!$room->checkOpenSelf($this->date)){
-            $this->setErrorMessage('当前日期不在可预约范围内');
-            return false;
-        }
+        // if(!$room->checkOpenSelf($this->date)){
+        //     $this->setErrorMessage('当前日期不在可预约范围内');
+        //     return false;
+        // }
         $hours = json_decode($this->hours,true);
         
-
-        $dept = Department::findOne($this->dept);
-        if ($dept === null) {
-            $this->setErrorMessage('社团单位不存在');
-        }
         $room = Room::findOne($this->room_id);
         if ($room === null) {
             $this->setErrorMessage('房间不存在');
         }
-
+        if($user->isStudent()) {
+            $deptName = '';
+        } else {
+            $deptName = $user->alias;
+        }
         $order = new Order();
         $order->date = $this->date;
         $order->room_id = $this->room_id;
-        $order->user_id = $user->getLogicId();
-        $order->dept_id = $this->dept;
+        $order->user_id = $user->id;
         $order->type = $orderType;
         $order->status = Order::STATUS_INIT;
-        $order->setHours($hours);
-        $order->setOrderData([
+        $order->hours = $hours;
+        $order->data = [
             'name' => $this->name,
             'student_no' => $user->isStudent() ? $user->id : '',
             'phone' => $this->phone,
@@ -117,9 +112,9 @@ class OrderSubmitForm extends Model {
             'content' => $this->content,
             'number' => $this->number,
             'secure' => $this->secure,
-            'dept_name' => $dept->name,
+            'dept_name' => $deptName,
             'room_name' => $room->name.'('.$room->number.')',
-        ]);
+        ];
 
         OrderService::submitOrder($order, $user);
         return $order;

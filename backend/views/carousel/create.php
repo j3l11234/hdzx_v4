@@ -4,13 +4,13 @@ use yii\helpers\Html;
 
 
 /* @var $this yii\web\View */
-/* @var $model common\models\entities\Room */
+/* @var $model common\models\entities\Carousel */
 
-$this->title = 'Create Room';
-$this->params['breadcrumbs'][] = ['label' => 'Rooms', 'url' => ['index']];
+$this->title = 'Create Carousel';
+$this->params['breadcrumbs'][] = ['label' => 'Carousels', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="room-create">
+<div class="carousel-create">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

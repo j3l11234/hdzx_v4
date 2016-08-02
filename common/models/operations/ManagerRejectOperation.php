@@ -33,7 +33,7 @@ class ManagerRejectOperation extends BaseOrderOperation {
             if(!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
                 throw new OrderOperationException('该账户无负责人审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
             }else{
-                if(!$this->order->checkManager($this->user->id)){
+                if(!Order::checkManager($this->user->id, $this->order->managers)) {
                     throw new OrderOperationException('该账户对该预约无负责人审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
                 }
             }

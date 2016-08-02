@@ -43,6 +43,9 @@ class JsonBehavior extends Behavior {
      */
     public function arrayToJson($event) {
         foreach ($this->attributes as $attribute) {
+            if($this->owner->$attribute === null){
+                $this->owner->$attribute = [];
+            }
             $this->owner->$attribute = json_encode($this->owner->$attribute);
         }
     }

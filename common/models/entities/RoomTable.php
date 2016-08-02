@@ -113,6 +113,9 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public static function addTable($table, $id, $hours){
+        if (!is_array($table)) {
+            $table = [];
+        }
         if ($hours != null) {
             foreach ($hours as $hour) {
                 $hour = (string)$hour;
@@ -136,6 +139,9 @@ class RoomTable extends ActiveRecord {
      * @return null
      */
     public static function removeTable($table, $id) {
+        if (!is_array($table)) {
+            $table = [];
+        }
         foreach ($table as &$idList) {
             $index = array_search($id, $idList);
             if ($index !== false) {
@@ -153,6 +159,9 @@ class RoomTable extends ActiveRecord {
      * @return array idList
      */
     public static function getTable($table, $hours = null) {
+        if (!is_array($table)) {
+            $table = [];
+        }
         $idList = [];
         foreach ($table as $hour=>$hourTable) {
             if ($hours == null || in_array($hour, $hours)){

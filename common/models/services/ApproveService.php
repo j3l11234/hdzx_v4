@@ -64,7 +64,7 @@ class ApproveService extends Component {
                 $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED, Order::STATUS_MANAGER_REJECTED, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
                 if ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
                 } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
-                    $where[] = ['in', 'dept_id', $user->getApproveDeptList()];
+                    //$where[] = ['in', 'dept_id', $user->getApproveDeptList()];
                 } else {
                     throw new ApproveException('没有查询权限', ApproveException::AUTH_FAILED);
                 }
@@ -88,17 +88,27 @@ class ApproveService extends Component {
             $where[] = ['<=', 'date', $end_date];
         }
 
-        $result = Order::find()->select(['id'])->where($where)->all();
+        $result = Order::find()->select(['id', 'managers'])->where($where)->asArray()->all();
 
         $orderList = [];
         $orders = [];
-        foreach ($result as $key => $order) {
-            $order = OrderService::queryOneOrder($order->id);
-
-            $orderList[] = $order['id'];
-            $orders[$order['id']] = $order;
+        if ($type == static::TYPE_MANAGER) {
+            foreach ($result as $key => $order) {
+                if(!Order::checkManager($user->id, $order['managers'])) {
+                    continue;
+                }
+                $order = OrderService::queryOneOrder($order['id']);
+                $orderList[] = $order['id'];
+                $orders[$order['id']] = $order;
+            }
+        } else {
+            foreach ($result as $key => $order) {
+                $order = OrderService::queryOneOrder($order['id']);
+                $orderList[] = $order['id'];
+                $orders[$order['id']] = $order;
+            }
         }
-
+        
         $data = [
             'orderList' => $orderList,
             'orders' => $orders,

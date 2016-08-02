@@ -3,16 +3,16 @@
 namespace backend\controllers;
 
 use Yii;
-use common\models\entities\Room;
+use common\models\entities\Carousel;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 /**
- * RoomController implements the CRUD actions for Room model.
+ * CarouselController implements the CRUD actions for Carousel model.
  */
-class RoomController extends Controller
+class CarouselController extends Controller
 {
     /**
      * @inheritdoc
@@ -30,13 +30,13 @@ class RoomController extends Controller
     }
 
     /**
-     * Lists all Room models.
+     * Lists all Carousel models.
      * @return mixed
      */
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => Room::find(),
+            'query' => Carousel::find(),
         ]);
 
         return $this->render('index', [
@@ -45,7 +45,7 @@ class RoomController extends Controller
     }
 
     /**
-     * Displays a single Room model.
+     * Displays a single Carousel model.
      * @param integer $id
      * @return mixed
      */
@@ -57,13 +57,13 @@ class RoomController extends Controller
     }
 
     /**
-     * Creates a new Room model.
+     * Creates a new Carousel model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
     public function actionCreate()
     {
-        $model = new Room();
+        $model = new Carousel();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
@@ -75,7 +75,7 @@ class RoomController extends Controller
     }
 
     /**
-     * Updates an existing Room model.
+     * Updates an existing Carousel model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
@@ -94,7 +94,7 @@ class RoomController extends Controller
     }
 
     /**
-     * Deletes an existing Room model.
+     * Deletes an existing Carousel model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
@@ -107,15 +107,15 @@ class RoomController extends Controller
     }
 
     /**
-     * Finds the Room model based on its primary key value.
+     * Finds the Carousel model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
-     * @return Room the loaded model
+     * @return Carousel the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findModel($id)
     {
-        if (($model = Room::findOne($id)) !== null) {
+        if (($model = Carousel::findOne($id)) !== null) {
             return $model;
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');

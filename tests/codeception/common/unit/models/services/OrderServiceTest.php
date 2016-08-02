@@ -65,6 +65,10 @@ class OrderServiceTest extends DbTestCase {
         codecept_debug($depts);
     }
     
+    public function testqueryWeekUsage() {
+        OrderService::queryWeekUsage('1',  strtotime('2015-12-01'));
+    }
+
     /**
      * @inheritdoc
      */

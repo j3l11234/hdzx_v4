@@ -163,10 +163,11 @@ class Room extends ActiveRecord {
             'number' => '房间号',
             'name' => '房间名',
             'type' => '房间类型',
-            'info' => 'Info',
-            'align' => 'Align',
-            'open' => 'Open',
-            'updated_at' => 'Update Time',
+            'data' => '房间数据',
+            'align' => '排序',
+            'status' => '状态',
+            'updated_at' => '创建时间',
+            'updated_at' => '更新时间',
         ];
     }
 }

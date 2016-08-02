@@ -7,7 +7,10 @@ use tests\codeception\common\unit\DbTestCase;
 use Codeception\Specify;
 use common\models\entities\RoomTable;
 use common\models\services\RoomService;
+use tests\codeception\common\fixtures\OrderFixture;
+use tests\codeception\common\fixtures\OrderOperationFixture;
 use tests\codeception\common\fixtures\RoomTableFixture;
+use tests\codeception\common\fixtures\UserFixture;
 
 /**
  * Room table test
@@ -17,13 +20,13 @@ class RoomServiceTest extends DbTestCase {
     use Specify;
 
     public function testGetRoomTable() {
-        $roomTable = RoomService::getRoomTable('2016-01-01', 1);
-        expect('can find exist roomTable', $roomTable)->notNull();
+        // $roomTable = RoomService::getRoomTable('2016-01-01', 404,true,true);
+        // expect('can find exist roomTable', $roomTable)->notNull();
 
 
-        $roomTable = RoomService::getRoomTable('2016-01-01', 99);
+        $roomTable = RoomService::getRoomTable('2015-12-01', 404, true,true);
         expect('can find not exist roomTable', $roomTable)->notNull();
-        $this->tester->seeRecord(RoomTable::className(), ['date' => '2016-01-01', 'room_id' => '99']);
+        $this->tester->seeRecord(RoomTable::className(), ['date' => '2015-12-01', 'room_id' => '404']);
     }
 
     public function testApplyOrder() {
@@ -79,7 +82,19 @@ class RoomServiceTest extends DbTestCase {
         return [
             'room_table' => [
                 'class' => RoomTableFixture::className(),
-                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/entities/roomtable.php'
+                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/roomtable.php'
+            ],
+            'order_op' => [
+                'class' => OrderOperationFixture::className(),
+                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/order_op.php'
+            ],
+            'order' => [
+                'class' => OrderFixture::className(),
+                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/order.php'
+            ],
+            'user' => [
+                'class' => UserFixture::className(),
+                'dataFile' => '@tests/codeception/common/unit/fixtures/data/models/user.php'
             ],
         ];
     }

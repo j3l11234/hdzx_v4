@@ -177,10 +177,21 @@ class Order extends ActiveRecord {
      * 检查该order是否能被该用户审批
      *
      * @param string $user_id 用户id
+     * @param string/json $managers 用户id 
      * @return boolean 是否可以
      */
-    public function checkManager($user_id) {
-        return in_array($user_id, $this->managers);
+    public static function checkManager($user_id, $managers) {
+        if (is_array($managers)) {
+            return in_array($user_id, $managers);
+        }else if (is_numeric($managers)) {
+            return $user_id === $managers;
+        }else if (is_string($managers)) {
+            $managers = json_decode($managers);
+            if (!empty($managers)) {
+                return in_array($user_id, $managers);
+            }
+        }
+        return false;    
     }
 
     /**
