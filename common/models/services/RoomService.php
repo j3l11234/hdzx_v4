@@ -9,6 +9,7 @@ namespace common\models\services;
 
 use Yii;
 use yii\base\Component;
+use yii\caching\TagDependency;
 use common\exceptions\RoomTableException;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
@@ -33,7 +34,7 @@ class RoomService extends Component {
      */
     public static function queryRoomTable($date, $room_id) {
         $cache = Yii::$app->cache;
-        $cacheKey = RoomTable::getCacheKey($date, $room_id);
+        $cacheKey = 'RoomTable'.'_'.$date.'_'.$room_id;
         $data = $cache->get($cacheKey);
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效'); 
@@ -48,7 +49,7 @@ class RoomService extends Component {
             }
             $data['hourTable'] = $roomTable->getHourTable($hours);
             $data['chksum'] = substr(md5(json_encode($data)), 0, 6);
-            $cache->set($cacheKey, $data);
+            $cache->set($cacheKey, $data, 86400*7, new TagDependency(['tags' => $cacheKey]));
         } else {
             Yii::trace($cacheKey.':缓存命中'); 
         }

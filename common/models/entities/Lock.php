@@ -127,10 +127,6 @@ class Lock extends ActiveRecord {
         return $dateList;
     }
 
-    public static function getCacheKey($lock_id){
-        return 'Lock'.'_'.$lock_id;
-    }
-
     /**
      * @inheritdoc
      */

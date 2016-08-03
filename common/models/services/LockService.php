@@ -92,7 +92,7 @@ class LockService extends Component {
                 $dateList = self::queryLockDateList($lock['id']);
                 if (in_array($date, $dateList)) {
                     $lockList[] = $lock['id'];
-                    $tags[] = Lock::getCacheKey($lock['id']);
+                    $tags[] = 'Lock'.'_'.$lock['id'];
                 }
             }
 
@@ -151,9 +151,7 @@ class LockService extends Component {
                     $roomTable->save();
 
                     //清除缓存
-                    $cache = Yii::$app->cache;
-                    $cacheKey = RoomTable::getCacheKey($date, $room_id);
-                    $cache->delete($cacheKey);
+                    TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
                 }
             }
         }
@@ -168,7 +166,7 @@ class LockService extends Component {
      */
     public static function queryOneLock($lock_id) {
         $cache = Yii::$app->cache;
-        $cacheKey = Lock::getCacheKey($lock_id);
+        $cacheKey = 'Lock'.'_'.$lock_id;
         $data = $cache->get($cacheKey);
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效');
@@ -178,7 +176,7 @@ class LockService extends Component {
             $data = array_merge($data, $data['data']);
             unset($data['data']);
 
-            $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => Lock::getCacheKey($lock_id)]));
+            $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
         } else {
             Yii::trace($cacheKey.':缓存命中'); 
         }

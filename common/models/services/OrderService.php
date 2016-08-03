@@ -9,6 +9,7 @@ namespace common\models\services;
 
 use Yii;
 use yii\base\Component;
+use yii\caching\TagDependency;
 use common\exceptions\RoomTableException;
 use common\models\entities\Department;
 use common\models\entities\Order;
@@ -40,8 +41,10 @@ class OrderService extends Component {
             $order->save();
             $submitOp = new SubmitOperation($order, $user, $roomTable);
             $submitOp->doOperation();
-
             $transaction->commit();
+
+            //清除缓存
+            TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
         } catch (\Exception $e) {
             $transaction->rollBack();
             throw $e;
@@ -99,7 +102,7 @@ class OrderService extends Component {
      */
     public static function queryOneOrder($order_id) {
         $cache = Yii::$app->cache;
-        $cacheKey = Order::getCacheKey($order_id);
+        $cacheKey = 'Order'.'_'.$order_id;
         $data = $cache->get($cacheKey);
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效'); 
@@ -119,7 +122,7 @@ class OrderService extends Component {
             }
             $data['opList'] = $operationList;
             
-            $cache->set($cacheKey, $data);
+            $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
         } else {
             Yii::trace($cacheKey.':缓存命中'); 
         }

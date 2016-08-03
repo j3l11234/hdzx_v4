@@ -9,6 +9,7 @@ namespace common\models\services;
 
 use Yii;
 use yii\base\Component;
+use yii\caching\TagDependency;
 use common\exceptions\RoomTableException;
 use common\exceptions\ApproveException;
 use common\models\entities\Department;
@@ -92,7 +93,8 @@ class ApproveService extends Component {
 
         $orderList = [];
         $orders = [];
-        if ($type == static::TYPE_MANAGER) {
+        if ($type == static::TYPE_MANAGER && 
+            !$user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
             foreach ($result as $key => $order) {
                 if(!Order::checkManager($user->id, $order['managers'])) {
                     continue;
@@ -108,7 +110,6 @@ class ApproveService extends Component {
                 $orders[$order['id']] = $order;
             }
         }
-        
         $data = [
             'orderList' => $orderList,
             'orders' => $orders,
@@ -212,9 +213,8 @@ class ApproveService extends Component {
             $transaction->commit();
 
             //清除缓存
-            $cache = Yii::$app->cache;
-            $cacheKey = Order::getCacheKey($order->id);
-            $cache->delete($cacheKey);
+            TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
+            TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
         } catch (\Exception $e) {
             $transaction->rollBack();
             throw $e;

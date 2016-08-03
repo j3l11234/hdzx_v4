@@ -152,10 +152,6 @@ class Order extends ActiveRecord {
         return 'ver';
     }
 
-    public static function getCacheKey($order_id){
-        return 'Order'.'_'.$order_id;
-    }
-
     /**
      * 通过日期和房间查找预约
      *

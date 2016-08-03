@@ -88,10 +88,6 @@ class RoomTable extends ActiveRecord {
         return $this->useOptimisticLock ? 'ver' : null;
     }
 
-    public static function getCacheKey($date, $room_id){
-        return 'RoomTable'.'_'.$date.'_'.$room_id;
-    }
-
     /**
      * 通过日期和房间查找时间表
      *
