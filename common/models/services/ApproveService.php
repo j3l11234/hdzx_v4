@@ -220,4 +220,31 @@ class ApproveService extends Component {
             throw $e;
         }
     }
+
+    /**
+     * 自动审批-负责人自动驳回
+     *
+     * @param Order $order 预约
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function autoApprove1() {
+        $where = ['and'];
+        $where[] = ['in', 'room_id', [403,440,441,603,301,302]];
+        $where[] = ['=', 'type', Order::TYPE_TWICE];
+        $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING]];
+        $now = time();
+        $month = date("m", $now);
+        $year = date("Y", $now);
+        $day = date("d", $now);
+        $where[] = ['>=', 'date', date("y-m-d", $now)];
+        $where[] = ['<', 'submit_time', mktime(0, 0, 0, $month, $day - 1, $year)];
+        $result = Order::find()->where($where)->orderBy('submit_time')->all();
+
+        $user = UserService::findIdentity(1)->getUser();
+        foreach ($result as $order) {
+            Yii::info('自动审批:负责人驳回Order'.$order->id);
+            static::rejectOrder($order, $user, static::TYPE_MANAGER, '超时自动驳回');
+        }
+    }
 }

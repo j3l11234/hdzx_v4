@@ -219,6 +219,16 @@ class ApproveController extends Controller
         return $data;
     }
 
-
+    /**
+     * 自动审批-负责人驳回
+     *
+     * @return mixed
+     */
+    public function actionAutoapprove1() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        $data = ApproveService::autoApprove1();
+        return $data;
+    }
     
 }
