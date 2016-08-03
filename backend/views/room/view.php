@@ -26,13 +26,14 @@ $this->params['breadcrumbs'][] = $this->title;
     </p>
 
     <?= DetailView::widget([
+        'formatter' => ['class' => 'backend\helper\Formatter'],
         'model' => $model,
         'attributes' => [
             'id',
             'number',
             'name',
             'type',
-            'data:ntext',
+            'data:json:数据',
             'align',
             'status',
             'created_at',
