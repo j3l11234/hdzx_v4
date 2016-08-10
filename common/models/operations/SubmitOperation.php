@@ -9,7 +9,7 @@ namespace common\models\operations;
 
 use Yii;
 use yii\base\Component;
-use common\exceptions\OrderOperationException;
+use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
 use common\models\services\RoomService;
@@ -34,7 +34,7 @@ class SubmitOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_INIT){
-            throw new OrderOperationException('预约状态异常', BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
+            throw new OrderOperationException('预约状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 
@@ -53,8 +53,8 @@ class SubmitOperation extends BaseOrderOperation {
      */
     protected function setPostStatus() {
         $this->order->submit_time = time();
-        if($this->order->type == Order::TYPE_AUTO){ //自动审批
-            $this->order->status = Order::STATUS_AUTO_PENDING;
+        if($this->order->type == Order::TYPE_SIMPLE){ //自动审批
+            $this->order->status = Order::STATUS_SIMPLE_PENDING;
         } else if($this->order->type == Order::TYPE_TWICE) { //二级审批
             $this->order->status = Order::STATUS_MANAGER_PENDING;
         } else {

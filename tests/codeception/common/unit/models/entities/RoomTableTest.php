@@ -28,10 +28,8 @@ class RoomTableTest extends DbTestCase {
             ],
             'locked' => [],
         ];
-
         $roomTable = new RoomTable();
         $roomTable->load($modelData,'');
-
         expect('save()', $roomTable->save())->true();
 
         $newRoomTable = RoomTable::findOne($roomTable->getPrimaryKey());
@@ -40,6 +38,29 @@ class RoomTableTest extends DbTestCase {
         expect('room->ordered', $newRoomTable->ordered)->equals($modelData['ordered']);
         expect('room->used', $newRoomTable->used)->equals($modelData['used']);
         expect('room->locked ', $newRoomTable->locked)->equals($modelData['locked']);
+    }
+
+    public function testFields() {
+        $modelData = [
+            'date' => '2015-12-01',
+            'room_id' => '1',
+            'ordered' => [
+                "11" => [2],
+                "12" => [2],
+                "13" => [2],
+            ],
+            'used' => [
+                "8" => [1],
+                "9" => [1],
+                "10" => [1],
+            ],
+            'locked' => [],
+        ];
+        $roomTable = new RoomTable();
+        $roomTable->load($modelData,'');
+
+        $exportData = $roomTable->toArray(['date', 'room_id', 'ordered', 'used', 'locked']);
+        expect('exportData', $exportData)->equals($modelData);
     }
 
     public function testAddTable() {
@@ -58,7 +79,6 @@ class RoomTableTest extends DbTestCase {
             ],
             'locked' => [],
         ];
-
         $roomTable = new RoomTable();
         $roomTable->load($modelData,'');
 
@@ -114,7 +134,6 @@ class RoomTableTest extends DbTestCase {
                 "11" => [8],
             ],
         ];
-
         $roomTable = new RoomTable();
         $roomTable->load($modelData,'');
 
@@ -170,7 +189,6 @@ class RoomTableTest extends DbTestCase {
                 "11" => [8],
             ],
         ];
-
         $roomTable = new RoomTable();
         $roomTable->load($modelData,'');
 

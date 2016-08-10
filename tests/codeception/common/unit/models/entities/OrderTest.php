@@ -31,17 +31,14 @@ class OrderTest extends DbTestCase {
                 'content' => '学习',
                 'number' => '1',
                 'secure' => '做好了',
-            ]
+            ],
+            'issue_time' => '1',
         ];
-        
-
         $order = new Order();
         $order->load($modelData, '');
-
         expect('save()', $order->save())->true();
 
         $newOrder = Order::findOne($order->getPrimaryKey());
-
         expect('order->date', $newOrder->date)->equals($modelData['date']);
         expect('order->room_id', $newOrder->room_id)->equals($modelData['room_id']);
         expect('order->user_id', $newOrder->user_id)->equals($modelData['user_id']);
@@ -50,26 +47,19 @@ class OrderTest extends DbTestCase {
         expect('order->submit_time', $newOrder->submit_time)->equals($modelData['submit_time']);
         expect('order->hours', $newOrder->hours)->equals($modelData['hours']);
         expect('order->managers', $newOrder->managers)->equals($modelData['managers']);
-        expect('order->data', $newOrder->data)->equals($modelData['data']);      
-    }
-
-    public function testFindByDateRoom() {
-        $orderList = Order::findByDateRoom('2015-12-01', 301);
-        expect('the count', count($orderList))->equals(2);
+        expect('order->data', $newOrder->data)->equals($modelData['data']);
+        expect('order->issue_time', $newOrder->issue_time)->equals($modelData['issue_time']);      
     }
 
     public function testFields() {
-        $order = Order::findOne(1);
-        $exportData = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'managers', 'type', 'status', 'submit_time', 'data', 'issue_time']);
-        expect('exportData', $exportData)->equals([
-            'id' => 1,
-            'date' => '2015-12-01',
-            'room_id' => 301,
+        $modelData = [
+            'date' => '2015-01-03',
+            'room_id' => '99',
             'hours' => [8,9,10],
             'user_id' => '1',
             'managers' => [1,2],
-            'type' => Order::TYPE_AUTO,
-            'status' => Order::STATUS_PASSED,
+            'type' => '1',
+            'status' => '1',
             'submit_time' => 12312312,
             'data' => [
                 'name' => '李鹏翔',
@@ -80,15 +70,25 @@ class OrderTest extends DbTestCase {
                 'number' => '1',
                 'secure' => '做好了',
             ],
-            'issue_time' => 123123132,
-        ]);
+            'issue_time' => '1',
+        ];
+        $order = new Order();
+        $order->load($modelData, '');
+
+        $exportData = $order->toArray(['date', 'room_id', 'hours', 'user_id', 'managers', 'type', 'status', 'submit_time', 'data', 'issue_time']);
+        expect('exportData', $exportData)->equals($modelData);
+    }
+
+    public function testFindByDateRoom() {
+        $orderList = Order::findByDateRoom('2015-12-01', 301);
+        expect('the count', count($orderList))->equals(2);
     }
 
     public function testCheckManager() {
-        $order = Order::findOne(1);
-        expect('user_id=1', $order->checkManager(1))->true();
-        expect('user_id=2', $order->checkManager(2))->true();
-        expect('user_id=3', $order->checkManager(3))->false();
+        $managers = [1,2];
+        expect('user_id=1', Order::checkManager(1, $managers))->true();
+        expect('user_id=2', Order::checkManager(2, $managers))->true();
+        expect('user_id=3', Order::checkManager(3, $managers))->false();
     }
 
     /**

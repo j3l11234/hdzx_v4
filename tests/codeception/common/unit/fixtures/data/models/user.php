@@ -12,7 +12,7 @@ return [
         'email' => 'admin@admin.com',
         'alias' => '管理员',
         'managers' => '[1]',
-        'privilege' => (User::PRIV_ADMIN ^ User::PRIV_APPROVE_MANAGER_DEPT ^ User::PRIV_APPROVE_MANAGER_ALL ^ User::PRIV_APPROVE_SCHOOL ^ User::PRIV_APPROVE_AUTO),
+        'privilege' => (User::PRIV_ADMIN ^ User::PRIV_APPROVE_MANAGER_DEPT ^ User::PRIV_APPROVE_MANAGER_ALL ^ User::PRIV_APPROVE_SCHOOL ^ User::PRIV_APPROVE_SIMPLE),
         'status' => User::STATUS_ACTIVE,
         'created_at' => 1450067555,
         'updated_at' => 1450067555,

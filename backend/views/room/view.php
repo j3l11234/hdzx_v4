@@ -26,7 +26,7 @@ $this->params['breadcrumbs'][] = $this->title;
     </p>
 
     <?= DetailView::widget([
-        'formatter' => ['class' => 'backend\helper\Formatter'],
+        'formatter' => ['class' => 'backend\helpers\Formatter'],
         'model' => $model,
         'attributes' => [
             'id',

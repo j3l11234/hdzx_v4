@@ -80,16 +80,12 @@ class Room extends ActiveRecord {
      */
     public function rules() {
         return [
-            [['number', 'name', 'type','status'], 'required'],
-            [['number', 'align'], 'integer'],
-            [['data', 'align'], 'safe'],
-            // [['type'], 'in', 'range' => [self::TYPE_AUTO, self::TYPE_TWICE, self::TYPE_SCHOOL_AUTO]],
-            // [['status'], 'in', 'range' => [self::STATUS_CLOSE, self::STATUS_OPEN]],
+            [['id', 'number', 'name', 'type', 'data', 'align', 'status'], 'safe'],
         ];
     }
 
     /**
-     * 得到允许申请的日期
+     * 得到开放的日期范围
      *
      * @param int $max_before 最大提前日期
      * @param int $min_before 最小提前日期
@@ -152,22 +148,5 @@ class Room extends ActiveRecord {
             ->where(['status' => self::STATUS_OPEN])
             ->orderBy('align')
             ->all();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels() {
-        return [
-            'id' => 'ID',
-            'number' => '房间号',
-            'name' => '房间名',
-            'type' => '房间类型',
-            'data' => '房间数据',
-            'align' => '排序',
-            'status' => '状态',
-            'updated_at' => '创建时间',
-            'updated_at' => '更新时间',
-        ];
     }
 }

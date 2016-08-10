@@ -29,49 +29,49 @@ class RoomServiceTest extends DbTestCase {
         $this->tester->seeRecord(RoomTable::className(), ['date' => '2015-12-01', 'room_id' => '404']);
     }
 
-    public function testApplyOrder() {
-        $roomTable = RoomService::getRoomTable('2016-01-01', 1);
-        expect('can find exist roomTable', $roomTable)->notNull();
-        RoomService::applyOrder($roomTable, 1, [8,9,10], false);
-        $this->tester->seeRecord(RoomTable::className(), ['date' => '2016-01-01', 'room_id' => '1', 'ordered' => json_encode([
-            '8' => [1],
-            '9' => [1],
-            '10' => [1],
-        ])]);
+    // public function testApplyOrder() {
+    //     $roomTable = RoomService::getRoomTable('2016-01-01', 1);
+    //     expect('can find exist roomTable', $roomTable)->notNull();
+    //     RoomService::applyOrder($roomTable, 1, [8,9,10], false);
+    //     $this->tester->seeRecord(RoomTable::className(), ['date' => '2016-01-01', 'room_id' => '1', 'ordered' => json_encode([
+    //         '8' => [1],
+    //         '9' => [1],
+    //         '10' => [1],
+    //     ])]);
 
-        RoomService::applyOrder($roomTable, 2, [10,11,12], false);
-        $this->tester->seeRecord(RoomTable::className(), ['date' => '2016-01-01', 'room_id' => '1', 'ordered' => json_encode([
-            '8' => [1],
-            '9' => [1],
-            '10' => [1,2],
-            '11' => [2],
-            '12' => [2],
-        ])]);
+    //     RoomService::applyOrder($roomTable, 2, [10,11,12], false);
+    //     $this->tester->seeRecord(RoomTable::className(), ['date' => '2016-01-01', 'room_id' => '1', 'ordered' => json_encode([
+    //         '8' => [1],
+    //         '9' => [1],
+    //         '10' => [1,2],
+    //         '11' => [2],
+    //         '12' => [2],
+    //     ])]);
 
-        RoomService::applyOrder($roomTable, 1, [], false);
-        $this->tester->seeRecord(RoomTable::className(), ['date' => '2016-01-01', 'room_id' => '1', 'ordered' => json_encode([
-            '8' => [],
-            '9' => [],
-            '10' => [2],
-            '11' => [2],
-            '12' => [2],
-        ])]);
-    }
+    //     RoomService::applyOrder($roomTable, 1, [], false);
+    //     $this->tester->seeRecord(RoomTable::className(), ['date' => '2016-01-01', 'room_id' => '1', 'ordered' => json_encode([
+    //         '8' => [],
+    //         '9' => [],
+    //         '10' => [2],
+    //         '11' => [2],
+    //         '12' => [2],
+    //     ])]);
+    // }
 
-    public function testQueryRoomTable(){
-        $roomTable = RoomService::queryRoomTable('2015-01-02', 2);
-        codecept_debug($roomTable);
-    }
+    // public function testQueryRoomTable(){
+    //     $roomTable = RoomService::queryRoomTable('2015-01-02', 2);
+    //     codecept_debug($roomTable);
+    // }
 
-    public function testQueryRoomList() {
-        $rooms = RoomService::queryRoomList();
-        codecept_debug($rooms);
-    }
+    // public function testQueryRoomList() {
+    //     $rooms = RoomService::queryRoomList();
+    //     codecept_debug($rooms);
+    // }
 
-    public function testQueryDateRange() {
-        $range = RoomService::queryDateRange();
-        codecept_debug($range);
-    }
+    // public function testQueryDateRange() {
+    //     $range = RoomService::queryDateRange();
+    //     codecept_debug($range);
+    // }
     
 
     /**

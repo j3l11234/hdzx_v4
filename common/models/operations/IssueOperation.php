@@ -9,7 +9,7 @@ namespace common\models\operations;
 
 use Yii;
 use yii\base\Component;
-use common\exceptions\OrderOperationException;
+use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
 use common\models\entities\User;
@@ -30,7 +30,7 @@ class AutoRevokeOperation extends BaseOrderOperation {
      */
     protected function checkAuth() {
         if (!$this->user->checkPrivilege(User::PRIV_TYPE_ISSUE)) {
-            throw new OrderOperationException('该账户无开门条发放权限', BaseOrderOperation::ERROR_AUTH_FAILED);
+            throw new \Exception('该账号无开门条发放权限', Error::AUTH_FAILED);
         }
     }
 
@@ -39,7 +39,7 @@ class AutoRevokeOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != STATUS_PASSED){
-            throw new OrderOperationException('预约状态异常', BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
+            throw new \Exception('当前申请不可发放开门条', Error::INVALID_ORDER_STATUS);
         }
     }
 
@@ -47,21 +47,21 @@ class AutoRevokeOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkRoomTable() {
-        return;
+
     }
 
     /**
      * @inheritdoc
      */
     protected function applyRoomTable() {
-        return;
+        
     }
 
     /**
      * @inheritdoc
      */
     protected function setPostStatus() {
-        return;
+        
     }
 
 }

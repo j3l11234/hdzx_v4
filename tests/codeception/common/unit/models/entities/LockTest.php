@@ -14,7 +14,6 @@ class LockTest extends DbTestCase {
 
     public function testRW() {
         $modelData = [
-            'id' => 1,
             'rooms' => [301,302,603,403,404,405,406,407,408,409,414,415,440,441],
             'hours' => [12,13],
             'start_date' => '2016-01-01',
@@ -44,10 +43,7 @@ class LockTest extends DbTestCase {
     }
 
     public function testFields() {
-        $lock = Lock::findOne(1);
-        $exportData = $lock->toArray(['id', 'rooms', 'hours', 'start_date', 'end_date', 'status', 'data']);
-        expect('exportData', $exportData)->equals([
-            'id' => 1,
+        $modelData = [
             'rooms' => [301,302,603,403,404,405,406,407,408,409,414,415,440,441],
             'hours' => [12,13],
             'start_date' => '2016-01-01',
@@ -59,7 +55,12 @@ class LockTest extends DbTestCase {
                 'title' => '中午休息',
                 'comment' => '规定！',
             ],
-        ]);
+        ];
+
+        $lock = new Lock();
+        $lock->load($modelData, '');
+        $exportData = $lock->toArray(['rooms', 'hours', 'start_date', 'end_date', 'status', 'data']);
+        expect('exportData', $exportData)->equals($modelData);
     }
 
     public function testGetDateList() {
@@ -73,6 +74,8 @@ class LockTest extends DbTestCase {
         $dateList = Lock::getDateList(Lock::LOOP_WEEK, 2, '2016-01-06', '2016-01-31');
         expect('$dateList', $dateList)->equals(['2016-01-12', '2016-01-19', '2016-01-26']);
 
+        $dateList = Lock::getDateList(Lock::LOOP_MONTH, 15, '2016-01-01', '2016-05-31');
+        expect('$dateList', $dateList)->equals(['2016-01-15', '2016-02-15', '2016-03-15', '2016-04-15','2016-05-15']);
         $dateList = Lock::getDateList(Lock::LOOP_MONTH, 31, '2016-01-01', '2016-05-31');
         expect('$dateList', $dateList)->equals(['2016-01-31', '2016-03-31', '2016-05-31']);
     }

@@ -8,9 +8,10 @@
 namespace common\models\operations;
 
 use Yii;
-use common\exceptions\OrderOperationException;
+use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
+use common\models\entities\User;
 use common\models\services\RoomService;
 
 /**
@@ -23,12 +24,12 @@ class CancelOperation extends BaseOrderOperation {
     protected static $opName = '取消预约';
 
     /**
-     * 检查用户权限
-     * @throws OrderOperationException 如果出现错误
+     * @inheritdoc
      */
     protected function checkAuth() {
-        if ($this->user->id != $this->order->user_id) {
-            throw new OrderOperationException('该账户不能取消此预约', BaseOrderOperation::ERROR_AUTH_FAILED);
+        if (!$this->user->checkPrivilege(User::PRIV_ADMIN) &&
+            $this->user->id != $this->order->user_id) {
+            throw new \Exception('该账号无权取消此申请', Error::AUTH_FAILED);
         }
     }
 

@@ -18,7 +18,7 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'type')->textInput() ?>
 
-    <?= $form->field($model, 'data', ['class' => 'backend\helper\ActiveField'])->textarea(['rows' => 6]) ?>
+    <?= $form->field($model, 'data', ['class' => 'backend\helpers\ActiveField'])->textarea(['rows' => 6]) ?>
 
     <?= $form->field($model, 'align')->textInput() ?>
 

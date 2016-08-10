@@ -16,8 +16,6 @@ use common\behaviors\JsonBehavior;
  * Order
  * 预约
  *
- * 预约状态是有重复的，比如校级审批通过和自动审批通过都是审批通过。
- *
  * @property integer $id
  * @property date $date 申请日期
  * @property integer $room_id 房间id
@@ -70,22 +68,22 @@ class Order extends ActiveRecord {
      */
     const STATUS_SCHOOL_REJECTED    = 22;
     /**
-     * 预约状态 自动待审批
+     * 预约状态 琴房待审批
      */
-    const STATUS_AUTO_PENDING       = 30;
+    const STATUS_SIMPLE_PENDING       = 30;
     /**
-     * 预约状态 自动通过
+     * 预约状态 琴房通过
      */
-    const STATUS_AUTO_APPROVED      = 02;
+    const STATUS_SIMPLE_APPROVED      = 02;
     /**
-     * 预约状态 自动驳回
+     * 预约状态 琴房驳回
      */
-    const STATUS_AUTO_REJECTED      = 32;
+    const STATUS_SIMPLE_REJECTED      = 32;
 
     /**
-     * 预约类型 自动审批预约
+     * 预约类型 琴房审批预约
      */
-    const TYPE_AUTO     = 1;
+    const TYPE_SIMPLE     = 1;
     /**
      * 预约状态 二级审批预约
      */
@@ -133,15 +131,7 @@ class Order extends ActiveRecord {
     public function rules()
     {
         return [
-            [['date', 'user_id', 'room_id', 'type', 'status'], 'required'],
-            [['hours', 'data','managers'], 'safe'],
-            [['room_id', 'submit_time', 'issue_time'], 'integer'],
-            [['status'], 'in', 'range' => [
-                self::STATUS_INIT, self::STATUS_PASSED, self::STATUS_CANCELED,
-                self::STATUS_MANAGER_PENDING, self::STATUS_MANAGER_APPROVED, self::STATUS_MANAGER_REJECTED,
-                self::STATUS_SCHOOL_PENDING, self::STATUS_SCHOOL_APPROVED, self::STATUS_SCHOOL_REJECTED,
-                self::STATUS_AUTO_PENDING, self::STATUS_AUTO_APPROVED, self::STATUS_AUTO_REJECTED]],
-            [['type'], 'in', 'range' => [self::TYPE_AUTO, self::TYPE_TWICE]],
+            [['id', 'date', 'room_id', 'hours', 'user_id', 'managers', 'type', 'status', 'submit_time', 'data', 'issue_time'], 'safe'],
         ];
     }
 
@@ -202,24 +192,21 @@ class Order extends ActiveRecord {
             $status == self::STATUS_CANCELED ||
             $status == self::STATUS_MANAGER_REJECTED ||
             $status == self::STATUS_SCHOOL_REJECTED ||
-            $status == self::STATUS_AUTO_REJECTED ) {
+            $status == self::STATUS_SIMPLE_REJECTED ) {
 
             $roomTableStatus = self::ROOMTABLE_NONE;
-
         } else if ($status == self::STATUS_MANAGER_PENDING ||
             $status == self::STATUS_MANAGER_APPROVED ||
             $status == self::STATUS_SCHOOL_PENDING ||
-            $status == self::STATUS_AUTO_PENDING ) {
+            $status == self::STATUS_SIMPLE_PENDING ) {
 
             $roomTableStatus = self::ROOMTABLE_ORDERED;
-
         } else if ($status == self::STATUS_PASSED ||
             $status == self::STATUS_SCHOOL_APPROVED ||
-            $status == self::STATUS_AUTO_APPROVED) {
+            $status == self::STATUS_SIMPLE_APPROVED) {
 
             $roomTableStatus = self::ROOMTABLE_USED;
         }
-
         return $roomTableStatus;
     }
 }

@@ -9,7 +9,7 @@ namespace common\models\operations;
 
 use Yii;
 use yii\base\Component;
-use common\exceptions\OrderOperationException;
+use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
 use common\models\entities\User;
@@ -31,10 +31,10 @@ class ManagerRejectOperation extends BaseOrderOperation {
     protected function checkAuth() {
         if (!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
             if(!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
-                throw new OrderOperationException('该账户无负责人审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
+                throw new OrderOperationException('该账号无负责人审批权限', Error::AUTH_FAILED);
             }else{
                 if(!Order::checkManager($this->user->id, $this->order->managers)) {
-                    throw new OrderOperationException('该账户对该预约无负责人审批权限', BaseOrderOperation::ERROR_AUTH_FAILED);
+                    throw new OrderOperationException('该账号对该预约无负责人审批权限', Error::AUTH_FAILED);
                 }
             }
         }
@@ -45,7 +45,7 @@ class ManagerRejectOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_MANAGER_PENDING){
-            throw new OrderOperationException('预约状态异常', BaseOrderOperation::ERROR_INVALID_ORDER_STATUS);
+            throw new OrderOperationException('预约状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 

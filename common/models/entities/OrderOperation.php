@@ -68,17 +68,17 @@ class OrderOperation extends ActiveRecord {
      */
     const TYPE_SCHOOL_REVOKE    = 22;
       /**
-     * 操作类型 自动审批通过
+     * 操作类型 琴房审批通过
      */
-    const TYPE_AUTO_APPROVE    = 30;
+    const TYPE_SIMPLE_APPROVE    = 30;
     /**
-     * 操作类型 自动审批驳回
+     * 操作类型 琴房审批驳回
      */
-    const TYPE_AUTO_REJECT    = 31;
+    const TYPE_SIMPLE_REJECT    = 31;
     /**
-     * 操作类型 自动审批撤回
+     * 操作类型 琴房审批撤回
      */
-    const TYPE_AUTO_REVOKE      = 32;
+    const TYPE_SIMPLE_REVOKE      = 32;
      /**
      * 操作类型 发放开门条
      */
@@ -96,14 +96,7 @@ class OrderOperation extends ActiveRecord {
      */
     public function rules() {
         return [
-            [['order_id', 'user_id', 'type'], 'required'],
-            [['data'], 'safe'],
-            [['order_id'], 'integer'],
-            [['type'], 'in', 'range' => [
-                self::TYPE_SUBMIT, self::TYPE_CHANGE_HOUR, self::TYPE_CANCEL, 
-                self::TYPE_MANAGER_APPROVE, self::TYPE_MANAGER_REJECT, self::TYPE_MANAGER_REVOKE, 
-                self::TYPE_SCHOOL_APPROVE, self::TYPE_SCHOOL_REJECT, self::TYPE_SCHOOL_REVOKE, 
-                self::TYPE_AUTO_APPROVE, self::TYPE_AUTO_REJECT, self::TYPE_AUTO_REVOKE, self::TYPE_ISSUE]],
+            [['id', 'order_id', 'user_id', 'time', 'type', 'data'], 'safe'],
         ];
     }
 
@@ -121,21 +114,6 @@ class OrderOperation extends ActiveRecord {
                 'attributes' => ['data'],
             ],
 
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels() {
-        return [
-            'id' => 'ID',
-            'order_id' => 'Order ID',
-            'user_id' => 'User ID',
-            'student_id' => 'Student ID',
-            'time' => 'Time',
-            'type' => 'Type',
-            'data' => 'Data',
         ];
     }
 }

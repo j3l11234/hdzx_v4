@@ -84,9 +84,7 @@ class Lock extends ActiveRecord {
      */
     public function rules() {
         return [
-            [['status', 'start_date', 'end_date'], 'required'],
-            [['rooms', 'hours', 'data'], 'safe'],
-            [['status'], 'in', 'range' => [self::STATUS_ENABLE, self::STATUS_DISABLE]],
+            [['id', 'rooms', 'hours', 'start_date', 'end_date', 'status', 'data'], 'safe'],
         ];
     }
 
@@ -125,21 +123,5 @@ class Lock extends ActiveRecord {
             }
         }
         return $dateList;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels() {
-        return [
-            'id' => 'ID',
-            'number' => '房间号',
-            'name' => '房间名',
-            'type' => '房间类型',
-            'info' => 'Info',
-            'align' => 'Align',
-            'open' => 'Open',
-            'updated_at' => 'Update Time',
-        ];
     }
 }

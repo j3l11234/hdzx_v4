@@ -52,7 +52,7 @@ class ApproveServiceTest extends DbTestCase {
         ApproveService::approveOrder($order, $user, ApproveService::TYPE_AUTO, "测试批注");
 
         $newOrder = Order::findOne($order->id);
-        expect('$order->status', $newOrder->status)->equals(Order::STATUS_AUTO_APPROVED);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_SIMPLE_APPROVED);
 
     }
 
@@ -78,7 +78,7 @@ class ApproveServiceTest extends DbTestCase {
         ApproveService::rejectOrder($order, $user, ApproveService::TYPE_AUTO);
 
         $newOrder = Order::findOne($order->id);
-        expect('$order->status', $newOrder->status)->equals(Order::STATUS_AUTO_REJECTED);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_SIMPLE_REJECTED);
             
     }
 

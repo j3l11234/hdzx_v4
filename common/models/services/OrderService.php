@@ -155,7 +155,7 @@ class OrderService extends Component {
             $where[] = ['<=', 'date', $end_date];
             $where[] = ['=', 'user_id', $user_id];
             $where[] = ['in', 'status', [
-                Order::STATUS_AUTO_PENDING, Order::STATUS_AUTO_APPROVED,
+                Order::STATUS_SIMPLE_PENDING, Order::STATUS_SIMPLE_APPROVED,
                 Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED,
                 Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED,
             ]];

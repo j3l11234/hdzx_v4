@@ -98,7 +98,7 @@ class SubmitOperationTest extends DbTestCase {
             throw $e;    
         }
         $newOrder = Order::findOne($order->id);
-        expect('$order->status', $newOrder->status)->equals(Order::STATUS_AUTO_PENDING);
+        expect('$order->status', $newOrder->status)->equals(Order::STATUS_SIMPLE_PENDING);
 
         $orderOp = OrderOperation::findOne([
             'order_id' => $order->id,

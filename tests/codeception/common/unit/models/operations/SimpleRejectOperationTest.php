@@ -9,7 +9,7 @@ use common\models\entities\OrderOperation;
 use common\models\entities\RoomTable;
 use common\models\entities\User;
 use common\models\operations\BaseOrderOperation;
-use common\models\operations\AutoApproveOperation;
+use common\models\operations\SimpleRejectOperation;
 use common\models\services\RoomService;
 use common\models\services\UserService;
 use tests\codeception\common\fixtures\OrderFixture;
@@ -21,7 +21,7 @@ use tests\codeception\common\unit\DbTestCase;
 /**
  * OrderOperation test
  */
-class AutoApproveOperationTest extends DbTestCase {
+class SimpleRejectOperationTest extends DbTestCase {
 
     public function testCheckAuth() {
         //认证异常
@@ -33,7 +33,7 @@ class AutoApproveOperationTest extends DbTestCase {
         $connection = Yii::$app->db;
         $transaction=$connection->beginTransaction();
  
-        $submitOp = new AutoApproveOperation($order, $user, $roomTable);
+        $submitOp = new SimpleRejectOperation($order, $user, $roomTable);
         try {
             $submitOp->doOperation();
             expect('should throw exception', false)->true();
@@ -54,7 +54,7 @@ class AutoApproveOperationTest extends DbTestCase {
         $connection = Yii::$app->db;
         $transaction=$connection->beginTransaction();  
 
-        $submitOp = new AutoApproveOperation($order, $user, $roomTable);
+        $submitOp = new SimpleRejectOperation($order, $user, $roomTable);
         try {
             $submitOp->doOperation();
             expect('should throw exception', false)->true();
@@ -65,11 +65,11 @@ class AutoApproveOperationTest extends DbTestCase {
         }
 
          $newOrder = Order::findOne($order->id);
-         expect('order->status should be STATUS_INIT', $newOrder->status)->equals(Order::STATUS_AUTO_PENDING);
+         expect('order->status should be STATUS_INIT', $newOrder->status)->equals(Order::STATUS_SIMPLE_PENDING);
     }
 
     public function testOperation() {
-        //状态正常
+        //正常
         $order = Order::findOne(40);
         $user = UserService::findIdentity(1)->getUser();
         $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
@@ -77,7 +77,7 @@ class AutoApproveOperationTest extends DbTestCase {
         $connection = Yii::$app->db;
         $transaction=$connection->beginTransaction();
 
-        $submitOp = new AutoApproveOperation($order, $user, $roomTable);
+        $submitOp = new SimpleRejectOperation($order, $user, $roomTable);
         try {
             $submitOp->doOperation();
             $transaction->commit();
@@ -87,12 +87,12 @@ class AutoApproveOperationTest extends DbTestCase {
         }
 
         $newOrder = Order::findOne($order->id);
-        expect('$order->status', $newOrder->status)->equals(Order::STATUS_AUTO_APPROVED);
+        expect('$order->status should be STATUS_SIMPLE_REJECTED', $newOrder->status)->equals(Order::STATUS_SIMPLE_REJECTED);
 
         $orderOp = OrderOperation::findOne([
             'order_id' => $order->id,
             'user_id' => $user->id,
-            'type' => OrderOperation::TYPE_AUTO_APPROVE
+            'type' => OrderOperation::TYPE_AUTO_REJECT
             ]);
         expect('can find $orderOp', $orderOp)->notNull();
 
@@ -100,7 +100,7 @@ class AutoApproveOperationTest extends DbTestCase {
         $ordered = $newRoomTable->getOrdered($order->hours);
         $used = $newRoomTable->getUsed($order->hours);
         expect('roomTable->ordered have not order', in_array($order->id, $ordered))->false();
-        expect('roomTable->used have order', in_array($order->id, $used))->true();
+        expect('roomTable->used have not order', in_array($order->id, $used))->false();
     }
 
     /**

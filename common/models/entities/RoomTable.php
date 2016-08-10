@@ -75,9 +75,7 @@ class RoomTable extends ActiveRecord {
     public function rules()
     {
         return [
-            [['date', 'room_id'], 'required'],
-            [['ordered', 'used', 'locked'], 'safe'],
-            [['room_id'], 'integer'], 
+            [['id', 'date', 'room_id', 'ordered', 'used', 'locked'], 'safe'],
         ];
     }
 

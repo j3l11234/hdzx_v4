@@ -1,6 +1,6 @@
 <?php
 
-namespace backend\helper;
+namespace backend\helpers;
 
 use Yii;
 /**

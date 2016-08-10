@@ -13,24 +13,58 @@ use yii\db\ActiveRecord;
 use common\behaviors\JsonBehavior;
 
 /**
- * 普通用户
+ * 用户基类
  *
  * @property integer $id
- * @property string $username 用户名
+ * @property string $username
  * @property string $auth_key
  * @property string $password_hash
  * @property string $password_reset_token
- * @property integer $dept_id 部门id
  * @property string $email
- * @property string $alias 显示用户名
- * @property string $managers 可以审批的部门
- * @property integer $privilege 权限表
- * @property integer $status 用户状态
+ * @property string $alias
+ * @property json $managers 负责人List
+ * @property integer $privilege
+ * @property integer $status
  * @property integer $created_at
  * @property integer $updated_at
- * @property string $password write-only password
  */
 class BaseUser extends ActiveRecord {
+
+    /**
+     * 后台管理权限 房间锁，用户管理，房间管理等
+     */
+    const PRIV_ADMIN                = 0b0000000001;
+    /**
+     * 负责人审批权限_按dept_id (审批/驳回/撤销)
+     * 只能审批在approve里列举出来的dept_id的order
+     */
+    const PRIV_APPROVE_MANAGER_DEPT = 0b0000000010; 
+    /**
+     * 负责人审批权限_全部(审批/驳回/撤销) (覆盖上一条权限)
+     */
+    const PRIV_APPROVE_MANAGER_ALL   = 0b0000000100;
+    /**
+     * 校级审批权限(审批/驳回/撤销)
+     */
+    const PRIV_APPROVE_SCHOOL       = 0b0000001000;
+    /**
+     * 琴房审批权限(审批/驳回/撤销)
+     */
+    const PRIV_APPROVE_SIMPLE         = 0b0000010000;
+    /**
+     * 开门条发放权限
+     */
+    const PRIV_TYPE_ISSUE           = 0b0000100000;
+    /**
+     * 琴房申请权限
+     */
+    const PRIV_ORDER_SIMPLE         = 0b0001000000;
+    /**
+     * 活动室申请权限
+     */
+    const PRIV_ORDER_ACTIVITY       = 0b0010000000;
+
+
     /**
      * 用户状态 已删除
      */
@@ -65,7 +99,39 @@ class BaseUser extends ActiveRecord {
      * @inheritdoc
      */
     public function rules() {
-        return [];
+        return [
+            [['id', 'username', 'auth_key', 'password_hash', 'password_reset_token', 'email', 'alias', 'managers', 'privilege', 'status'], 'safe'],
+        ];
+    }
+
+    /**
+     * 添加权限
+     *
+     * @param int $privNum 权限代号
+     * @return null
+     */
+    public function addPrivilege($privNum) {
+        $this->privilege ^= $privNum;
+    }
+
+    /**
+     * 移除权限
+     *
+     * @param int $privNum 权限代号
+     * @return null
+     */
+    public function removePrivilege($privNum) {
+        $this->privilege &= ~$privNum;
+    }
+
+    /**
+     * 检查权限
+     *
+     * @param int $privNum 权限代号
+     * @return boolean 是否拥有权限
+     */
+    public function checkPrivilege($privNum) {
+        return ($this->privilege & $privNum) == $privNum;
     }
 
     /**
