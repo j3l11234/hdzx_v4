@@ -6,8 +6,8 @@ use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\Response;
-use common\models\services\OrderService;
-use common\models\services\RoomService;
+use common\services\OrderService;
+use common\services\RoomService;
 
 /**
  * DataController 

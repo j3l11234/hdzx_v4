@@ -2,7 +2,7 @@
 namespace backend\models;
 
 use common\behaviors\ErrorBehavior;
-use common\models\services\LockService;
+use common\services\LockService;
 
 use yii\base\Model;
 use Yii;

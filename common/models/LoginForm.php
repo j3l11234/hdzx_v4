@@ -6,7 +6,7 @@ use yii\base\Model;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\StudentUser;
-use common\models\services\UserService;
+use common\services\UserService;
 
 /**
  * Login form

@@ -3,8 +3,8 @@
 namespace tests\codeception\common\unit\models\entities;
 
 use Yii;
-use tests\codeception\common\unit\DbTestCase;
 use Codeception\Specify;
+use tests\codeception\common\unit\DbTestCase;
 use common\models\entities\Room;
 use tests\codeception\common\fixtures\RoomFixture;
 

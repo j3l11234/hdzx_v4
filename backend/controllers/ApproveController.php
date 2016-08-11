@@ -10,8 +10,8 @@ use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\filters\Cors;
 
-use common\models\services\ApproveService;
-use common\models\services\OrderService;
+use common\services\ApproveService;
+use common\services\OrderService;
 use backend\models\ApproveQueryForm;
 use backend\models\ApproveForm;
 

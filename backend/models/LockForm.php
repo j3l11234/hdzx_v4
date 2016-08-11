@@ -6,8 +6,8 @@ use common\models\entities\User;
 use common\models\entities\Order;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
-use common\models\services\RoomService;
-use common\models\services\ApproveService;
+use common\services\RoomService;
+use common\services\ApproveService;
 
 use yii\base\Model;
 use Yii;

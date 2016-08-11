@@ -3,6 +3,7 @@
 namespace tests\codeception\common\unit\models;
 
 use Yii;
+use Codeception\Specify;
 use tests\codeception\common\unit\DbTestCase;
 use common\models\entities\RoomTable;
 use tests\codeception\common\fixtures\RoomTableFixture;

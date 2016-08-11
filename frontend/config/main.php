@@ -24,7 +24,7 @@ return [
             ]
         ],
         'user' => [
-            'identityClass' => 'common\models\services\UserService',
+            'identityClass' => 'common\services\UserService',
             'enableAutoLogin' => true,
             'loginUrl' => ['/login'],
         ],

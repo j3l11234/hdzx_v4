@@ -8,9 +8,9 @@ use common\models\entities\User;
 use common\models\entities\Order;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
-use common\models\services\RoomService;
-use common\models\services\OrderService;
-use common\models\services\LockService;
+use common\services\RoomService;
+use common\services\OrderService;
+use common\services\LockService;
 
 /**
  * Signup form

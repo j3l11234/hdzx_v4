@@ -25,7 +25,7 @@ return [
             ]
         ],
         'user' => [
-            'identityClass' => 'common\models\services\UserService',
+            'identityClass' => 'common\services\UserService',
             'enableAutoLogin' => true,
             'idParam' => '__id_admin',
             'loginUrl' => ['user/login'],

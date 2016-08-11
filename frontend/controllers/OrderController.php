@@ -9,7 +9,7 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\filters\Cors;
-use common\models\services\RoomService;
+use common\services\RoomService;
 use frontend\models\OrderQueryForm;
 use frontend\models\OrderSubmitForm;
 
