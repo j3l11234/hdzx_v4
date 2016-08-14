@@ -37,4 +37,8 @@ class Error {
      */
     const COMPET      = 0005;
 
+    /**
+     * 无效审批类型
+     */
+    const INVALID_APPROVE_TYPE = 0006;
 }

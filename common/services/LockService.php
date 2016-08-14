@@ -49,7 +49,7 @@ class LockService extends Component {
      */
     public static function queryLockDateList($lock_id) {
         $cache = Yii::$app->cache;
-        $cacheKey = Lock::getCacheKey($lock_id).'_dateList';
+        $cacheKey = 'Lock_'.$lock_id.'_dateList';
         $data = $cache->get($cacheKey);
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效');
@@ -58,7 +58,7 @@ class LockService extends Component {
             $dateList = Lock::getDateList($lock->data['loop_type'], $lock->data['loop_day'], $lock->start_date, $lock->end_date);
             
             $data = $dateList;
-            $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => Lock::getCacheKey($lock_id)]));
+            $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => 'Lock_'.$lock_id]));
         } else {
             Yii::trace($cacheKey.':缓存命中'); 
         }

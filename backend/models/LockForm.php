@@ -1,6 +1,8 @@
 <?php
 namespace backend\models;
 
+use Yii;
+use yii\base\Model;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\Order;
@@ -8,9 +10,6 @@ use common\models\entities\Room;
 use common\models\entities\RoomTable;
 use common\services\RoomService;
 use common\services\ApproveService;
-
-use yii\base\Model;
-use Yii;
 
 /**
  * Signup form
@@ -50,18 +49,6 @@ class ApproveForm extends Model {
         ];
     }
 
-    function getType($type) {
-        switch ($type) {
-            case 'auto':
-                return ApproveService::TYPE_AUTO;
-            case 'manager':
-                return ApproveService::TYPE_MANAGER;
-            case 'school':
-                return ApproveService::TYPE_SCHOOL;
-            default:
-                break;
-        }
-    }
 
     /**
      * 通过预约
@@ -82,7 +69,7 @@ class ApproveForm extends Model {
         try {
             ApproveService::approveOrder($order, $user, $numType, $this->comment);
             return $order;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         } 
@@ -107,7 +94,7 @@ class ApproveForm extends Model {
         try {
             ApproveService::rejectOrder($order, $user, $numType, $this->comment);
             return $order;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         } 
@@ -132,7 +119,7 @@ class ApproveForm extends Model {
         try {
             ApproveService::revokeOrder($order, $user, $numType, $this->comment);
             return $order;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         } 

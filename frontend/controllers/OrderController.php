@@ -69,7 +69,8 @@ class OrderController extends Controller
             ],
             'captcha' => [
                 'class' => 'frontend\actions\MyCaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+                //'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+                'fixedVerifyCode' => 'testme',
                 'height' => 36,
                 'padding' => 0,
             ],
@@ -108,11 +109,10 @@ class OrderController extends Controller
     public function actionGetroomtables() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
+        $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomTables']);
-        $model->load(Yii::$app->request->get(), '');
-        if ($model->validate()) {
-            $data = $model->getRoomTables();
-            return array_merge($data, [
+        if ($model->load($reqData, '') && $model->validate() && $resData = $model->getRoomTables()) {
+            return array_merge($resData, [
                 'error' => 0,
             ]);
         } else {
@@ -131,12 +131,10 @@ class OrderController extends Controller
     public function actionGetroomuse() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $data = Yii::$app->request->get();
+        $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomUse']);
-        $model->load($data, '');
-        if ($model->validate()) {
-            $data = $model->getRoomUse();
-            return array_merge($data, [
+        if ($model->load($reqData, '') && $model->validate() && $resData = $model->getRoomUse()) {
+            return array_merge($resData, [
                 'error' => 0,
             ]);
         } else {
@@ -145,7 +143,6 @@ class OrderController extends Controller
                 'message' => $model->getErrorMessage(),
             ];
         }
-        return $data;
     }
 
     /**
@@ -156,10 +153,10 @@ class OrderController extends Controller
     public function actionSubmitorder() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $data = Yii::$app->request->post();
+        $reqData = Yii::$app->request->post();
 
         $captchaAction = $this->createAction('captcha');
-        if (empty($data['captcha']) || !$captchaAction->validate($data['captcha'], false)) {
+        if (empty($reqData['captcha']) || !$captchaAction->validate($reqData['captcha'], false)) {
             return [
                 'error' => 1,
                 'message' => '验证码错误',
@@ -168,7 +165,7 @@ class OrderController extends Controller
             
         $model = new OrderSubmitForm(['scenario' => 'submitOrder']);
 
-        if ($model->load($data, '') && $model->validate() && $result = $model->submitOrder()) {
+        if ($model->load($reqData, '') && $model->validate() && $resData = $model->submitOrder()) {
             return [
                 'error' => 0,
                 'message' => '提交成功',
@@ -189,12 +186,10 @@ class OrderController extends Controller
     public function actionGetmyorders() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $data = Yii::$app->request->get();
+        $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getMyOrders']);
-        $model->load($data, '');
-        if ($model->validate()) {
-            $data = $model->getMyOrders();
-            return array_merge($data, [
+        if ($model->load($reqData, '') && $model->validate() && $resData = $model->getMyOrders()) {
+            return array_merge($resData, [
                 'error' => 0,
             ]);
         } else {
@@ -203,6 +198,5 @@ class OrderController extends Controller
                 'message' => $model->getErrorMessage(),
             ];
         }
-        return $data;
     }
 }

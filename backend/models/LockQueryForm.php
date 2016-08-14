@@ -1,14 +1,13 @@
 <?php
 namespace backend\models;
 
+use Yii;
+use yii\base\Model;
 use common\behaviors\ErrorBehavior;
 use common\services\LockService;
 
-use yii\base\Model;
-use Yii;
-
 /**
- * Signup form
+ * LockQuery form
  */
 class LockQueryForm extends Model {
     public $status;

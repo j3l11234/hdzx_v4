@@ -1,8 +1,8 @@
 <?php
 namespace frontend\models;
 
-use yii\base\Model;
 use Yii;
+use yii\base\Model;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\Order;
@@ -13,7 +13,7 @@ use common\services\OrderService;
 use common\services\LockService;
 
 /**
- * Signup form
+ * OrderQuery form
  */
 class OrderQueryForm extends Model {
     public $start_date;

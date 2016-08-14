@@ -1,16 +1,16 @@
 <?php
 namespace frontend\models;
 
+use Yii;
+use yii\base\Model;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\Room;
 use common\services\OrderService;
-use yii\base\Model;
-use Yii;
 
 /**
- * Signup form
+ * OrderSubmit form
  */
 class OrderSubmitForm extends Model {
     public $date;

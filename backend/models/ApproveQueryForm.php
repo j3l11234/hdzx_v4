@@ -1,6 +1,8 @@
 <?php
 namespace backend\models;
 
+use Yii;
+use yii\base\Model;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\Order;
@@ -9,11 +11,8 @@ use common\models\entities\RoomTable;
 use common\services\RoomService;
 use common\services\ApproveService;
 
-use yii\base\Model;
-use Yii;
-
 /**
- * Signup form
+ * ApproveQuery form
  */
 class ApproveQueryForm extends Model {
     public $start_date;
@@ -45,25 +44,15 @@ class ApproveQueryForm extends Model {
     public function rules() {
         return [
             [['type'], 'required'],
-            [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
-            [['start_date', 'end_date'], 'dateRangeValidator'],
+            [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['type'], 'in', 'range' => ['auto', 'manager', 'school',]],
         ];
     }
 
-    function dateRangeValidator($attribute, $params) {
-        $range = static::getDateRange();
-        
-        $date = strtotime($this->$attribute);   
-        if($date < $range['start']  || $date > $range['end']){
-            $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内的记录');
-        }
-    }
-
-    public static function getDateRange(){
+    public static function getDefaultDateRange(){
         $today = strtotime(date('Y-m-d', time()));
-        $start = strtotime("-31 day",$today);
-        $end = strtotime("+31 day",$today);
+        $start = $today;
+        $end = strtotime("+1 month",$today);
 
         return [
             'start' => $start,
@@ -74,7 +63,7 @@ class ApproveQueryForm extends Model {
     function getType($type) {
         switch ($type) {
             case 'auto':
-                return ApproveService::TYPE_AUTO;
+                return ApproveService::TYPE_SIMPLE;
             case 'manager':
                 return ApproveService::TYPE_MANAGER;
             case 'school':
@@ -92,14 +81,18 @@ class ApproveQueryForm extends Model {
     public function getApproveOrder() {
         $user = Yii::$app->user->getIdentity()->getUser();
         $numType = $this->getType($this->type);
-        $range = static::getDateRange();
+        $range = static::getDefaultDateRange();
         if(empty($this->start_date)){
             $this->start_date = date('Y-m-d', $range['start']);
         }
         if(empty($this->end_date)){
             $this->end_date = date('Y-m-d', $range['end']);
         }
-        
+        if(strtotime($this->end_date) - strtotime($this->start_date) > 93 * 86400) {
+            $this->setErrorMessage('查询日期间隔不能大于3个月');
+            return false;
+        }
+
         $data = ApproveService::queryApproveOrder($user, $numType, $this->start_date, $this->end_date);
 
         //解析roomTable，用于分析冲突
@@ -107,10 +100,7 @@ class ApproveQueryForm extends Model {
         foreach ($data['orders'] as $id => $order) {
             $room_id = $order['room_id'];
             $date = $order['date'];
-            if(!isset($roomTables[$room_id])){
-                $roomTables[$room_id] = [];
-            }
-            if (isset($roomTables[$room_id][$date])){
+            if (isset($roomTables[$room_id.'_'.$date])){
                 continue;
             }
 
@@ -118,9 +108,11 @@ class ApproveQueryForm extends Model {
             unset($roomTable['locked']);
             unset($roomTable['hourTable']);
             unset($roomTable['chksum']);
-            $roomTables[$room_id][$date] = $roomTable;
+            $roomTables[$room_id.'_'.$date] = $roomTable;
         }
         $data['roomTables'] = $roomTables;
+        $data['start_date'] = $this->start_date;
+        $data['end_date'] = $this->end_date;
 
         return $data;
     }

@@ -8,7 +8,7 @@ use common\behaviors\ErrorBehavior;
 use common\models\entities\StudentUser;
 
 /**
- * Signup form
+ * UserActive from
  */
 class UserActiveForm extends Model {
     public $username;

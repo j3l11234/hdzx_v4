@@ -2,8 +2,6 @@
 namespace backend\controllers;
 
 use Yii;
-use yii\base\InvalidParamException;
-use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\VerbFilter;
@@ -72,11 +70,8 @@ class ApproveController extends Controller
      */
     public function actionApproveAutoPage()
     {
-        $dateRange = ApproveQueryForm::getDateRange();
         return $this->render('/page/approve', [
             'apprveType' => 'auto',
-            'start_date' => date('Y-m-d'),
-            'end_date' => date('Y-m-d', $dateRange['end']),
         ]);
     }
 
@@ -87,11 +82,8 @@ class ApproveController extends Controller
      */
     public function actionApproveManagerPage()
     {
-        $dateRange = ApproveQueryForm::getDateRange();
         return $this->render('/page/approve', [
             'apprveType' => 'manager',
-            'start_date' => date('Y-m-d'),
-            'end_date' => date('Y-m-d', $dateRange['end']),
         ]);
     }
 
@@ -102,11 +94,8 @@ class ApproveController extends Controller
      */
     public function actionApproveSchoolPage()
     {
-        $dateRange = ApproveQueryForm::getDateRange();
         return $this->render('/page/approve', [
             'apprveType' => 'school',
-            'start_date' => date('Y-m-d'),
-            'end_date' => date('Y-m-d', $dateRange['end']),
         ]);
     }
 
@@ -118,12 +107,10 @@ class ApproveController extends Controller
     public function actionGetorders() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $data = Yii::$app->request->get();
+        $reqData = Yii::$app->request->get();
         $model = new ApproveQueryForm(['scenario' => 'getApproveOrder']);
-        $model->load($data, '');
-        if ($model->validate()) {
-            $data = $model->getApproveOrder();
-            return array_merge($data, [
+        if ($model->load($reqData, '') && $model->validate() && $resData = $model->getApproveOrder()) {
+            return array_merge($resData, [
                 'error' => 0,
             ]);
         } else {
@@ -132,7 +119,6 @@ class ApproveController extends Controller
                 'message' => $model->getErrorMessage(),
             ];
         }
-        return $data;
     }
 
     /**
@@ -144,15 +130,14 @@ class ApproveController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $getData = Yii::$app->request->get();
-        $data = Yii::$app->request->post();
-        $data['type'] = $getData['type'];
+        $reqData = Yii::$app->request->post();
+        $reqData['type'] = $getData['type'];
         
         $model = new ApproveForm(['scenario' => 'approveOrder']);
-        $model->load($data, '');
-        if ($model->validate() && $model->approveOrder()) {
+        if ($model->load($reqData, '') && $model->validate() && $model->approveOrder()) {
             return [
                 'error' => 0,
-                'message' => '审批成功',
+                'message' => '审批通过成功',
             ];
         } else {
             return [
@@ -160,7 +145,6 @@ class ApproveController extends Controller
                 'message' => $model->getErrorMessage(),
             ];
         }
-        return $data;
     }
 
     /**
@@ -172,15 +156,14 @@ class ApproveController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $getData = Yii::$app->request->get();
-        $data = Yii::$app->request->post();
-        $data['type'] = $getData['type'];
+        $reqData = Yii::$app->request->post();
+        $reqData['type'] = $getData['type'];
         
         $model = new ApproveForm(['scenario' => 'rejectOrder']);
-        $model->load($data, '');
-        if ($model->validate() && $model->rejectOrder()) {
+        if ($model->load($reqData, '') && $model->validate() && $model->rejectOrder()) {
             return [
                 'error' => 0,
-                'message' => '审批成功',
+                'message' => '审批驳回成功',
             ];
         } else {
             return [
@@ -188,7 +171,6 @@ class ApproveController extends Controller
                 'message' => $model->getErrorMessage(),
             ];
         }
-        return $data;
     }
 
     /**
@@ -200,15 +182,14 @@ class ApproveController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
         
         $getData = Yii::$app->request->get();
-        $data = Yii::$app->request->post();
-        $data['type'] = $getData['type'];
+        $reqData = Yii::$app->request->post();
+        $reqData['type'] = $getData['type'];
         
         $model = new ApproveForm(['scenario' => 'revokeOrder']);
-        $model->load($data, '');
-        if ($model->validate() && $model->revokeOrder()) {
+        if ($model->load($reqData, '') && $model->validate() && $model->revokeOrder()) {
             return [
                 'error' => 0,
-                'message' => '撤回成功',
+                'message' => '审批撤回成功',
             ];
         } else {
             return [
@@ -216,7 +197,6 @@ class ApproveController extends Controller
                 'message' => $model->getErrorMessage(),
             ];
         }
-        return $data;
     }
 
     /**

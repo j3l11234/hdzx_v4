@@ -9,6 +9,7 @@ namespace common\operations;
 
 use Yii;
 use yii\base\Component;
+use yii\base\Exception;
 use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -34,7 +35,7 @@ class SubmitOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_INIT){
-            throw new \Exception('预约状态异常', Error::INVALID_ORDER_STATUS);
+            throw new Exception('预约状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 
@@ -58,7 +59,7 @@ class SubmitOperation extends BaseOrderOperation {
         } else if($this->order->type == Order::TYPE_TWICE) { //二级审批
             $this->order->status = Order::STATUS_MANAGER_PENDING;
         } else {
-            throw new \Exception('预约类型异常', static::ERROR_INVALID_TYPE);
+            throw new Exception('预约类型异常', static::ERROR_INVALID_TYPE);
         }
     }
 

@@ -9,6 +9,7 @@ namespace common\operations;
 
 use Yii;
 use yii\base\Component;
+use yii\base\Exception;
 use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -30,7 +31,7 @@ class SchoolRejectOperation extends BaseOrderOperation {
      */
     protected function checkAuth() {
         if (!$this->user->checkPrivilege(User::PRIV_APPROVE_SCHOOL)) {
-            throw new \Exception('该账号无校级审批权限', Error::AUTH_FAILED);
+            throw new Exception('该账号无校级审批权限', Error::AUTH_FAILED);
         }
     }
 
@@ -39,7 +40,7 @@ class SchoolRejectOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_SCHOOL_PENDING){
-            throw new \Exception('预约状态异常', Error::INVALID_ORDER_STATUS);
+            throw new Exception('预约状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 
