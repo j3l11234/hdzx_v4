@@ -35,7 +35,7 @@ class UserController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout',],
+                        'actions' => ['logout', 'index'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -81,6 +81,9 @@ class UserController extends Controller
     {
         $dataProvider = new ActiveDataProvider([
             'query' => User::find(),
+            'pagination' => [
+                'pageSize' => 5,
+            ],
         ]);
 
         return $this->render('index', [

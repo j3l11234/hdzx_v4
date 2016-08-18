@@ -10,7 +10,7 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\filters\Cors;
-use common\models\LoginForm;
+use frontend\models\LoginForm;
 use common\models\PasswordResetForm;
 use frontend\models\UserActiveForm;
 
@@ -151,7 +151,6 @@ class UserController extends Controller {
     }
    
 
-
     /**
      * 申请重设密码
      *
@@ -171,6 +170,7 @@ class UserController extends Controller {
             'model' => $model,
         ]);
     }
+
 
     /**
      * 重设密码
@@ -202,48 +202,80 @@ class UserController extends Controller {
         ]);
     }
 
+
     /**
-     * 申请激活账户
+     * 申请激活学生用户
      *
      * @return mixed
      */
-    public function actionRequestActiveUser() {
-        $model = new UserActiveForm(['scenario' => 'request']);
+    public function actionRequestStudentUser() {
+        $model = new UserActiveForm(['scenario' => UserActiveForm::SCENARIO_STU_REQUEST]);
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            if($model->request()) {
-                Yii::$app->session->setFlash('success', '发送邮件成功，请查收邮件并根据提示操作');
+            if($model->stuRequest()) {
+                Yii::$app->session->setFlash('success', $model->getMessage());
             } else {
                 Yii::$app->session->setFlash('error', $model->getErrorMessage());
             }
         }
 
-        return $this->render('requestActiveUser', [
+        return $this->render('requestStudentUser', [
+            'model' => $model,
+        ]);
+    }
+
+
+    /**
+     * 申请激活社团账号
+     *
+     * @return mixed
+     */
+    public function actionRequestDeptUser() {
+        $model = new UserActiveForm(['scenario' => UserActiveForm::SCENARIO_DEPT_REQUEST]);
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            if($model->deptRequest()) {
+                Yii::$app->session->setFlash('success', $model->getMessage());
+            } else {
+                Yii::$app->session->setFlash('error', $model->getErrorMessage());
+            }
+        }
+
+        return $this->render('requestDeptUser', [
             'model' => $model,
         ]);
     }
 
     /**
-     * 激活账户
+     * 验证账号
      *
+     * @param string $type
      * @param string $token
      * @return mixed
      * @throws BadRequestHttpException
      */
-    public function actionActiveUser($token) {
-        $model = new UserActiveForm(['scenario' => 'active']);
-
+    public function actionVerifyUser($type, $token) {
+        switch ($type) {
+            case 'student':
+                $model = new UserActiveForm(['scenario' => UserActiveForm::SCENARIO_STU_VERIFY]);
+                break;
+            case 'dept':
+                $model = new UserActiveForm(['scenario' => UserActiveForm::SCENARIO_DEPT_VERIFY]);
+                break;
+            default:
+                throw new BadRequestHttpException('无效的链接');
+                break;
+        }
+        
         try {
             $model->validateToken($token);
+            if ($model->verify()) {
+                Yii::$app->session->setFlash('success', $model->getMessage());
+            } else {
+                Yii::$app->session->setFlash('error', $model->getErrorMessage());
+            }
+            return $this->render('../result');
         } catch (InvalidParamException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
-        
-        if ($model->active()) {
-            Yii::$app->session->setFlash('success', '激活成功');
-        } else {
-            Yii::$app->session->setFlash('error', $model->getErrorMessage());
-        }
-
-        return $this->render('../result');
     }
+
 }

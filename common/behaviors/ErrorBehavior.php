@@ -11,6 +11,7 @@ use yii\db\ActiveRecord;
  */
 class ErrorBehavior extends Behavior {
     private $errorMessage;
+    private $message;
 
     /**
      * @inheritdoc
@@ -56,5 +57,24 @@ class ErrorBehavior extends Behavior {
      */
     public function setErrorMessage($errorMessage) {
         $this->errorMessage = $errorMessage;
+    }
+
+     /**
+     * 获取信息
+     *
+     * @return String 错误信息
+     */
+    public function getMessage() {
+        return $this->message;
+    }
+
+    /**
+     * 设置信息
+     *
+     * @param String $errorMessage 错误信息
+     * @return null
+     */
+    public function setMessage($message) {
+        $this->message = $message;
     }
 }

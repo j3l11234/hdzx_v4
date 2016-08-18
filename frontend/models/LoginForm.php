@@ -1,9 +1,10 @@
 <?php
-namespace common\models;
+namespace frontend\models;
 
 use Yii;
 use yii\base\Model;
 use common\behaviors\ErrorBehavior;
+use common\models\entities\BaseUser;
 use common\models\entities\User;
 use common\models\entities\StudentUser;
 use common\services\UserService;
@@ -45,15 +46,19 @@ class LoginForm extends Model {
     public function login() {
         if ($this->validate()) {
             //根据用户名取得学生用户(优先)和正常用户
-            $user = StudentUser::findByUsername($this->username);
+            $user = StudentUser::findByUsername($this->username, [BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
             if ($user === null) {
-                $user = User::findByUsername($this->username);
+                $user = User::findByUsername($this->username, [BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
             }
 
             if ($user === null) {
                 $this->setErrorMessage('用户不存在');
             } else {
                 if ($user->validatePassword($this->password)) {
+                    if ($user->status != BaseUser::STATUS_ACTIVE) {
+                        $this->setErrorMessage('该用户当前不可登陆');
+                        return false;
+                    }
                     $userService = new UserService($user);
                     return Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0);
                 }else{

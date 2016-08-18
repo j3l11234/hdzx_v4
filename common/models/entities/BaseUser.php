@@ -68,19 +68,23 @@ class BaseUser extends ActiveRecord {
     /**
      * 用户状态 已删除
      */
-    const STATUS_DELETED = 0x000;
+    const STATUS_DELETED = 00;
     /**
      * 用户状态 启用中
      */
-    const STATUS_ACTIVE = 0x001;
+    const STATUS_ACTIVE = 01;
     /**
      * 用户状态 黑名单
      */
-    const STATUS_BLOCKED = 0x002;
+    const STATUS_BLOCKED = 02;
     /**
      * 用户状态 未激活
      */
-    const STATUS_UNACTIVE = 0x004;
+    const STATUS_UNACTIVE = 04;
+    /**
+     * 用户状态 未验证
+     */
+    const STATUS_UNVERIFY = 05;
 
     /**
      * @inheritdoc
@@ -140,8 +144,8 @@ class BaseUser extends ActiveRecord {
      * @param string $username
      * @return static|null
      */
-    public static function findByUsername($username) {
-        return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
+    public static function findByUsername($username, $status = self::STATUS_ACTIVE) {
+        return static::findOne(['username' => $username, 'status' => $status]);
     }
 
     /**
@@ -157,7 +161,7 @@ class BaseUser extends ActiveRecord {
 
         return static::findOne([
             'password_reset_token' => $token,
-            'status' => [self::STATUS_ACTIVE, self::STATUS_UNACTIVE],
+            'status' => [self::STATUS_ACTIVE, self::STATUS_UNVERIFY],
         ]);
     }
 

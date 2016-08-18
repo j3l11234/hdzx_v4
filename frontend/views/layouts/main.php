@@ -48,7 +48,8 @@ AppAsset::register($this);
             'label' => '未登录',
             'items'=>[
                 ['label' => '登录', 'url' => ['/login']],
-                ['label' => '激活新用户', 'url' => ['/user/request-active-user']],
+                ['label' => '激活学生账户', 'url' => ['/user/request-student-user']],
+                ['label' => '激活社团账户', 'url' => ['/user/request-dept-user']],
             ],
         ];
     } else {
