@@ -52,7 +52,7 @@ class LockService extends Component {
         $cacheKey = 'Lock_'.$lock_id.'_dateList';
         $data = $cache->get($cacheKey);
         if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效');
+            Yii::trace($cacheKey.':缓存失效', '数据缓存');
 
             $lock = Lock::findOne($lock_id);
             $dateList = Lock::getDateList($lock->data['loop_type'], $lock->data['loop_day'], $lock->start_date, $lock->end_date);
@@ -60,7 +60,7 @@ class LockService extends Component {
             $data = $dateList;
             $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => 'Lock_'.$lock_id]));
         } else {
-            Yii::trace($cacheKey.':缓存命中'); 
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
     }
@@ -78,7 +78,7 @@ class LockService extends Component {
         $cacheKey = 'LockTable'.'_'.$date.'_'.$room_id;
         $data = $cache->get($cacheKey);
         if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效');
+            Yii::trace($cacheKey.':缓存失效', '数据缓存');
             
             $result = Lock::find()->select(['id'])->where(['status' => Lock::STATUS_ENABLE])->all();
             $lockList = [];
@@ -99,7 +99,7 @@ class LockService extends Component {
             $data = $lockList;
             $cache->set($cacheKey, $data, 90*86400, new TagDependency(['tags' => $tags]));
         } else {
-            Yii::trace($cacheKey.':缓存命中'); 
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
     }
@@ -169,7 +169,7 @@ class LockService extends Component {
         $cacheKey = 'Lock'.'_'.$lock_id;
         $data = $cache->get($cacheKey);
         if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效');
+            Yii::trace($cacheKey.':缓存失效', '数据缓存');
 
             $lock = Lock::findOne($lock_id);
             $data = $lock->toArray(['id', 'rooms', 'hours', 'start_date', 'end_date', 'status', 'data']);
@@ -178,7 +178,7 @@ class LockService extends Component {
 
             $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
         } else {
-            Yii::trace($cacheKey.':缓存命中'); 
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
     }

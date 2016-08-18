@@ -72,7 +72,7 @@ class OrderSubmitForm extends Model {
         $orderType;
         switch ($room->type) {
             case Room::TYPE_SIMPLE:
-                $orderType = Order::TYPE_AUTO;
+                $orderType = Order::TYPE_SIMPLE;
                 break;
             case Room::TYPE_ACTIVITY:
                 $orderType = Order::TYPE_TWICE;

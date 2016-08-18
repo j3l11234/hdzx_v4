@@ -37,7 +37,7 @@ class RoomService extends Component {
         $cacheKey = 'RoomTable'.'_'.$date.'_'.$room_id;
         $data = $cache->get($cacheKey);
         if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效'); 
+            Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $roomTable = self::getRoomTable($date, $room_id, true, true);
             $data = $roomTable->toArray(['ordered', 'used', 'locked']);
             
@@ -51,7 +51,7 @@ class RoomService extends Component {
             $data['chksum'] = substr(md5(json_encode($data)), 0, 6);
             $cache->set($cacheKey, $data, 86400*7, new TagDependency(['tags' => $cacheKey]));
         } else {
-            Yii::trace($cacheKey.':缓存命中'); 
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
     }
@@ -67,7 +67,7 @@ class RoomService extends Component {
         $cache = Yii::$app->cache;
         $data = $cache->get($cacheKey);
         if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效'); 
+            Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $data = [];
             $roomList_ = Room::getOpenRooms();
             $roomList = [];
@@ -85,7 +85,7 @@ class RoomService extends Component {
             ];
             $cache->set($cacheKey, $data);
         }else{
-            Yii::trace($cacheKey.':缓存命中'); 
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
     }
@@ -102,7 +102,7 @@ class RoomService extends Component {
         $cache = Yii::$app->cache;
         $data = $cache->get($cacheKey);
         if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效'); 
+            Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
 
             $startDate = mktime(0, 0, 0, date("m", $now), date("d", $now), date("Y", $now));
             $endDate = $startDate;
@@ -119,7 +119,7 @@ class RoomService extends Component {
             ];
             $cache->set($cacheKey, $data, 86400);
         }else{
-            Yii::trace($cacheKey.':缓存命中'); 
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;    
     }

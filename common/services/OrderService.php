@@ -105,7 +105,7 @@ class OrderService extends Component {
         $cacheKey = 'Order'.'_'.$order_id;
         $data = $cache->get($cacheKey);
         if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效'); 
+            Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $order = Order::findOne($order_id);
             $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
             $data = array_merge($data, $data['data']);
@@ -124,7 +124,7 @@ class OrderService extends Component {
             
             $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
         } else {
-            Yii::trace($cacheKey.':缓存命中'); 
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
     }
@@ -149,7 +149,7 @@ class OrderService extends Component {
         $cacheKey = 'WeekUsage_'.$user_id.'_'.$start_date;
         $data = $cache->get($cacheKey);
         if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效'); 
+            Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $where = ['and'];
             $where[] = ['>=', 'date', $start_date];
             $where[] = ['<=', 'date', $end_date];
@@ -175,7 +175,7 @@ class OrderService extends Component {
             
             $cache->set($cacheKey, $data);
         } else {
-            Yii::trace($cacheKey.':缓存命中'); 
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
        

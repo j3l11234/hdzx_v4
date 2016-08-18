@@ -21,7 +21,7 @@ use common\services\OrderService;
 
 
 /**
- * 审批预约相关服务类
+ * 审批申请相关服务类
  * 负责审批相关操作
  */
 class ApproveService extends Component {
@@ -46,7 +46,7 @@ class ApproveService extends Component {
         03 => '校级',
     ];
     /**
-     * 查询审批预约
+     * 查询审批申请
      * 数据会包含操作记录
      *
      * @param User $user 用户
@@ -126,11 +126,12 @@ class ApproveService extends Component {
     /**
      * 审批一个申请
      *
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @return null
      * @throws Exception 如果出现异常
      */
     public static function approveOrder($order, $user, $type, $comment = null) {
+        Yii::info(static::$type_string[$type].'审批通过, id='.$order->id.', comment='.$comment, '审批申请');
         switch ($type) {
             case static::TYPE_SIMPLE:
                 $operationClass = 'common\operations\SimpleApproveOperation';
@@ -152,11 +153,12 @@ class ApproveService extends Component {
     /**
      * 驳回一个申请
      *
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @return null
      * @throws Exception 如果出现异常
      */
     public static function rejectOrder($order, $user, $type, $comment = null) {
+        Yii::info(static::$type_string[$type].'审批驳回, id='.$order->id.', comment='.$comment, '审批申请');
         switch ($type) {
             case static::TYPE_SIMPLE:
                 $operationClass = 'common\operations\SimpleRejectOperation';
@@ -176,13 +178,14 @@ class ApproveService extends Component {
     }
 
     /**
-     * 撤回一个申请预约
+     * 撤回一个申请申请
      *
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @return null
      * @throws Exception 如果出现异常
      */
     public static function revokeOrder($order, $user, $type, $comment = null) {
+        Yii::info(static::$type_string[$type].'审批撤回, id='.$order->id.', comment='.$comment, '审批申请');
         switch ($type) {
             case static::TYPE_SIMPLE:
                 $operationClass = 'common\operations\SimpleRevokeOperation';
@@ -203,7 +206,6 @@ class ApproveService extends Component {
 
 
     protected static function operateOrder($order, $user, $operationClass, $comment) {
-
         $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
         $extra = [
             'comment' => $comment
@@ -223,25 +225,21 @@ class ApproveService extends Component {
             TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
         } catch (Exception $e) {
             $transaction->rollBack();
+            Yii::error(static::$type_string[$type].'审批异常, id='.$order->id.', error='.$e->getMessage(), '审批申请');
             throw $e;
         }
     }
 
 
     /**
-     * 自动驳回冲突的预约
+     * 自动驳回冲突的申请
      *
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @return null
      * @throws Exception 如果出现异常
      */
     public static function rejectConflictOrder($order, $user, $type, $comment = '冲突自动驳回') {
         $rejectList = [];
-
-        //如果是负责人审批则不驳回任何冲突审批
-        if ($type == static::TYPE_MANAGER) {
-            return $rejectList;
-        }
 
         $orderList = static::getConflictOrder($order, $type, false);
         foreach ($orderList as $conflictOrder) {
@@ -251,56 +249,41 @@ class ApproveService extends Component {
             }
 
             try {
-                Yii::info(static::$type_string[$type].'审批：驳回Order_'.$conflictOrder->id.'(因为与Order_'.$order->id.')冲突', '驳回冲突申请');
+                Yii::info(static::$type_string[$type].'审批驳回, id='.$conflictOrder->id.', 冲突id='.$order->id, '驳回冲突申请');
                 static::rejectOrder($conflictOrder, $user, $type, $comment);
-                $rejectOrder[] = $conflictOrder->id;
+                $rejectList[] = $conflictOrder->id;
             } catch (Exception $e) {
-                Yii::error(static::$type_string[$type].'审批：Order_'.$conflictOrder->id.'异常,'.$e->getMessage(), '驳回冲突申请');
             }  
-        }
-        
-        //如果是校级审批，还需要把负责人审批也一起驳回
-        if ($type == static::TYPE_SCHOOL) {
-            $orderList = static::getConflictOrder($order, static::TYPE_MANAGER, false);
-            foreach ($orderList as $conflictOrder) {
-                //跳过自身
-                if ($conflictOrder->id == $order->id) {
-                    continue;
-                }
-                
-                try {
-                    Yii::info(static::$type_string[static::TYPE_MANAGER].'审批：驳回Order_'.$conflictOrder->id.'(因为与Order_'.$order->id.')冲突', '驳回冲突申请');
-                    static::rejectOrder($conflictOrder, $user, $type, $comment);
-                    $rejectOrder[] = $conflictOrder->id;
-                } catch (Exception $e) {
-                    Yii::error(static::$type_string[static::TYPE_MANAGER].'审批：Order_'.$conflictOrder->id.'异常,'.$e->getMessage(), '驳回冲突申请');
-                }   
-            }
         }
 
         return $rejectList;
     }
 
     /**
-     * 查询冲突预约
+     * 查询冲突申请
      *
-     * @param Order/Array $order 预约
+     * @param Order/Array $order 申请
      * @param int $type 查询类型
      * @param bool $onlyId 仅仅返回id
      * @return Array<Order>
      */
     public static function getConflictOrder($order, $type, $onlyId = true) {
         if(is_array($order)) {
-            $roomTable = RoomService::getRoomTable($order['date'], $order['room_id']);
-            $hours = $order['hours'];
+            $date = $order['date'];
+            $room_id = $order['room_id'];
         } else {
-            $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
-            $hours = $order->hours;
+            $date = $order->date;
+            $room_id = $order->room_id;
         }
-        $orderIds = $roomTable->getOrdered($hours);
 
+        $roomTable = RoomService::getRoomTable($date, $room_id);
+        $hours = $order->hours;
+        $orderIds = $roomTable->getOrdered($hours);
+    
         $where = ['and'];
         $where[] = ['in', 'id', $orderIds];
+        $where[] = ['=', 'date', $date];
+        $where[] = ['=', 'room_id', $room_id];
         switch ($type) {
             case static::TYPE_SIMPLE:
                 $where[] = ['=', 'type', Order::TYPE_SIMPLE];
@@ -312,7 +295,7 @@ class ApproveService extends Component {
                 break;
             case static::TYPE_SCHOOL:
                 $where[] = ['=', 'type', Order::TYPE_TWICE];
-                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING, Order::STATUS_SCHOOL_PENDING]];
+                $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING]];
                 break;
             default:
                 throw new Exception('无效审批类型', Error::INVALID_APPROVE_TYPE);
@@ -328,14 +311,56 @@ class ApproveService extends Component {
         return $result;
     }
 
+
     /**
-     * 自动审批-负责人自动驳回
+     * 自动审批-琴房自动通过
      *
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @return null
      * @throws Exception 如果出现异常
      */
     public static function autoApprove1($now = null) {
+        if (empty($now)) {
+            $now = time();
+        }
+        $where = ['and'];
+        $where[] = ['in', 'room_id', [404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,419,420,421,]];
+        $where[] = ['=', 'type', Order::TYPE_SIMPLE];
+        $where[] = ['in', 'status', [Order::STATUS_SIMPLE_PENDING]];
+        $where[] = ['>=', 'date', date("y-m-d", $now)];
+        $result = Order::find()->where($where)->orderBy('submit_time ASC')->all();
+
+        $user = UserService::findIdentity(1)->getUser();
+        $approveList = [];
+        $rejectList = [];
+        foreach ($result as $order) {
+            if (in_array($order->id, $rejectList)) { //该申请因为冲突已经被驳回
+                 Yii::trace('跳过已被驳回的申请, id='.$order->id, '自动审批'); 
+                continue;
+            }
+            try {
+                Yii::info(static::$type_string[static::TYPE_SIMPLE].'审批通过, id='.$order->id.', reason=琴房审批自动通过', '自动审批');
+                static::approveOrder($order, $user, static::TYPE_SIMPLE, '琴房自动通过');
+                $approveList[] = $order->id;
+                $rejectList_1 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SIMPLE);
+                $rejectList = array_merge ($rejectList, $rejectList_1);  
+            } catch (Exception $e) {
+            }   
+        }
+        return [
+            'approveList' => $approveList,
+            'rejectList' => $rejectList,
+        ];
+    }
+
+    /**
+     * 自动审批-负责人自动驳回
+     *
+     * @param Order $order 申请
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function autoApprove2($now = null) {
         if (empty($now)) {
             $now = time();
         }
@@ -351,24 +376,29 @@ class ApproveService extends Component {
         $result = Order::find()->where($where)->orderBy('submit_time ASC')->all();
 
         $user = UserService::findIdentity(1)->getUser();
+        $rejectList = [];
         foreach ($result as $order) {
             try {
-                static::rejectOrder($order, $user, static::TYPE_MANAGER, '超时自动驳回');
-                Yii::info('负责人审批：驳回Order'.$order->id, '自动审批');
+                Yii::info(static::$type_string[static::TYPE_MANAGER].'审批驳回, id='.$order->id.', reason=负责人超时未审批', '自动审批');
+                $rejectList[] = $order->id;
+                static::rejectOrder($order, $user, static::TYPE_MANAGER, '负责人超时未审批，自动驳回');
             } catch (Exception $e) {
-                Yii::error('负责人审批：异常'.$order->id.','.$e->getMessage(), '自动审批');
             }  
         }
+
+        return [
+            'rejectList' => $rejectList,
+        ];
     }
 
     /**
      * 自动审批-3天校级审批自动通过
      *
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @return null
      * @throws Exception 如果出现异常
      */
-    public static function autoApprove2($now = null) {
+    public static function autoApprove3($now = null) {
         if (empty($now)) {
             $now = time();
         }
@@ -388,15 +418,27 @@ class ApproveService extends Component {
         $result = Order::find()->where($where)->orderBy('submit_time ASC')->all();
 
         $user = UserService::findIdentity(1)->getUser();
+        $approveList = [];
+        $rejectList = [];
         foreach ($result as $order) {
-            try {
-                static::approveOrder($order, $user, static::TYPE_SCHOOL, '自动审批通过');
-                Yii::info('校级审批：通过Order'.$order->id, '自动审批');
-            } catch (Exception $e) {
-                //TBD 冲突
-                Yii::error('校级审批：异常'.$order->id.','.$e->getMessage(), '自动审批');
+            if (in_array($order->id, $rejectList)) { //该申请因为冲突已经被驳回
+                 Yii::trace('跳过已被驳回的申请, id='.$order->id, '自动审批'); 
+                continue;
             }
-            
+            try {
+                Yii::info(static::$type_string[static::TYPE_SCHOOL].'审批通过, id='.$order->id.', reason=校级审批自动通过', '自动审批');
+                static::approveOrder($order, $user, static::TYPE_SCHOOL, '该申请提交时间最早，自动通过');
+                $approveList[] = $order->id;
+                $rejectList_1 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SCHOOL);
+                $rejectList_2 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_MANAGER);
+                $rejectList = array_merge ($rejectList, $rejectList_1, $rejectList_2);  
+            } catch (Exception $e) {
+            }   
         }
+
+        return [
+            'approveList' => $approveList,
+            'rejectList' => $rejectList,
+        ];
     }
 }

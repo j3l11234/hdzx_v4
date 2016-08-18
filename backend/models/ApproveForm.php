@@ -81,7 +81,12 @@ class ApproveForm extends Model {
 
         try {
             ApproveService::approveOrder($order, $user, $type, $this->comment);
-            ApproveService::rejectConflictOrder($order, $user, $type);
+            if ($type == ApproveService::TYPE_SIMPLE) { //琴房审批，驳回琴房的冲突预约
+                ApproveService::rejectConflictOrder($order, $user, $type);
+            } else if ( $type == ApproveService::TYPE_SCHOOL) { //校级审批，驳回负责人和校级的冲突预约
+                ApproveService::rejectConflictOrder($order, $user, ApproveService::TYPE_SCHOOL);
+                ApproveService::rejectConflictOrder($order, $user, ApproveService::TYPE_MANAGER);
+            }
             return $order;
         } catch (Exception $e) {
             $this->setErrorMessage($e->getMessage());

@@ -200,7 +200,7 @@ class ApproveController extends Controller
     }
 
     /**
-     * 自动审批-负责人驳回
+     * 自动审批-琴房自动通过
      *
      * @return mixed
      */
@@ -211,4 +211,27 @@ class ApproveController extends Controller
         return $data;
     }
     
+    /**
+     * 自动审批-负责人自动驳回
+     *
+     * @return mixed
+     */
+    public function actionAutoapprove2() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        $data = ApproveService::autoApprove2();
+        return $data;
+    }
+
+    /**
+     * 自动审批-3天校级审批自动通过
+     *
+     * @return mixed
+     */
+    public function actionAutoapprove3() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        $data = ApproveService::autoApprove3();
+        return $data;
+    }
 }
