@@ -87,6 +87,17 @@ class BaseUser extends ActiveRecord {
     const STATUS_UNVERIFY = 05;
 
     /**
+     * 场景 创建
+     */
+    const SCENARIO_CREATE       = 'create';
+    /**
+     * 场景 跟新
+     */
+    const SCENARIO_UPDATE       = 'update';
+
+    public $password;
+
+    /**
      * @inheritdoc
      */
     public function behaviors() {
@@ -99,12 +110,33 @@ class BaseUser extends ActiveRecord {
         ];
     }
 
+    /*
+     * @inheritdoc
+     */
+    public function scenarios() {
+        $scenarios = parent::scenarios();
+        $scenarios[static::SCENARIO_CREATE] = ['username', 'password', 'status', 'email', 'alias', 'managers', 'privilege', 'status'];
+        $scenarios[static::SCENARIO_UPDATE] = ['username', 'password', 'status', 'email', 'alias', 'managers', 'privilege', 'status'];
+        return $scenarios;
+    }
+
+    
+
     /**
      * @inheritdoc
      */
     public function rules() {
         return [
-            [['id', 'username', 'auth_key', 'password_hash', 'password_reset_token', 'email', 'alias', 'managers', 'privilege', 'status'], 'safe'],
+            [['id', 'username', 'email', 'alias', 'managers', 'status', 'privilege',], 'required'],
+            ['password', 'required', 'on' => static::SCENARIO_CREATE],
+            ['username', 'string', 'min' => 3, 'max' => 20],
+            ['username', 'unique'], 
+            ['password', 'string', 'min' => 6, 'max' => 20],
+            ['email', 'email'],
+            ['alias', 'string', 'min' => 1, 'max' => 20],
+            ['status', 'in', 'range' => [static::STATUS_DELETED, static::STATUS_ACTIVE, static::STATUS_BLOCKED, static::STATUS_UNACTIVE, static::STATUS_UNVERIFY]],
+            ['privilege', 'number',],
+            [['auth_key', 'password_hash', 'password_reset_token',], 'safe'],
         ];
     }
 
@@ -136,6 +168,21 @@ class BaseUser extends ActiveRecord {
      */
     public function checkPrivilege($privNum) {
         return ($this->privilege & $privNum) == $privNum;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels() {
+        return [
+            'username' => '用户名',
+            'password' => '密码',
+            'email' => '邮箱',
+            'alias' => '显示名',
+            'manager' => '负责人审批者',
+            'status' => '状态',
+            'privilege' => '权限', 
+        ];
     }
 
     /**

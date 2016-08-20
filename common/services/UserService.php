@@ -10,6 +10,7 @@ namespace common\services;
 use Yii;
 use yii\base\NotSupportedException;
 use yii\web\IdentityInterface;
+use common\models\entities\BaseUser;
 use common\models\entities\StudentUser;
 use common\models\entities\User;
 
@@ -42,14 +43,23 @@ class UserService implements IdentityInterface {
      * 根据id去判断对应的用户
      */
     public static function findIdentity($id) {
-    	if (substr($id, 0, 1) === 'S') {
-    		$user = StudentUser::findOne(['id' => $id, 'status' => User::STATUS_ACTIVE]);
-    	} else {
-    		$user = User::findOne(['id' => $id, 'status' => User::STATUS_ACTIVE]);
-    	}
+        $user = static::findUser($id);
 
     	$identity = $user !== null ? new static($user) : null;
     	return $identity;
+    }
+
+    /**
+     * @inheritdoc
+     * 根据id去判断对应的用户
+     * @return User/StuUser $user
+     */
+    public static function findUser($id, $status = [BaseUser::STATUS_ACTIVE]) {
+        if (substr($id, 0, 1) === 'S') {
+            return StudentUser::findOne(['id' => $id, 'status' => $status]);
+        } else {
+            return User::findOne(['id' => $id, 'status' => $status]);
+        }
     }
 
     /**

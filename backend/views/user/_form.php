@@ -12,27 +12,19 @@ use yii\widgets\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?php $usernameField = $form->field($model, 'username'); ?>
-    <?php $passwordField = $form->field($model, 'password'); ?>
-    <?php if ($mode == 'create'): ?>
-        <?= $usernameField->textInput(['maxlength' => true]) ?>
-        <?= $passwordField->textInput() ?>  
-    <?php else: ?>
-        <?= $usernameField->textInput(['maxlength' => true])->hint("用户名将不会被修改") ?>
-        <?= $passwordField->textInput()->hint("留空则不修改密码") ?>
-    <?php endif; ?>
+    <?= $form->field($model, 'username')->label('用户名')->textInput(['maxlength' => true]); ?>
 
-    <?= $form->field($model, 'dept_id')->textInput() ?>
-
-    <?= $form->field($model, 'email')->textInput() ?>
-
-    <?= $form->field($model, 'alias')->textInput() ?>
-
-    <?= $form->field($model, 'approve_dept')->textInput() ?>
+    <?= $form->field($model, 'password')->label('密码')->textInput(['value' => ''])->hint('不修改密码请留空此项'); ?>
     
-    <?= $form->field($model, 'privilege')->textInput() ?>
+    <?= $form->field($model, 'email')->label('邮箱')->textInput() ?>
 
-    <?= $form->field($model, 'status')->textInput() ?>
+    <?= $form->field($model, 'alias')->label('显示名')->textInput() ?>
+
+    <?= $form->field($model, 'managers')->label('负责人审批者')->textInput(['value' => json_encode($model->managers)]) ?>
+    
+    <?= $form->field($model, 'privilege')->label('权限')->textInput() ?>
+
+    <?= $form->field($model, 'status')->label('状态')->textInput() ?>
 
 	<div class="form-group">
         <?= Html::submitButton($model->isNewRecord ? '创建' : '更新', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>

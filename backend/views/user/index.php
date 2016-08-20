@@ -22,7 +22,6 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
-
             'id',
             'username',
             //'auth_key',
@@ -30,19 +29,16 @@ $this->params['breadcrumbs'][] = $this->title;
             //'password_reset_token',
             'email:email',
             'alias',
-            'managers:ntext',
+            [
+                'class' => DataColumn::className(),
+                'attribute' => 'managers',
+                'label' => '负责人审批者',
+                'content' => function ($model, $key, $index, $column){
+                    return json_encode($model->managers);
+                },
+            ],
             'privilege',
             'status',
-            [
-                'class' => DataColumn::className(),
-                'attribute' => 'created_at',
-                'format' => ['datetime', 'php:Y-m-d H:i:s'],
-            ],
-            [
-                'class' => DataColumn::className(),
-                'attribute' => 'updated_at',
-                'format' => ['datetime', 'php:Y-m-d H:i:s'],
-            ],
             ['class' => 'yii\grid\ActionColumn'],
         ],
     ]); ?>

@@ -19,6 +19,7 @@ class UserActiveForm extends Model {
     public $alias;
     public $manager;
     public $captcha;
+    
     private $_user;
 
     const SCENARIO_STU_REQUEST      = 'stuRequest';

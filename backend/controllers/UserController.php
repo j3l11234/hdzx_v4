@@ -13,11 +13,11 @@ use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-
-use backend\models\LoginForm;
-
 use yii\data\ActiveDataProvider;
+
+use common\models\entities\BaseUser;
 use common\models\entities\User;
+use backend\models\LoginForm;
 
 /**
  * UserController implements the CRUD actions for User model.
@@ -29,13 +29,14 @@ class UserController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
+                'only' => ['logout', 'logout'],
                 'rules' => [
                     [
                         'actions' => ['login',],
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout', 'index'],
+                        'actions' => ['logout',],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -110,10 +111,28 @@ class UserController extends Controller
      */
     public function actionCreate()
     {
-        $model = new User(['scenario' => 'create']);
+        $model = new User();
+        $model->scenario = BaseUser::SCENARIO_CREATE;
+        $model->managers = [1];
         $model->generateAuthKey();
         
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+        $postData = Yii::$app->request->post();
+        if(!empty($postData['User']['managers'])){
+            $postData['User']['managers'] = json_decode($postData['User']['managers']);
+        }
+
+        $result = false;
+        if ($model->load($postData) && $model->validate()) {
+            //密码不为空则修改密码
+            if(!empty($model->password)) {
+                $model->setPassword($model->password);
+            }
+            $result = $model->save(false);
+        } else {
+            $result = false;
+        }
+
+        if ($result) {
             return $this->redirect(['view', 'id' => $model->id]);
         } else {
             return $this->render('create', [
@@ -131,15 +150,25 @@ class UserController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
-        $model->scenario = 'update';
+        $model->scenario = BaseUser::SCENARIO_UPDATE;
 
-        //为空则不修改密码
         $postData = Yii::$app->request->post();
-        if(empty($postData['User']['password'])){
-            unset($postData['User']['password']);
+        if(!empty($postData['User']['managers'])){
+            $postData['User']['managers'] = json_decode($postData['User']['managers']);
         }
-        
-        if ($model->load($postData) && $model->save()) {
+
+        $result = false;
+        if ($model->load($postData) && $model->validate()) {
+            //密码不为空则修改密码
+            if(!empty($model->password)) {
+                $model->setPassword($model->password);
+            }
+            $result = $model->save(false);
+        } else {
+            $result = false;
+        }
+
+        if ($result) {
             return $this->redirect(['view', 'id' => $model->id]);
         } else {
             return $this->render('update', [

@@ -34,22 +34,26 @@ $this->params['breadcrumbs'][] = $this->title;
             'auth_key',
             'password_hash',
             'password_reset_token',
-            'dept_id',
             'email:email',
-            'alias',
-            'approve_dept:ntext',
+            'alias:raw',
+            [
+                'label' => '负责人审批者',
+                'attribute' => 'managers',
+                'value' => json_encode($model->managers),
+            ],
             'privilege',
             'status',
             [
-                'class' => DataColumn::className(),
+                'label' => '创建时间',
                 'attribute' => 'created_at',
                 'format' => ['datetime', 'php:Y-m-d H:i:s'],
             ],
             [
-                'class' => DataColumn::className(),
+                'label' => '修改时间',
                 'attribute' => 'updated_at',
                 'format' => ['datetime', 'php:Y-m-d H:i:s'],
             ],
+           
         ],
     ]) ?>
 
