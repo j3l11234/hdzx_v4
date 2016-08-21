@@ -13,6 +13,7 @@ use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\web\ForbiddenHttpException;
 use yii\data\ActiveDataProvider;
 
 use common\models\entities\BaseUser;
@@ -31,14 +32,14 @@ class UserController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout', 'logout'],
+                'only' => ['logout', 'logout', 'index', 'student', 'view', 'update', 'delete'],
                 'rules' => [
                     [
                         'actions' => ['login',],
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout',],
+                        'actions' => ['logout', 'index', 'student', 'view', 'update', 'delete'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -82,6 +83,8 @@ class UserController extends Controller
      */
     public function actionIndex()
     {
+        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
+
         $dataProvider = new ActiveDataProvider([
             'query' => User::find(['status' => [BaseUser::STATUS_DELETED, BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]]),
             'pagination' => [
@@ -100,6 +103,8 @@ class UserController extends Controller
      */
     public function actionStudent()
     {
+        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
+        
         $dataProvider = new ActiveDataProvider([
             'query' => StudentUser::find(['status' => [BaseUser::STATUS_DELETED, BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]]),
             'pagination' => [
@@ -119,8 +124,9 @@ class UserController extends Controller
      */
     public function actionView($id)
     {
+        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
+        
         $model = $this->findModel($id);
-
         return $this->render('view', [
             'model' => $model,
         ]);
@@ -133,6 +139,8 @@ class UserController extends Controller
      */
     public function actionCreate()
     {
+        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
+        
         $model = new User();
         $model->scenario = BaseUser::SCENARIO_CREATE;
         $model->managers = [1];
@@ -175,6 +183,8 @@ class UserController extends Controller
      */
     public function actionUpdate($id)
     {
+        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
+        
         $model = $this->findModel($id);
         $model->scenario = BaseUser::SCENARIO_UPDATE;
 
@@ -220,6 +230,8 @@ class UserController extends Controller
      */
     public function actionDelete($id)
     {   
+        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
+        
         if ($id != 1){
             $this->findModel($id)->delete();
         }
@@ -240,7 +252,14 @@ class UserController extends Controller
         if (($model = $user) !== null) {
             return $model;
         } else {
-            throw new NotFoundHttpException('The requested page does not exist.');
+            throw new NotFoundHttpException('找不到该用户');
+        }
+    }
+
+    protected function checkPrivilege($privilege) {
+        $user = Yii::$app->user->getIdentity()->getUser();
+        if(empty($user) || !$user->checkPrivilege($privilege)){
+            throw new ForbiddenHttpException('您没有权限执行该操作');
         }
     }
 }

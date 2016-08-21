@@ -9,6 +9,7 @@ use yii\bootstrap\Nav;
 use yii\bootstrap\NavBar;
 use yii\widgets\Breadcrumbs;
 use common\widgets\Alert;
+use common\models\entities\BaseUser;
 
 AppAsset::register($this);
 ?>
@@ -30,6 +31,7 @@ AppAsset::register($this);
 </script>
 <div class="wrap">
     <?php
+
     NavBar::begin([
         'brandLabel' => '学活场地申请后台系统',
         'brandUrl' => Yii::$app->homeUrl,
@@ -39,29 +41,35 @@ AppAsset::register($this);
     ]);
     $menuItems = [
         ['label' => 'Home', 'url' => ['/site/index']],
-        [
+    ];
+    
+    if (Yii::$app->user->isGuest) {
+        $menuItems[] = [
+            'label' => '未登录',
+            'url' => ['/user/login'],
+        ];
+    } else {
+        $menuItems[] = [
             'label' => '审批预约',
             'items'=>[
                 ['label' => '自动审批', 'url' => ['/approve/auto']],
                 ['label' => '负责人审批', 'url' => ['/approve/manager']],
                 ['label' => '校级审批', 'url' => ['/approve/school']],
             ],
-        ],
-        [
-            'label' => '用户管理',
-            'items'=>[
-                ['label' => '普通用户', 'url' => ['/user/index']],
-                ['label' => '学生用户', 'url' => ['/user/student']],
-            ],
-        ],
-        ['label' => '房间锁', 'url' => ['/lock']],
-    ];
-    if (Yii::$app->user->isGuest) {
-        $menuItems[] = [
-            'label' => '未登录',
-            'url' => ['/login'],
         ];
-    } else {
+
+        $user = Yii::$app->user->getIdentity()->getUser();
+        if ($user->checkPrivilege(BaseUser::PRIV_ADMIN)){
+            $menuItems[] = [
+                'label' => '用户管理',
+                'items'=>[
+                    ['label' => '普通用户', 'url' => ['/user/index']],
+                    ['label' => '学生用户', 'url' => ['/user/student']],
+                ],
+            ];
+            $menuItems[] = ['label' => '房间锁', 'url' => ['/lock']];
+        }
+
         $menuItems[] = [
             'label' => Yii::$app->user->identity->username.' ('. Yii::$app->user->identity->alias.')',
             'items'=>[
