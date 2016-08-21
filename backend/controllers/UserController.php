@@ -179,10 +179,16 @@ class UserController extends Controller
         $model->scenario = BaseUser::SCENARIO_UPDATE;
 
         $postData = Yii::$app->request->post();
+
+        if($id == 1 &&!empty($postData['User'])){
+            $postData['User']['privilege'][] = BaseUser::PRIV_ADMIN;
+            $postData['User']['status'] = BaseUser::STATUS_ACTIVE;
+        }
+
         if(!empty($postData['User']['managers'])){
             $postData['User']['managers'] = json_decode($postData['User']['managers']);
         }
-        if(!empty($postData['User']['privilege'])){
+        if(!empty($postData['User']['privilege'])) {
             $postData['User']['privilege'] = BaseUser::privilegeList2Num($postData['User']['privilege']);
         }
         
@@ -213,9 +219,10 @@ class UserController extends Controller
      * @return mixed
      */
     public function actionDelete($id)
-    {
-        $this->findModel($id)->delete();
-
+    {   
+        if ($id != 1){
+            $this->findModel($id)->delete();
+        }
         return $this->redirect(['index']);
     }
 

@@ -47,6 +47,13 @@ AppAsset::register($this);
                 ['label' => '校级审批', 'url' => ['/approve/school']],
             ],
         ],
+        [
+            'label' => '用户管理',
+            'items'=>[
+                ['label' => '普通用户', 'url' => ['/user/index']],
+                ['label' => '学生用户', 'url' => ['/user/student']],
+            ],
+        ],
         ['label' => '房间锁', 'url' => ['/lock']],
     ];
     if (Yii::$app->user->isGuest) {
