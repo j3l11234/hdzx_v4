@@ -131,7 +131,7 @@ class BaseUser extends ActiveRecord {
             ['password', 'required', 'on' => static::SCENARIO_CREATE],
             ['username', 'string', 'min' => 3, 'max' => 20],
             ['username', 'unique'], 
-            ['password', 'string', 'min' => 6, 'max' => 20],
+            ['password', 'string', 'min' => 5, 'max' => 20],
             ['email', 'email'],
             ['alias', 'string', 'min' => 1, 'max' => 20],
             ['status', 'in', 'range' => [static::STATUS_DELETED, static::STATUS_ACTIVE, static::STATUS_BLOCKED, static::STATUS_UNACTIVE, static::STATUS_UNVERIFY]],

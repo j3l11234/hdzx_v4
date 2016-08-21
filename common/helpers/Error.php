@@ -41,4 +41,9 @@ class Error {
      * 无效审批类型
      */
     const INVALID_APPROVE_TYPE = 0006;
+
+    /**
+     * 保存房间锁失败
+     */
+    const SAVE_LOCK = 0007;
 }

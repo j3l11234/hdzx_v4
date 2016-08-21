@@ -10,6 +10,8 @@ namespace common\services;
 use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
+use yii\base\Exception;
+use common\helpers\Error;
 use common\models\entities\Lock;
 use common\models\entities\RoomTable;
 use common\services\RoomService;
@@ -183,7 +185,49 @@ class LockService extends Component {
         return $data;
     }
 
-    public static function addLock($lock_id){
+    /**
+     * 添加一个房间锁
+     *
+     * @param Lock $lock 房间锁
+     * @return boolean
+     */
+    public static function addLock($lock) {
+        $result = $lock->save();
+        if (!$result) {
+            Yii::error($lock->getErrors(), __METHOD__);
+            throw new Exception('房间锁保存失败', Error::SAVE_LOCK);
+        }           
+    }
+
+    /**
+     * 修改一个房间锁
+     *
+     * @param Lock $lock 房间锁
+     * @return boolean
+     */
+    public static function editLock($lock) {
+        $result = $lock->save();
+        if (!$result) {
+            Yii::error($lock->getErrors(), __METHOD__);
+            throw new Exception('房间锁保存失败', Error::SAVE_LOCK);
+        }
+        TagDependency::invalidate(Yii::$app->cache, 'Lock'.'_'.$lock->id);
+        //读取解析lock的room和date，使其缓存失效
+    }
+
+    /**
+     * 删除一个房间锁
+     *
+     * @param Lock $lock 房间锁
+     * @return boolean
+     */
+    public static function deleteLock($lock) {
+        $result = $lock->delete();
+        if (!$result) {
+            Yii::error($lock->getErrors(), __METHOD__);
+            throw new Exception('房间锁删除失败', Error::SAVE_LOCK);
+        }
+        TagDependency::invalidate(Yii::$app->cache, 'Lock'.'_'.$lock->id);
         //读取解析lock的room和date，使其缓存失效
     }
 }

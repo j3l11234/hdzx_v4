@@ -4,9 +4,7 @@ namespace backend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\web\Response;
-use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-use yii\filters\Cors;
 
 use common\services\ApproveService;
 use common\services\OrderService;
@@ -40,14 +38,7 @@ class ApproveController extends Controller
                         'roles' => ['@'],
                     ],
                 ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'logout' => ['post'],
-                    'approveOrder' => ['post'],
-                ],
-            ],
+            ]
         ];
     }
 
