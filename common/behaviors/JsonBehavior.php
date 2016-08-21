@@ -32,7 +32,16 @@ class JsonBehavior extends Behavior {
      */
     public function jsonToArray($event) {
         foreach ($this->attributes as $attribute) {
-            $this->owner->$attribute = json_decode($this->owner->$attribute, true);
+            if (is_array($attribute)){
+                $attributeName = $attribute['attribute'];
+                if ($attribute['jsonToArray'] !== null) {
+                    $this->owner->$attributeName = call_user_func($attribute['jsonToArray'], $this->owner, $attributeName);
+                } else {
+                    $this->owner->$attributeName = json_decode($this->owner->$attributeName, true);
+                }
+            } else {
+                $this->owner->$attribute = json_decode($this->owner->$attribute, true);
+            }
         }
     }
 
@@ -43,10 +52,23 @@ class JsonBehavior extends Behavior {
      */
     public function arrayToJson($event) {
         foreach ($this->attributes as $attribute) {
-            if($this->owner->$attribute === null){
-                $this->owner->$attribute = [];
+            if (is_array($attribute)){
+                $attributeName = $attribute['attribute'];
+                if($this->owner->$attributeName === null){
+                    $this->owner->$attributeName = [];
+                }
+
+                if ($attribute['arrayToJson'] !== null) {
+                    $this->owner->$attributeName = call_user_func($attribute['arrayToJson'], $this->owner, $attributeName);
+                } else {
+                    $this->owner->$attributeName = json_encode($this->owner->$attributeName);
+                }
+            } else {
+                if($this->owner->$attribute === null){
+                    $this->owner->$attribute = [];
+                }
+                $this->owner->$attribute = json_encode($this->owner->$attribute);
             }
-            $this->owner->$attribute = json_encode($this->owner->$attribute);
         }
     }
 
