@@ -19,7 +19,7 @@ class UserActiveForm extends Model {
     public $alias;
     public $manager;
     public $captcha;
-    
+
     private $_user;
 
     const SCENARIO_STU_REQUEST      = 'stuRequest';
@@ -70,22 +70,24 @@ class UserActiveForm extends Model {
      * @return User|null the saved model or null if saving fails
      */
     public function stuRequest() {
-        $user = BaseUser::findByUsername($this->username, [BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
+        $user = StudentUser::findByUsername($this->username, [BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
         if(empty($user)){
             $user = new StudentUser();
-            $user->id = $this->username;
+            $user->id = 'S'.$this->username;
         } else {
             if ($user->status != BaseUser::STATUS_UNVERIFY) {
                 $this->setErrorMessage('用户已存在');
                 return false;
             }
         }
-
-        $user->status = BaseUser::STATUS_UNVERIFY;
-        $user->alias = $this->alias;
         $user->username = $this->username;
-        $user->email = $this->username.'@bjtu.edu.cn';
         $user->setPassword($this->password);
+        $user->email = $this->username.'@bjtu.edu.cn';
+        $user->alias = $this->alias;
+        $user->managers = [1];
+        $user->status = BaseUser::STATUS_UNVERIFY;
+        $user->privilege = BaseUser::PRIV_ORDER_SIMPLE;
+        
         $user->generateAuthKey();
         $user->generatePasswordResetToken();
         if ($user->save()) {
@@ -99,7 +101,10 @@ class UserActiveForm extends Model {
                 return true;
             }else{
                 $this->setErrorMessage('发送邮件失败');
+                Yii::error('发送邮件失败', __METHOD__);
             }
+        } else {
+            Yii::error($user->getErrors(), __METHOD__);
         }
         return false;
     }
@@ -120,11 +125,13 @@ class UserActiveForm extends Model {
             }
         }
 
-        $user->status = User::STATUS_UNVERIFY;
-        $user->alias = $this->alias;
         $user->username = $this->username;
-        $user->email = $this->email;
         $user->setPassword($this->password);
+        $user->email = $this->email;
+        $user->alias = $this->alias;
+        $user->managers = [1];
+        $user->status = BaseUser::STATUS_UNVERIFY;
+        $user->privilege = BaseUser::PRIV_ORDER_ACTIVITY;
         $user->generateAuthKey();
         $user->generatePasswordResetToken();
         if ($user->save()) {
@@ -137,8 +144,10 @@ class UserActiveForm extends Model {
                 $this->setMessage('发送邮件成功，请查收邮件并根据提示操作');
                 return true;
             }else{
-                $this->setErrorMessage('发送邮件失败');
+                Yii::error('发送邮件失败', __METHOD__);
             }
+        } else {
+            Yii::error($user->getErrors(), __METHOD__);
         }
         return false;
     }
@@ -187,7 +196,7 @@ class UserActiveForm extends Model {
 
         switch ($this->scenario) {
             case static::SCENARIO_STU_VERIFY:
-                $this->_user = BaseUser::findByPasswordResetToken($token);
+                $this->_user = StudentUser::findByPasswordResetToken($token);
                 break;
             case static::SCENARIO_DEPT_VERIFY:
                 $this->_user = User::findByPasswordResetToken($token);

@@ -335,7 +335,7 @@ class ApproveService extends Component {
         $rejectList = [];
         foreach ($result as $order) {
             if (in_array($order->id, $rejectList)) { //该申请因为冲突已经被驳回
-                 Yii::trace('跳过已被驳回的申请, id='.$order->id, '自动审批'); 
+                Yii::trace('跳过已被驳回的申请, id='.$order->id, '自动审批'); 
                 continue;
             }
             try {

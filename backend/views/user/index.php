@@ -4,6 +4,8 @@ use yii\helpers\Html;
 use yii\grid\DataColumn;
 use yii\grid\GridView;
 
+use common\models\entities\BaseUser;
+
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
@@ -15,13 +17,13 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Create User', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('创建用户', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
-
+    
+    <?php $statusTexts = BaseUser::getStatusTexts(); ?>
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
             'id',
             'username',
             //'auth_key',
@@ -32,13 +34,21 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'class' => DataColumn::className(),
                 'attribute' => 'managers',
-                'label' => '负责人审批者',
                 'content' => function ($model, $key, $index, $column){
                     return json_encode($model->managers);
                 },
             ],
-            'privilege',
-            'status',
+            [
+                'class' => DataColumn::className(),
+                'attribute' => 'status',
+                'content' => function ($model, $key, $index, $column) use ( $statusTexts ) {
+                    return $statusTexts[$model->status];   
+                },
+            ],
+
+
+            //
+
             ['class' => 'yii\grid\ActionColumn'],
         ],
     ]); ?>

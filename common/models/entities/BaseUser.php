@@ -179,10 +179,98 @@ class BaseUser extends ActiveRecord {
             'password' => '密码',
             'email' => '邮箱',
             'alias' => '显示名',
-            'manager' => '负责人审批者',
+            'managers' => '负责人审批者',
             'status' => '状态',
-            'privilege' => '权限', 
+            'privilege' => '权限',
+            'created_at' => '创建时间',
+            'updated_at' => '修改时间',
         ];
+    }
+
+    /**
+     * 获取状态文本
+     * 
+     * @return array 状态文本
+     */
+    public static function getStatusTexts(){
+        return [
+            static::STATUS_DELETED => '已删除',
+            static::STATUS_ACTIVE => '正常',
+            static::STATUS_BLOCKED => '黑名单',
+            static::STATUS_UNACTIVE => '未激活',
+            static::STATUS_UNVERIFY => '未验证',
+        ];
+    }
+
+    /**
+     * 获取权限文本
+     * 
+     * @return array 状态文本
+     */
+    public static function getPrivilegeTexts(){
+        return [
+            static::PRIV_ADMIN => '系统管理',
+            static::PRIV_APPROVE_MANAGER_DEPT => '负责人审批权限_按审批员',
+            static::PRIV_APPROVE_MANAGER_ALL => '负责人审批权限_全部',
+            static::PRIV_APPROVE_SCHOOL => '校级审批',
+            static::PRIV_APPROVE_SIMPLE => '琴房审批',
+            static::PRIV_TYPE_ISSUE => '开门条',
+            static::PRIV_ORDER_SIMPLE => '琴房审批',
+            static::PRIV_ORDER_ACTIVITY => '活动室申请',
+        ];
+    }
+
+    /**
+     * 权限数组转换成数值
+     * 
+     * @param array $privList 权限数组
+     * @return int 权限数值
+     */
+    public static function privilegeList2Num($privList){
+        $privilege = 0;
+        if (is_array($privList)){
+            foreach ([
+                static::PRIV_ADMIN,
+                static::PRIV_APPROVE_MANAGER_DEPT,
+                static::PRIV_APPROVE_MANAGER_ALL,
+                static::PRIV_APPROVE_SCHOOL,
+                static::PRIV_APPROVE_SIMPLE,
+                static::PRIV_TYPE_ISSUE,
+                static::PRIV_ORDER_SIMPLE,
+                static::PRIV_ORDER_ACTIVITY,
+            ] as $privNum) {
+                if (in_array($privNum, $privList)){
+                    $privilege += $privNum;
+                }
+            } 
+        }   
+        return $privilege;
+    }
+
+    /**
+     * 权限数值转换成数组
+     * 
+     * @param int $privilege 权限数值
+     * @return array 权限数组
+     */
+    public static function privilegeNum2List($privilege) {
+        $privList = [];
+        foreach ([
+            static::PRIV_ADMIN,
+            static::PRIV_APPROVE_MANAGER_DEPT,
+            static::PRIV_APPROVE_MANAGER_ALL,
+            static::PRIV_APPROVE_SCHOOL,
+            static::PRIV_APPROVE_SIMPLE,
+            static::PRIV_TYPE_ISSUE,
+            static::PRIV_ORDER_SIMPLE,
+            static::PRIV_ORDER_ACTIVITY,
+        ] as $privNum) {
+            if (($privilege & $privNum) == $privNum){
+                $privList[] = $privNum;
+            }
+        }
+        
+        return $privList;
     }
 
     /**

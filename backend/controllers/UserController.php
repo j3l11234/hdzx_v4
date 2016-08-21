@@ -17,6 +17,8 @@ use yii\data\ActiveDataProvider;
 
 use common\models\entities\BaseUser;
 use common\models\entities\User;
+use common\models\entities\StudentUser;
+use common\services\UserService;
 use backend\models\LoginForm;
 
 /**
@@ -81,9 +83,27 @@ class UserController extends Controller
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => User::find(),
+            'query' => User::find(['status' => [BaseUser::STATUS_DELETED, BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]]),
             'pagination' => [
-                'pageSize' => 5,
+                'pageSize' => 10,
+            ],
+        ]);
+
+        return $this->render('index', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
+     * Lists all Student User models.
+     * @return mixed
+     */
+    public function actionStudent()
+    {
+        $dataProvider = new ActiveDataProvider([
+            'query' => StudentUser::find(['status' => [BaseUser::STATUS_DELETED, BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]]),
+            'pagination' => [
+                'pageSize' => 10,
             ],
         ]);
 
@@ -99,8 +119,10 @@ class UserController extends Controller
      */
     public function actionView($id)
     {
+        $model = $this->findModel($id);
+
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $model,
         ]);
     }
 
@@ -114,11 +136,15 @@ class UserController extends Controller
         $model = new User();
         $model->scenario = BaseUser::SCENARIO_CREATE;
         $model->managers = [1];
+        $model->status = BaseUser::STATUS_ACTIVE;
         $model->generateAuthKey();
         
         $postData = Yii::$app->request->post();
         if(!empty($postData['User']['managers'])){
             $postData['User']['managers'] = json_decode($postData['User']['managers']);
+        }
+        if(!empty($postData['User']['privilege'])){
+            $postData['User']['privilege'] = BaseUser::privilegeList2Num($postData['User']['privilege']);
         }
 
         $result = false;
@@ -156,7 +182,10 @@ class UserController extends Controller
         if(!empty($postData['User']['managers'])){
             $postData['User']['managers'] = json_decode($postData['User']['managers']);
         }
-
+        if(!empty($postData['User']['privilege'])){
+            $postData['User']['privilege'] = BaseUser::privilegeList2Num($postData['User']['privilege']);
+        }
+        
         $result = false;
         if ($model->load($postData) && $model->validate()) {
             //密码不为空则修改密码
@@ -199,7 +228,9 @@ class UserController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = User::findOne($id)) !== null) {
+        $user = UserService::findUser($id,[BaseUser::STATUS_DELETED, BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
+        
+        if (($model = $user) !== null) {
             return $model;
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
