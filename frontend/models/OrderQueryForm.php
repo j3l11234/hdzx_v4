@@ -87,19 +87,19 @@ class OrderQueryForm extends Model {
      * @return User|null the saved model or null if saving fails
      */
     public function getRoomTables() {
-        $roomList = !empty($this->rooms) ? json_decode($this->rooms, true) : [];
-
         $dateRange = RoomService::queryDateRange();
         $startDate = !empty($this->start_date) ? strtotime($this->start_date) : $dateRange['start'];
         $endDate = !empty($this->end_date) ? strtotime($this->end_date) : strtotime("+1 day", $dateRange['end']);
+        $roomList = Room::getOpenRooms(true);
+        $rooms = !empty($this->rooms) ? json_decode($this->rooms, true) : $roomList;
 
-        $rooms = RoomService::queryRoomList()['rooms'];
         //计算hourTables
         $roomTables = [];
-        foreach ($rooms as $room_id => $room) {
-            if(!in_array($room_id, $roomList) && !empty($this->rooms)){
+        foreach ($roomList as $room_id) {
+            if(!in_array($room_id, $rooms) ){
                 continue;
             }
+            $roomDateRange = RoomService::queryRoomDateRange($room_id);
             for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {
                 $date = date('Y-m-d', $time);
                 $roomTable = RoomService::queryRoomTable($date, $room_id);
@@ -108,6 +108,7 @@ class OrderQueryForm extends Model {
                     unset($roomTable['used']);
                     unset($roomTable['locked']);
                 }
+                $roomTable['available'] = $time >= $roomDateRange['start'] && $time <= $roomDateRange['end'];
                 $roomTables[$room_id.'_'.$date] = $roomTable;
             }
         }

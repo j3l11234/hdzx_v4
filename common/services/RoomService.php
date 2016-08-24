@@ -70,7 +70,7 @@ class RoomService extends Component {
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $data = [];
-            $roomList_ = Room::getOpenRooms();
+            $roomList_ = Room::getOpenRooms(false);
             $roomList = [];
             $rooms = [];
             foreach ($roomList_ as $key => $room) {
@@ -91,7 +91,37 @@ class RoomService extends Component {
         return $data;
     }
 
-     /**
+
+    /**
+     * 得到房间的日期范围(带缓存)
+     *
+     * @param int $room_id
+     * @param boolean $cache 是否使用缓存
+     * @return json
+     */
+    public static function queryRoomDateRange($room_id, $cache = true) {
+        $cache = Yii::$app->cache;
+        $cacheKey = 'Room_'.$room_id.'_dateRange';
+        $data = $cache->get($cacheKey);
+        if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效', '数据缓存');
+
+            $now = time();
+            $room = Room::findOne($room_id);
+            $roomData = $room->data;
+            $dateRange = Room::getDateRange($roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'], $now);
+            
+            $data = $dateRange;
+            $cache->set($cacheKey, $data, $data['expired'], new TagDependency(['tags' => 'Room_'.$room_id]));
+            Yii::trace($cacheKey.':写入缓存, $expired='.$data['expired'], '数据缓存'); 
+        } else {
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
+        }
+        return $data;
+    }
+
+
+    /**
      * 查询所有房间的日期范围(带缓存)
      * 优先从缓存中查询
      * 
@@ -99,21 +129,20 @@ class RoomService extends Component {
      * @return json
      */
     public static function queryDateRange($cache = true) {
-        $now = time();
-        $cacheKey = 'dateRange_'.date('Y-m-d', $now);
+        $cacheKey = 'dateRange';
         $cache = Yii::$app->cache;
         $data = $cache->get($cacheKey);
         if ($data == null || !$cache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
 
+            $now = time();
             $startDate = mktime(0, 0, 0, date("m", $now), date("d", $now), date("Y", $now));
             $endDate = $startDate;
             $expired = 86400;
 
-            $roomList = Room::getOpenRooms();
-            foreach ($roomList as $room) {
-                $roomData = $room->data;
-                $dateRange = Room::getDateRange($roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'], $now);
+            $roomList = Room::getOpenRooms(true);
+            foreach ($roomList as $room_id) {
+                $dateRange = static::queryRoomDateRange($room_id, $cache);
                 $endDate = max($endDate, $dateRange['end']);
                 $expired = min($expired,  $dateRange['expired']);
             }

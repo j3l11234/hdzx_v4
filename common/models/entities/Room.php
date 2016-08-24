@@ -155,12 +155,24 @@ class Room extends ActiveRecord {
     /**
      * 得到所有开启的房间
      *
+     * @param boolean $onlyId 仅获取id
      * @return static|null
      */
-    public static function getOpenRooms() {
-        return static::find()
+    public static function getOpenRooms($onlyId = false) {
+        $find = static::find()
             ->where(['status' => self::STATUS_OPEN])
-            ->orderBy('align')
-            ->all();
+            ->orderBy('align');
+
+        if ($onlyId) {
+            $result = $find->select(['id'])->asArray()->all();
+            $data = [];
+            foreach ($result as $room) {
+                $data[] = $room['id'];
+            }
+        } else {
+            $data = $find->all();
+        }
+
+        return $data;
     }
 }
