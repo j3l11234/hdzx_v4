@@ -14,22 +14,13 @@ class ErrorBehavior extends Behavior {
     private $message;
 
     /**
-     * @inheritdoc
-     */
-    public function events() {
-        return [
-            ActiveRecord::EVENT_AFTER_VALIDATE => 'afterValidate',
-        ];
-    }
-
-    /**
-     * 完成Validate后的处理函数
-     * 如果有Error，将其转成字符串
+     * 获取错误信息
+     * 如果有Validate Error，将其转成字符串
      *
-     * @return null
+     * @return String 错误信息
      */
-    public function afterValidate($event) {
-        if ($this->owner->hasErrors()) {
+    public function getErrorMessage() {
+        if(empty($this->errorMessage) && $this->owner->hasErrors()) {
             $errorMessage = '';
             $errors = $this->owner->getErrors();
             foreach ($errors as $attr => $messages) {
@@ -38,14 +29,6 @@ class ErrorBehavior extends Behavior {
             }
             $this->errorMessage = $errorMessage;
         }
-    }
-
-    /**
-     * 获取错误信息
-     *
-     * @return String 错误信息
-     */
-    public function getErrorMessage() {
         return $this->errorMessage;
     }
 
