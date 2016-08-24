@@ -24,6 +24,7 @@ use common\behaviors\JsonBehavior;
  * $data = [
  *     'secure' => 1, //是否需要填写安全信息
  *     'by_week' => 1, //按周开放
+ *     'open_time' => '07:00:00', //开放时间
  *     'max_before' => 30, //最大提前
  *     'min_before' => 5, //最小提前申请
  *     'max_hour' => 2, //单次申请最长时间
@@ -90,24 +91,35 @@ class Room extends ActiveRecord {
      * @param int $max_before 最大提前日期
      * @param int $min_before 最小提前日期
      * @param int $by_week 是否按周开放，1为是
-     * @param int $now 参考时间，默认为当前时间
+     * @param string $open_time 开放时间，默认为[00:00:00]
      * @param int $now 参考时间，默认为当前时间
      * @return array 返回的格式
      * [
      *      'start' => $limitStart,
      *      'end' => $limitEnd
+     *      'expired' => 过期时间
      * ]
      */
-    public static function getDateRange($max_before, $min_before, $by_week, $now = null) {
+    public static function getDateRange($max_before, $min_before, $by_week, $open_time = null, $now = null) {
         $now = $now === null ? time() : $now;
+        $open_time = $open_time === null ? '0:0:0' : $open_time;
 
         $month = date("m", $now);
-        $year = date("Y", $now);
         $day = date("d", $now);
+        $year = date("Y", $now);
 
         $limitStart = mktime(0, 0, 0, $month, $day + $min_before, $year);
-        $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);
 
+        //开放时间判断，如果未到达开放时间，则按照前一天算
+        $open_now = strtotime(date('Y-m-d',$now).' '.date('H:i:s',strtotime($open_time)));
+        if ($now < $open_now){
+            $day--;
+            $expired = $open_now - $now;
+        } else {
+            $expired = mktime(0, 0, 0, $month, $day + 1, $year) - $now;
+        }
+
+        $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);
         //如果是按周开发则自动开放到本周日
         if($by_week == 1) {
             $weekDay = date('w', $limitEnd);
@@ -117,7 +129,8 @@ class Room extends ActiveRecord {
 
         return [
             'start' => $limitStart,
-            'end' => $limitEnd
+            'end' => $limitEnd,
+            'expired' => $expired,
         ];
     }
 
@@ -128,12 +141,13 @@ class Room extends ActiveRecord {
      * @param int $max_before 最大提前日期
      * @param int $min_before 最小提前日期
      * @param int $by_week 是否按周开放，1为是
+     * @param string $open_time 开放时间，默认为[00:00:00]
      * @param int $now 参考时间，默认为当前时间
      * @return boolean 是否可以申请
      */
-    public static function checkOpen($date, $max_before, $min_before, $by_week, $now = null) {
+    public static function checkOpen($date, $max_before, $min_before, $by_week, $open_time = null, $now = null) {
         $date = strtotime($date);
-        $range = self::getDateRange($max_before, $min_before, $by_week, $now);
+        $range = self::getDateRange($max_before, $min_before, $by_week, $open_time, $now);
 
         return ($date >= $range['start'] && $date <= $range['end']);
     }

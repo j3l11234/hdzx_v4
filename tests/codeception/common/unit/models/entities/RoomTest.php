@@ -64,31 +64,50 @@ class RoomTest extends DbTestCase {
     }
 
     public function testGetDateRange() {
-        $dateRange = Room::getDateRange(10, 5, 0, strtotime('2016-03-01'));
+        $dateRange = Room::getDateRange(10, 5, 0, '0:0:0', strtotime('2016-03-01 0:0:0'));
         expect('dateRange', $dateRange)->equals([
             'start' => strtotime('2016-03-06 00:00:00'),
             'end' => strtotime('2016-03-11 23:59:59'),
         ]);
 
 
-        $dateRange = Room::getDateRange(10, 5, 1, strtotime('2016-03-01'));
+        $dateRange = Room::getDateRange(10, 5, 1, '0:0:0', strtotime('2016-03-01 0:0:0'));
         expect('dateRange', $dateRange)->equals([
             'start' => strtotime('2016-03-06 00:00:00'),
             'end' => strtotime('2016-03-13 23:59:59'),
         ]);
 
-        $dateRange = Room::getDateRange(5, 5, 1, strtotime('2016-03-01'));
+        $dateRange = Room::getDateRange(5, 5, 1, '0:0:0', strtotime('2016-03-01 0:0:0'));
         expect('dateRange', $dateRange)->equals([
             'start' => strtotime('2016-03-06 00:00:00'),
             'end' => strtotime('2016-03-06 23:59:59'),
         ]);
+
+
+        $dateRange = Room::getDateRange(6, 5, 1, '0:0:0', strtotime('2016-03-01 0:0:0'));
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-03-06 00:00:00'),
+            'end' => strtotime('2016-03-13 23:59:59'),
+        ]);
+
+        $dateRange = Room::getDateRange(6, 5, 1, '8:0:0', strtotime('2016-03-01 0:0:0'));
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-03-06 00:00:00'),
+            'end' => strtotime('2016-03-06 23:59:59'),
+        ]);
+
+        $dateRange = Room::getDateRange(6, 5, 1, '7:0:0', strtotime('2016-03-01 8:0:0'));
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-03-06 00:00:00'),
+            'end' => strtotime('2016-03-13 23:59:59'),
+        ]);
     }
 
     public function testCheckOpen() {
-        expect('checkOpen', Room::checkOpen('2016-03-05', 10, 5, 0, strtotime('2016-03-01')))->false();
-        expect('checkOpen', Room::checkOpen('2016-03-06', 10, 5, 0, strtotime('2016-03-01')))->true();
-        expect('checkOpen', Room::checkOpen('2016-03-11', 10, 5, 0, strtotime('2016-03-01')))->true();
-        expect('checkOpen', Room::checkOpen('2016-03-12', 10, 5, 0, strtotime('2016-03-01')))->false();
+        expect('checkOpen', Room::checkOpen('2016-03-05', 10, 5, 0, '7:0:0', strtotime('2016-03-01 8:0:0')))->false();
+        expect('checkOpen', Room::checkOpen('2016-03-06', 10, 5, 0, '7:0:0', strtotime('2016-03-01 8:0:0')))->true();
+        expect('checkOpen', Room::checkOpen('2016-03-11', 10, 5, 0, '0:0:0', strtotime('2016-03-01 8:0:0')))->true();
+        expect('checkOpen', Room::checkOpen('2016-03-12', 10, 5, 0, '7:0:0', strtotime('2016-03-01 8:0:0')))->false();
     }
 
     /**
