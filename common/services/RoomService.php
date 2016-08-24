@@ -30,13 +30,14 @@ class RoomService extends Component {
      *
      * @param string $date 预约日期
      * @param integer $room_id 房间id
+     * @param boolean $cache 是否使用缓存
      * @return json
      */
-    public static function queryRoomTable($date, $room_id) {
+    public static function queryRoomTable($date, $room_id, $cache = true) {
         $cache = Yii::$app->cache;
         $cacheKey = 'RoomTable'.'_'.$date.'_'.$room_id;
         $data = $cache->get($cacheKey);
-        if ($data == null) {
+        if ($data == null || !$cache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $roomTable = self::getRoomTable($date, $room_id, true, true);
             $data = $roomTable->toArray(['ordered', 'used', 'locked']);
@@ -93,31 +94,35 @@ class RoomService extends Component {
      /**
      * 查询所有房间的日期范围(带缓存)
      * 优先从缓存中查询
-     *
+     * 
+     * @param boolean $cache 是否使用缓存
      * @return json
      */
-    public static function queryDateRange() {
+    public static function queryDateRange($cache = true) {
         $now = time();
         $cacheKey = 'dateRange_'.date('Y-m-d', $now);
         $cache = Yii::$app->cache;
         $data = $cache->get($cacheKey);
-        if ($data == null) {
+        if ($data == null || !$cache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
 
             $startDate = mktime(0, 0, 0, date("m", $now), date("d", $now), date("Y", $now));
             $endDate = $startDate;
+            $expired = 86400;
 
             $roomList = Room::getOpenRooms();
             foreach ($roomList as $room) {
                 $roomData = $room->data;
-                $dateRange = Room::getDateRange($roomData['max_before'], $roomData['min_before'], $roomData['by_week']);
+                $dateRange = Room::getDateRange($roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'], $now);
                 $endDate = max($endDate, $dateRange['end']);
+                $expired = min($expired,  $dateRange['expired']);
             }
             $data = [
                 'start' => $startDate,
                 'end' => $endDate,
             ];
-            $cache->set($cacheKey, $data, 86400);
+            $cache->set($cacheKey, $data, $expired);
+            Yii::trace($cacheKey.':写入缓存, $expired='.$expired, '数据缓存'); 
         }else{
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
