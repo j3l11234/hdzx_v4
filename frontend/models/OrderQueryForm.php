@@ -91,7 +91,7 @@ class OrderQueryForm extends Model {
 
         $dateRange = RoomService::queryDateRange();
         $startDate = !empty($this->start_date) ? strtotime($this->start_date) : $dateRange['start'];
-        $endDate = !empty($this->end_date) ? strtotime($this->end_date) : $dateRange['end'];
+        $endDate = !empty($this->end_date) ? strtotime($this->end_date) : strtotime("+1 day", $dateRange['end']);
 
         $rooms = RoomService::queryRoomList()['rooms'];
         //计算hourTables
@@ -121,6 +121,8 @@ class OrderQueryForm extends Model {
         return [
             'dateList' => $dateList,
             'roomTables' => $roomTables,
+            'start_date' => date('Y-m-d', $startDate),
+            'end_date' => date('Y-m-d', $endDate),
         ];
     }
 

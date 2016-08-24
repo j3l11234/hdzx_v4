@@ -71,12 +71,12 @@ class LockController extends Controller
     public function actionGetlocks() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $data = Yii::$app->request->get();
+        $reqData = Yii::$app->request->get();
         $model = new LockQueryForm(['scenario' => 'getLocks']);
-        $model->load($data, '');
+        $model->load($reqData, '');
         if ($model->validate()) {
-            $data = $model->getLocks();
-            return array_merge($data, [
+            $resData = $model->getLocks();
+            return array_merge($resData, [
                 'error' => 0,
             ]);
         } else {
@@ -85,6 +85,6 @@ class LockController extends Controller
                 'message' => $model->getErrorMessage(),
             ];
         }
-        return $data;
+        return $resData;
     }
 }

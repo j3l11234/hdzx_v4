@@ -82,10 +82,11 @@ class OrderSubmitForm extends Model {
                 break;
         }
         //验证日期
-        // if(!$room->checkOpenSelf($this->date)){
-        //     $this->setErrorMessage('当前日期不在可预约范围内');
-        //     return false;
-        // }
+        $roomData = $room->data;
+        if(!$room->checkOpen($this->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'])){
+            $this->setErrorMessage('该日期下的房间不可用');
+            return false;
+        }
         $hours = json_decode($this->hours,true);
         
         $room = Room::findOne($this->room_id);

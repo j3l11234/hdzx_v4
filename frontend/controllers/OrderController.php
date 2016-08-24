@@ -111,7 +111,8 @@ class OrderController extends Controller
 
         $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomTables']);
-        if ($model->load($reqData, '') && $model->validate() && $resData = $model->getRoomTables()) {
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->getRoomTables()) {
             return array_merge($resData, [
                 'error' => 0,
             ]);
@@ -133,7 +134,8 @@ class OrderController extends Controller
 
         $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomUse']);
-        if ($model->load($reqData, '') && $model->validate() && $resData = $model->getRoomUse()) {
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->getRoomUse()) {
             return array_merge($resData, [
                 'error' => 0,
             ]);
@@ -164,8 +166,8 @@ class OrderController extends Controller
         }
             
         $model = new OrderSubmitForm(['scenario' => 'submitOrder']);
-
-        if ($model->load($reqData, '') && $model->validate() && $resData = $model->submitOrder()) {
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->submitOrder()) {
             return [
                 'error' => 0,
                 'message' => '提交成功',
@@ -188,7 +190,8 @@ class OrderController extends Controller
 
         $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getMyOrders']);
-        if ($model->load($reqData, '') && $model->validate() && $resData = $model->getMyOrders()) {
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->getMyOrders()) {
             return array_merge($resData, [
                 'error' => 0,
             ]);
