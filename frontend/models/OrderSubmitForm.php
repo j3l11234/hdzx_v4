@@ -61,7 +61,7 @@ class OrderSubmitForm extends Model {
 
 
     /**
-     * 提交设宁.
+     * 提交申请.
      *
      * @return Order|false 是否成功
      */
@@ -83,7 +83,7 @@ class OrderSubmitForm extends Model {
         }
         //验证日期
         $roomData = $room->data;
-        if(!$room->checkOpen($this->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'])){
+        if(!Room::checkOpen($this->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'])){
             $this->setErrorMessage('该日期下的房间不可用');
             return false;
         }
