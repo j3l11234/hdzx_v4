@@ -99,6 +99,8 @@ class LockService extends Component {
             }
 
             $data = $lockList;
+            $tags[] = 'LockTable';
+            $tags[] = $cacheKey;
             $cache->set($cacheKey, $data, 90*86400, new TagDependency(['tags' => $tags]));
         } else {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
@@ -121,8 +123,8 @@ class LockService extends Component {
         $lockList = Lock::find()->select(['id'])->where(['status' => Lock::STATUS_ENABLE])->all();
         $lockTables = [];
         foreach ($lockList as $key => $lock) {
-            $lock = self::queryOneLock($lock['id']);
-            $dateList = self::queryLockDateList($lock['id']);
+            $lock = static::queryOneLock($lock['id']);
+            $dateList = static::queryLockDateList($lock['id']);
 
             foreach ($dateList as $key => $date) {
                 $dateTs = strtotime($date);
@@ -137,7 +139,7 @@ class LockService extends Component {
                     if (!isset($lockTables[$room_id][$date])) {
                         $lockTables[$room_id][$date] = [];
                     }
-                    RoomTable::addTable($lockTables[$room_id][$date], $lock['id'], $lock['hours']);
+                    $lockTables[$room_id][$date] = RoomTable::addTable($lockTables[$room_id][$date], $lock['id'], $lock['hours']);
                 }
             } 
         }
@@ -145,15 +147,15 @@ class LockService extends Component {
         //对roomTable进行差值更新
         foreach ($lockTables as $room_id => $roomLockTables) {
             foreach ($roomLockTables as $date => $lockTable) {
-                $roomTable = RoomService::getRoomTable($date, $room_id);
+                $roomTable = RoomService::getRoomTable($date, $room_id, true, false);
                 $data = $roomTable->toArray(['locked']);
                 if(json_encode($data['locked']) != json_encode($lockTable)){
-                    $roomTable->setLocked($lockTable);
+                    $roomTable->locked = $lockTable;
                     $roomTable->useOptimisticLock = false;
                     $roomTable->save();
 
                     //清除缓存
-                    TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
+                    TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$date.'_'.$room_id);
                 }
             }
         }
@@ -185,6 +187,7 @@ class LockService extends Component {
         return $data;
     }
 
+
     /**
      * 添加一个房间锁
      *
@@ -196,7 +199,8 @@ class LockService extends Component {
         if (!$result) {
             Yii::error($lock->getErrors(), __METHOD__);
             throw new Exception('房间锁保存失败', Error::SAVE_LOCK);
-        }           
+        }
+        TagDependency::invalidate(Yii::$app->cache, 'LockTable');
     }
 
     /**
@@ -211,7 +215,7 @@ class LockService extends Component {
             Yii::error($lock->getErrors(), __METHOD__);
             throw new Exception('房间锁保存失败', Error::SAVE_LOCK);
         }
-        TagDependency::invalidate(Yii::$app->cache, 'Lock'.'_'.$lock->id);
+        TagDependency::invalidate(Yii::$app->cache, 'Lock'.'_'.$lock->id); 
         //读取解析lock的room和date，使其缓存失效
     }
 
@@ -228,6 +232,7 @@ class LockService extends Component {
             throw new Exception('房间锁删除失败', Error::SAVE_LOCK);
         }
         TagDependency::invalidate(Yii::$app->cache, 'Lock'.'_'.$lock->id);
+        TagDependency::invalidate(Yii::$app->cache, 'LockTable');
         //读取解析lock的room和date，使其缓存失效
     }
 }

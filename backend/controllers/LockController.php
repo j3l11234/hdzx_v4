@@ -108,11 +108,11 @@ class LockController extends Controller
         } else {
              $model->scenario =  LockForm::SCENARIO_EDIT_LOCK;
         }
-
-        if ($model->load($reqData, '') && $model->validate() && $resData = $model->submitLock()) {
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->submitLock()) {
             return [
                 'error' => 0,
-                'message' => '提交成功',
+                'message' => $model->getMessage(),
             ];
         } else {
             return [
@@ -135,10 +135,11 @@ class LockController extends Controller
         $model = new LockForm();
         $model->scenario =  LockForm::SCENARIO_DELETE_LOCK;
 
-        if ($model->load($reqData, '') && $model->validate() && $resData = $model->deleteLock()) {
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->deleteLock()) {
             return [
                 'error' => 0,
-                'message' => '删除成功',
+                'message' => $model->getMessage(),
             ];
         } else {
             return [
@@ -148,6 +149,32 @@ class LockController extends Controller
         }
     }
 
+    /**
+     * 新增房间锁
+     *
+     * @return mixed
+     */
+    public function actionApplylock() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
+
+        $reqData = Yii::$app->request->post(); 
+        $model = new LockForm();
+        $model->scenario =  LockForm::SCENARIO_APPLY_LOCK;
+
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->applyLock()) {
+            return [
+                'error' => 0,
+                'message' => $model->getMessage(),
+            ];
+        } else {
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
+        }
+    }
 
     protected function checkPrivilege($privilege) {
         $user = Yii::$app->user->getIdentity()->getUser();

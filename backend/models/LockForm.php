@@ -8,6 +8,7 @@ use yii\base\Exception;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\Lock;
 use common\services\LockService;
+use common\services\RoomService;
 
 /**
  * Lock Form
@@ -28,6 +29,7 @@ class LockForm extends Model {
     const SCENARIO_ADD_LOCK       = 'addLock';
     const SCENARIO_EDIT_LOCK      = 'editLock';
     const SCENARIO_DELETE_LOCK    = 'delLock';
+    const SCENARIO_APPLY_LOCK     = 'applyLock';
 
     /**
      * @inheritdoc
@@ -45,7 +47,8 @@ class LockForm extends Model {
         $scenarios = parent::scenarios();
         $scenarios[static::SCENARIO_ADD_LOCK] = ['start_hour', 'end_hour', 'rooms', 'loop_type', 'loop_day', 'start_date', 'end_date', 'status', 'title', 'comment'];
         $scenarios[static::SCENARIO_EDIT_LOCK] = ['lock_id', 'start_hour', 'end_hour', 'rooms', 'loop_type', 'loop_day', 'start_date', 'end_date', 'status', 'title', 'comment'];
-        $scenarios[static::SCENARIO_DELETE_LOCK] = ['lock_id', ];
+        $scenarios[static::SCENARIO_DELETE_LOCK] = ['lock_id',];
+        $scenarios[static::SCENARIO_APPLY_LOCK] = ['start_date', 'end_date'];
         return $scenarios;
     }
 
@@ -57,7 +60,8 @@ class LockForm extends Model {
         $endHour = Yii::$app->params['order.endHour'];
 
         return [
-            [['rooms', 'loop_type', 'start_date', 'end_date', 'status', 'title', 'comment'], 'required'],
+            [['lock_id', 'rooms', 'loop_type', 'status', 'title', 'comment'], 'required'],
+            [['start_date', 'end_date'], 'required', 'on'=>[static::SCENARIO_ADD_LOCK, static::SCENARIO_EDIT_LOCK]],
             ['loop_day', 'number', 'min'=>1, 'max'=>31,],
             ['start_hour', 'number', 'min'=>$startHour, 'max'=>$endHour-1,],
             ['start_hour', 'number', 'min'=>$startHour+1, 'max'=>$endHour,],
@@ -87,6 +91,10 @@ class LockForm extends Model {
                 return false;
             }
         }
+        if (strtotime($this->end_date) - strtotime($this->start_date) > 366*86400) {
+            $this->setErrorMessage('开始时间和结束时间不能超过一年');
+            return false;
+        }
 
         $hours = [];
         for ($hour = $this->start_hour; $hour < $this->end_hour ; $hour++) { 
@@ -107,8 +115,10 @@ class LockForm extends Model {
         try {
             if ($this->scenario == static::SCENARIO_ADD_LOCK) {
                 LockService::addLock($lock);
+                $this->setMessage('添加房间锁成功');
             } else if ($this->scenario == static::SCENARIO_EDIT_LOCK){
                 LockService::editLock($lock);
+                $this->setMessage('修改房间锁成功');
             }
             return true;
         } catch (Exception $e) {
@@ -131,6 +141,32 @@ class LockForm extends Model {
 
         try {
             LockService::deleteLock($lock);
+            $this->setMessage('删除房间锁成功');
+            return true;
+        } catch (Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 应用房间锁
+     *
+     * @return Order|false 是否删除成功
+     */
+    public function applyLock() {
+        if (strtotime($this->end_date) - strtotime($this->start_date) > 366*86400) {
+            $this->setErrorMessage('开始时间和结束时间不能超过一年');
+            return false;
+        }
+
+        $dateRange = RoomService::queryDateRange();
+        $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d', $dateRange['start']);
+        $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
+        
+        try {
+            LockService::applyLock($startDate, $endDate);
+            $this->setMessage('应用房间锁成功');
             return true;
         } catch (Exception $e) {
             $this->setErrorMessage($e->getMessage());
