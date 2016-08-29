@@ -31,38 +31,44 @@ use common\behaviors\JsonBehavior;
 class BaseUser extends ActiveRecord {
 
     /**
-     * 后台管理权限 房间锁，用户管理，房间管理等
-     */
-    const PRIV_ADMIN                = 0b0000000001;
-    /**
-     * 负责人审批权限_按dept_id (审批/驳回/撤销)
-     * 只能审批在approve里列举出来的dept_id的order
-     */
-    const PRIV_APPROVE_MANAGER_DEPT = 0b0000000010; 
-    /**
-     * 负责人审批权限_全部(审批/驳回/撤销) (覆盖上一条权限)
-     */
-    const PRIV_APPROVE_MANAGER_ALL   = 0b0000000100;
-    /**
-     * 校级审批权限(审批/驳回/撤销)
-     */
-    const PRIV_APPROVE_SCHOOL       = 0b0000001000;
-    /**
-     * 琴房审批权限(审批/驳回/撤销)
-     */
-    const PRIV_APPROVE_SIMPLE         = 0b0000010000;
-    /**
-     * 开门条发放权限
-     */
-    const PRIV_TYPE_ISSUE           = 0b0000100000;
-    /**
      * 琴房申请权限
      */
-    const PRIV_ORDER_SIMPLE         = 0b0001000000;
+    const PRIV_ORDER_SIMPLE         = 0b0000000001;
     /**
      * 活动室申请权限
      */
-    const PRIV_ORDER_ACTIVITY       = 0b0010000000;
+    const PRIV_ORDER_ACTIVITY       = 0b0000000010;
+
+    /**
+     * 负责人审批权限_按managers (审批/驳回/撤销)
+     */
+    const PRIV_APPROVE_MANAGER_DEPT = 0b0000000100;
+    /**
+     * 负责人审批权限_全部(审批/驳回/撤销) (覆盖上一条权限)
+     */
+    const PRIV_APPROVE_MANAGER_ALL  = 0b0000001000;
+    /**
+     * 校级审批权限(审批/驳回/撤销)
+     */
+    const PRIV_APPROVE_SCHOOL       = 0b0000010000;
+    /**
+     * 琴房审批权限(审批/驳回/撤销)
+     */
+    const PRIV_APPROVE_SIMPLE       = 0b0000100000;
+
+    /**
+     * 后台登录权限
+     */
+    const PRIV_BACKEND              = 0b0001000000;
+    /**
+     * 后台管理权限 房间锁，用户管理，房间管理等
+     */
+    const PRIV_ADMIN                = 0b0010000000; 
+    /**
+     * 开门条发放权限
+     */
+    const PRIV_TYPE_ISSUE           = 0b0100000000;
+
 
 
     /**
@@ -115,8 +121,8 @@ class BaseUser extends ActiveRecord {
      */
     public function scenarios() {
         $scenarios = parent::scenarios();
-        $scenarios[static::SCENARIO_CREATE] = ['username', 'password', 'status', 'email', 'alias', 'managers', 'privilege', 'status'];
-        $scenarios[static::SCENARIO_UPDATE] = ['username', 'password', 'status', 'email', 'alias', 'managers', 'privilege', 'status'];
+        $scenarios[static::SCENARIO_CREATE] = ['username', 'password', 'status', 'email', 'alias', 'managers', 'privilege', 'status', 'usage_limit'];
+        $scenarios[static::SCENARIO_UPDATE] = ['username', 'password', 'status', 'email', 'alias', 'managers', 'privilege', 'status', 'usage_limit'];
         return $scenarios;
     }
 
@@ -127,9 +133,9 @@ class BaseUser extends ActiveRecord {
      */
     public function rules() {
         return [
-            [['id', 'username', 'email', 'alias', 'managers', 'status', 'privilege',], 'required'],
+            [['id', 'username', 'email', 'alias', 'managers', 'status',], 'required'],
             ['password', 'required', 'on' => static::SCENARIO_CREATE],
-            ['username', 'string', 'min' => 3, 'max' => 20],
+            ['username', 'string', 'min' => 2, 'max' => 20],
             ['username', 'unique'], 
             ['password', 'string', 'min' => 5, 'max' => 20],
             ['email', 'email'],
@@ -207,16 +213,17 @@ class BaseUser extends ActiveRecord {
      * 
      * @return array 状态文本
      */
-    public static function getPrivilegeTexts(){
+    public static function getPrivilegeTexts() {
         return [
-            static::PRIV_ADMIN => '系统管理',
+            static::PRIV_ORDER_SIMPLE => '琴房申请',
+            static::PRIV_ORDER_ACTIVITY => '活动室申请',
             static::PRIV_APPROVE_MANAGER_DEPT => '负责人审批权限_按审批员',
             static::PRIV_APPROVE_MANAGER_ALL => '负责人审批权限_全部',
             static::PRIV_APPROVE_SCHOOL => '校级审批',
             static::PRIV_APPROVE_SIMPLE => '琴房审批',
-            static::PRIV_TYPE_ISSUE => '开门条',
-            static::PRIV_ORDER_SIMPLE => '琴房审批',
-            static::PRIV_ORDER_ACTIVITY => '活动室申请',
+            static::PRIV_BACKEND => '后台登陆',
+            static::PRIV_ADMIN => '系统管理',
+            static::PRIV_TYPE_ISSUE => '开门条',  
         ];
     }
 
@@ -230,14 +237,15 @@ class BaseUser extends ActiveRecord {
         $privilege = 0;
         if (is_array($privList)){
             foreach ([
-                static::PRIV_ADMIN,
+                static::PRIV_ORDER_SIMPLE,
+                static::PRIV_ORDER_ACTIVITY,
                 static::PRIV_APPROVE_MANAGER_DEPT,
                 static::PRIV_APPROVE_MANAGER_ALL,
                 static::PRIV_APPROVE_SCHOOL,
                 static::PRIV_APPROVE_SIMPLE,
+                static::PRIV_BACKEND,
+                static::PRIV_ADMIN,
                 static::PRIV_TYPE_ISSUE,
-                static::PRIV_ORDER_SIMPLE,
-                static::PRIV_ORDER_ACTIVITY,
             ] as $privNum) {
                 if (in_array($privNum, $privList)){
                     $privilege += $privNum;
@@ -256,14 +264,15 @@ class BaseUser extends ActiveRecord {
     public static function privilegeNum2List($privilege) {
         $privList = [];
         foreach ([
-            static::PRIV_ADMIN,
+            static::PRIV_ORDER_SIMPLE,
+            static::PRIV_ORDER_ACTIVITY,
             static::PRIV_APPROVE_MANAGER_DEPT,
             static::PRIV_APPROVE_MANAGER_ALL,
             static::PRIV_APPROVE_SCHOOL,
             static::PRIV_APPROVE_SIMPLE,
+            static::PRIV_BACKEND,
+            static::PRIV_ADMIN,
             static::PRIV_TYPE_ISSUE,
-            static::PRIV_ORDER_SIMPLE,
-            static::PRIV_ORDER_ACTIVITY,
         ] as $privNum) {
             if (($privilege & $privNum) == $privNum){
                 $privList[] = $privNum;
@@ -355,4 +364,5 @@ class BaseUser extends ActiveRecord {
     public function removePasswordResetToken() {
         $this->password_reset_token = null;
     }
+
 }

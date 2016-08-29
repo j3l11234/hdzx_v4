@@ -45,7 +45,7 @@ class LoginForm extends Model
         if (!$this->hasErrors()) {
             $user = $this->getUser();
             if (!$user || !$user->validatePassword($this->password)) {
-                $this->addError($attribute, 'Incorrect username or password.');
+                $this->addError($attribute, '用户名或密码错误');
             }
         }
     }
@@ -58,7 +58,12 @@ class LoginForm extends Model
     public function login()
     {
         if ($this->validate()) {
-            $userService = new UserService($this->getUser());
+            $user = $this->getUser();
+            if (!$user->checkPrivilege(User::PRIV_BACKEND)) {
+                $this->addError('username', '该用户无后台登陆权限');
+                return false;
+            }
+            $userService = new UserService($user);
             return Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0);
         } else {
             return false;
