@@ -60,7 +60,11 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             [
                 'attribute' => 'status',
-                'value' => $statusTexts[$model->status]
+                'value' => $statusTexts[$model->status],
+            ],
+            [
+                'attribute' => 'usage_limit',
+                'value' => $model->usage_limit !== NULL ? json_encode($model->usage_limit) : '默认限额',
             ],
             [
                 'attribute' => 'created_at',
@@ -70,8 +74,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'updated_at',
                 'format' => ['datetime', 'php:Y-m-d H:i:s'],
             ],
-           
         ],
     ]) ?>
+
 
 </div>

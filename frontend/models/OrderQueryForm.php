@@ -40,6 +40,7 @@ class OrderQueryForm extends Model {
         $scenarios['getRoomTables'] = ['start_date', 'end_date', 'rooms', 'rt_detail'];
         $scenarios['getRoomUse'] = ['date', 'room'];
         $scenarios['getMyOrders'] = ['start_date', 'end_date'];
+        $scenarios['getUsage'] = ['date'];
         return $scenarios;
     }
 
@@ -48,7 +49,8 @@ class OrderQueryForm extends Model {
      */
     public function rules() {
         return [
-            [['date', 'room'], 'required'],
+            [['room'], 'required'],
+            [['date'], 'required', 'on' => 'getRoomUse'],
             [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['rooms'], 'jsonValidator'],
             [['start_date', 'end_date'], 'dateRangeValidator'],
@@ -134,7 +136,10 @@ class OrderQueryForm extends Model {
      */
     public function getRoomUse() {
         $data = RoomService::queryRoomTable($this->date, $this->room);
-        Yii::trace($data);
+        $roomDateRange = RoomService::queryRoomDateRange($this->room);
+        $time = strtotime($this->date);
+        $data['available'] = $time >= $roomDateRange['start'] && $time <= $roomDateRange['end'];
+
         $ordered = RoomTable::getTable($data['ordered']);
         $used = RoomTable::getTable($data['used']);
         $locked = RoomTable::getTable($data['locked']);
@@ -189,6 +194,25 @@ class OrderQueryForm extends Model {
 
         return $data;
     }
+
+     /**
+     * 查询单个用户的使用情况
+     *
+     * @return Mixed|null 返回数据
+     */
+    public function getUsage() {
+
+        if(empty($this->date)){
+            $time = time();
+        } else {
+            $time = strtotime($this->date);
+        }
+        $user = Yii::$app->user->getIdentity()->getUser();
+        $data = OrderService::queryUsage($user, $time);
+
+        return $data;
+    }
+
 
     /**
      * @inheritdoc

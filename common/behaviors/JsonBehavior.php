@@ -54,19 +54,12 @@ class JsonBehavior extends Behavior {
         foreach ($this->attributes as $attribute) {
             if (is_array($attribute)){
                 $attributeName = $attribute['attribute'];
-                if($this->owner->$attributeName === null){
-                    $this->owner->$attributeName = [];
-                }
-
                 if ($attribute['arrayToJson'] !== null) {
                     $this->owner->$attributeName = call_user_func($attribute['arrayToJson'], $this->owner, $attributeName);
                 } else {
                     $this->owner->$attributeName = json_encode($this->owner->$attributeName);
                 }
             } else {
-                if($this->owner->$attribute === null){
-                    $this->owner->$attribute = [];
-                }
                 $this->owner->$attribute = json_encode($this->owner->$attribute);
             }
         }

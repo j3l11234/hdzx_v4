@@ -168,50 +168,164 @@ class OrderService extends Component {
     }
 
     /**
-     * 查询单个用户的一周房间使用情况
+     * 查询单个用户本周本月的使用情况
      * 优先使用缓存
      *
-     * @param string $user_id 用户id
-     * @param data $date 查询时间
+     * @param BaseUSer $user 用户
+     * @param data $now 查询时间
+     * @param boolean $useCache 是否使用缓存
      * @return json
      */
-    public static function queryWeekUsage($user_id, $now = null) {
+    public static function queryUsage($user, $now = null, $useCache = true) {
         if (empty($now)) {
             $now = time();
         }
-        $weekDay = date('w', $now);
-        $start_date = date('Y-m-d', strtotime('-'.(($weekDay + 6) % 7).' days', $now));
-        $end_date = date('Y-m-d', strtotime((6 - ($weekDay + 6) % 7).' days', $now));
 
+        $startHour = Yii::$app->params['order.startHour'];
+        $endHour = Yii::$app->params['order.endHour'];
+        $maxHour = $endHour-$startHour;
+
+        $date = date('Y-m-d', $now);
         $cache = Yii::$app->cache;
-        $cacheKey = 'WeekUsage_'.$user_id.'_'.$start_date;
+        $cacheKey = 'Usage_'.$user->id.'_'.$date;
         $data = $cache->get($cacheKey);
-        if ($data == null) {
+        if ($data == null || !$useCache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
+
+            $monthUsage = [];
+            $weekUsage = [];
+            $roomList = Room::getOpenRooms(true);
+            foreach ($roomList as $room_id) {
+                $monthUsage[$room_id] = [
+                    'used' => 0,
+                    'ordered' => 0,
+                    'avl' => $maxHour*date('t', $now),
+                ];
+                $weekUsage[$room_id] = [
+                    'used' => 0,
+                    'ordered' => 0,
+                    'avl' => $maxHour*7,
+                ];
+            }
+
+            //计算本周本月的起止日期
+            $weekDay = date('w', $now);
+            $monthDay = date('j', $now);
+            $month = date("m", $now);
+            $year = date("Y", $now);
+            $monthStart = mktime(0, 0, 0, $month, 1, $year);
+            $monthEnd = mktime(23, 59, 59, $month, date('t', $now), $year);
+            $weekStart = mktime(0, 0, 0, $month, $monthDay-(($weekDay + 6) % 7), $year);
+            $weekEnd = mktime(23, 59, 59, $month, $monthDay+(6 - ($weekDay + 6) % 7), $year); 
+
+            //查找本月的申请
             $where = ['and'];
-            $where[] = ['>=', 'date', $start_date];
-            $where[] = ['<=', 'date', $end_date];
-            $where[] = ['=', 'user_id', $user_id];
+            $where[] = ['>=', 'date', date('Y-m-d', $monthStart)];
+            $where[] = ['<=', 'date', date('Y-m-d', $monthEnd)];
+            $where[] = ['=', 'user_id', $user->id];
             $where[] = ['in', 'status', [
                 Order::STATUS_SIMPLE_PENDING, Order::STATUS_SIMPLE_APPROVED,
                 Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED,
                 Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED,
             ]];
-            $where[] = ['=', 'status', Order::STATUS_PASSED];
-            $result = Order::find()->select(['id', 'room_id', 'hours'])->where($where)->all();
-
-            $usage = [];
+            $result = Order::find()->select(['id', 'date', 'room_id', 'status', 'hours'])->where($where)->all();
+            //计算本月的使用量
             foreach ($result as $order) {
                 $hours = $order->hours;
                 $room_id = (string)$order->room_id;
-                if (!isset($usage[$room_id])) {
-                    $usage[$room_id] = 0;
+                if (in_array($room_id, $roomList)) {
+                    if ($order->status == Order::STATUS_SIMPLE_PENDING || 
+                        $order->status == Order::STATUS_MANAGER_PENDING || 
+                        $order->status == Order::STATUS_SCHOOL_PENDING ){
+                        $monthUsage[$room_id]['ordered'] += count($hours);
+                    } else {
+                        $monthUsage[$room_id]['used'] += count($hours);
+                    }
                 }
-                $usage[$room_id] += count($hours);
             }
-            $data = $usage;
+
+            //查找本周的申请
+            $where = ['and'];
+            $where[] = ['>=', 'date', date('Y-m-d', $weekStart)];
+            $where[] = ['<=', 'date', date('Y-m-d', $weekEnd)];
+            $where[] = ['=', 'user_id', $user->id];
+            $where[] = ['in', 'status', [
+                Order::STATUS_SIMPLE_PENDING, Order::STATUS_SIMPLE_APPROVED,
+                Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED,
+                Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED,
+            ]];
+            $result = Order::find()->select(['id', 'date', 'room_id', 'status', 'hours'])->where($where)->all();
+            //计算本周的使用量
+            foreach ($result as $order) {
+                $hours = $order->hours;
+                $room_id = (string)$order->room_id;
+                if (in_array($room_id, $roomList)) {
+                    if ($order->status == Order::STATUS_SIMPLE_PENDING || 
+                        $order->status == Order::STATUS_MANAGER_PENDING || 
+                        $order->status == Order::STATUS_SCHOOL_PENDING ){
+                        $weekUsage[$room_id]['ordered'] += count($hours);
+                    } else {
+                        $weekUsage[$room_id]['used'] += count($hours);
+                    }
+                }     
+            }
+
+            //获取限额信息
+            $limits = $user->usage_limit != null ? $user->usage_limit : Yii::$app->params['usageLimit'];
+            foreach ($limits as $limit) {
+                if ($limit['type'] == 'month') { //计算月限额
+                    $useSum = 0;
+                    foreach ($limit['rooms'] as $room_id) {
+                        if (in_array($room_id, $roomList)) {
+                            $useSum += ($monthUsage[$room_id]['ordered'] + $monthUsage[$room_id]['used']);
+                        }
+                    }
+
+                    $avl = $limit['max'] - $useSum;
+                    if ($avl < 0) {
+                        $avl = 0;
+                    }
+
+                    foreach ($limit['rooms'] as $room_id) {
+                        if (in_array($room_id, $roomList)) {
+                            if ($monthUsage[$room_id]['avl'] > $avl) {
+                                $monthUsage[$room_id]['avl'] = $avl;
+                            }
+                        }
+                    }
+                } else if ($limit['type'] == 'week') { //计算周限额
+                    $useSum = 0;
+                    foreach ($limit['rooms'] as $room_id) {
+                        if (in_array($room_id, $roomList)) {
+                            $useSum += ($weekUsage[$room_id]['ordered'] + $weekUsage[$room_id]['used']);
+                        }
+                    }
+
+                    $avl = $limit['max'] - $useSum;
+                    if ($avl < 0) {
+                        $avl = 0;
+                    }
+
+                    foreach ($limit['rooms'] as $room_id) {
+                        if (in_array($room_id, $roomList)) {
+                            if ($weekUsage[$room_id]['avl'] > $avl || $weekUsage[$room_id]['avl'] == -1) {
+                                $weekUsage[$room_id]['avl'] = $avl;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Yii::trace('$monthUsage:'."\n".var_export($monthUsage, true), __METHOD__);
+            Yii::trace('$weekUsage:'."\n".var_export($weekUsage, true), __METHOD__);
+            Yii::trace('$limits:'."\n".var_export($limits, true), __METHOD__);
             
-            $cache->set($cacheKey, $data);
+            $data = [
+                'month' => $monthUsage,
+                'week' => $weekUsage,
+            ];;
+            
+            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => 'User_'.$user->id]));
         } else {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }

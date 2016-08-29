@@ -148,6 +148,30 @@ class OrderController extends Controller
     }
 
     /**
+     * 查询单个用户的使用情况
+     *
+     * @return mixed
+     */
+    public function actionGetusage() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $reqData = Yii::$app->request->get();
+        $model = new OrderQueryForm(['scenario' => 'getUsage']);
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->getUsage()) {
+            return array_merge($resData, [
+                'error' => 0,
+            ]);
+        } else {
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
+        }
+    }
+
+
+    /**
      * 提交预约
      *
      * @return mixed

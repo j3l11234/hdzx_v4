@@ -30,14 +30,14 @@ class RoomService extends Component {
      *
      * @param string $date 预约日期
      * @param integer $room_id 房间id
-     * @param boolean $cache 是否使用缓存
+     * @param boolean $useCache 是否使用缓存
      * @return json
      */
-    public static function queryRoomTable($date, $room_id, $cache = true) {
+    public static function queryRoomTable($date, $room_id, $useCache = true) {
         $cache = Yii::$app->cache;
         $cacheKey = 'RoomTable'.'_'.$date.'_'.$room_id;
         $data = $cache->get($cacheKey);
-        if ($data == null || !$cache) {
+        if ($data == null || !$useCache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $roomTable = self::getRoomTable($date, $room_id, true, true);
             $data = $roomTable->toArray(['ordered', 'used', 'locked']);
@@ -96,14 +96,14 @@ class RoomService extends Component {
      * 得到房间的日期范围(带缓存)
      *
      * @param int $room_id
-     * @param boolean $cache 是否使用缓存
+     * @param boolean $useCache 是否使用缓存
      * @return json
      */
-    public static function queryRoomDateRange($room_id, $cache = true) {
+    public static function queryRoomDateRange($room_id, $useCache = true) {
         $cache = Yii::$app->cache;
         $cacheKey = 'Room_'.$room_id.'_dateRange';
         $data = $cache->get($cacheKey);
-        if ($data == null) {
+        if ($data == null || $useCache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存');
 
             $now = time();
@@ -125,14 +125,14 @@ class RoomService extends Component {
      * 查询所有房间的日期范围(带缓存)
      * 优先从缓存中查询
      * 
-     * @param boolean $cache 是否使用缓存
+     * @param boolean $useCache 是否使用缓存
      * @return json
      */
-    public static function queryDateRange($cache = true) {
+    public static function queryDateRange($useCache = true) {
         $cacheKey = 'dateRange';
         $cache = Yii::$app->cache;
         $data = $cache->get($cacheKey);
-        if ($data == null || !$cache) {
+        if ($data == null || !$useCache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
 
             $now = time();
@@ -142,7 +142,7 @@ class RoomService extends Component {
 
             $roomList = Room::getOpenRooms(true);
             foreach ($roomList as $room_id) {
-                $dateRange = static::queryRoomDateRange($room_id, $cache);
+                $dateRange = static::queryRoomDateRange($room_id, $useCache);
                 $endDate = max($endDate, $dateRange['end']);
                 $expired = min($expired,  $dateRange['expired']);
             }

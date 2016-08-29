@@ -223,6 +223,7 @@ class ApproveService extends Component {
             //清除缓存
             TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
             TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
+            TagDependency::invalidate(Yii::$app->cache, 'User_'.$order->user_id);
         } catch (Exception $e) {
             $transaction->rollBack();
             Yii::error(static::$type_string[$type].'审批异常, id='.$order->id.', error='.$e->getMessage(), '审批申请');

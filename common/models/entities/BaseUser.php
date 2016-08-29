@@ -25,6 +25,21 @@ use common\behaviors\JsonBehavior;
  * @property json $managers 负责人List
  * @property integer $privilege
  * @property integer $status
+ * @property json $usage_limit 房间使用限额
+ * ```php
+ * $usage_limit = [
+ *         [
+ *             'rooms' => [301, 302],
+ *             'type' => 'week',
+ *             'max' => 21,
+ *         ],
+ *         [
+ *             'rooms' => [403，440，441，603],
+ *             'type' => 'month',
+ *             'max' => 70,
+ *         ]
+ *     ]
+ * ```  
  * @property integer $created_at
  * @property integer $updated_at
  */
@@ -111,7 +126,7 @@ class BaseUser extends ActiveRecord {
             TimestampBehavior::className(),
             [
                 'class' => JsonBehavior::className(),
-                'attributes' => ['managers'],
+                'attributes' => ['managers','usage_limit'],
             ],
         ];
     }
@@ -188,6 +203,7 @@ class BaseUser extends ActiveRecord {
             'managers' => '负责人审批者',
             'status' => '状态',
             'privilege' => '权限',
+            'usage_limit' => '房间使用限额',
             'created_at' => '创建时间',
             'updated_at' => '修改时间',
         ];
