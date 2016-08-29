@@ -8,9 +8,9 @@
 namespace backend\controllers;
 
 use Yii;
-
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\caching\TagDependency;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
@@ -147,14 +147,18 @@ class UserController extends Controller
         $model->status = BaseUser::STATUS_ACTIVE;
         $model->generateAuthKey();
         
+        $formName = $model->formName();
         $postData = Yii::$app->request->post();
-        if(!empty($postData['User']['managers'])){
-            $postData['User']['managers'] = json_decode($postData['User']['managers']);
+        if(!empty($postData[$formName]['managers'])){
+            $postData[$formName]['managers'] = json_decode($postData[$formName]['managers']);
         }
-        if(!empty($postData['User']['privilege'])){
-            $postData['User']['privilege'] = BaseUser::privilegeList2Num($postData['User']['privilege']);
+        if(!empty($postData[$formName]['privilege'])){
+            $postData[$formName]['privilege'] = BaseUser::privilegeList2Num($postData[$formName]['privilege']);
         }
-
+        if(isset($postData[$formName]['usage_limit'])) {
+            $postData[$formName]['usage_limit'] = json_decode($postData[$formName]['usage_limit']);
+        }
+        
         $result = false;
         if ($model->load($postData) && $model->validate()) {
             //密码不为空则修改密码
@@ -188,20 +192,23 @@ class UserController extends Controller
         $model = $this->findModel($id);
         $model->scenario = BaseUser::SCENARIO_UPDATE;
 
+        $formName = $model->formName();
         $postData = Yii::$app->request->post();
-
-        if($id == 1 &&!empty($postData['User'])){
-            $postData['User']['privilege'][] = BaseUser::PRIV_ADMIN;
-            $postData['User']['status'] = BaseUser::STATUS_ACTIVE;
+        if($id == 1 &&!empty($postData[$formName])){
+            $postData[$formName]['privilege'][] = BaseUser::PRIV_ADMIN;
+            $postData[$formName]['status'] = BaseUser::STATUS_ACTIVE;
         }
 
-        if(!empty($postData['User']['managers'])){
-            $postData['User']['managers'] = json_decode($postData['User']['managers']);
+        if(isset($postData[$formName]['managers'])){
+            $postData[$formName]['managers'] = json_decode($postData[$formName]['managers']);
         }
-        if(!empty($postData['User']['privilege'])) {
-            $postData['User']['privilege'] = BaseUser::privilegeList2Num($postData['User']['privilege']);
+        if(isset($postData[$formName]['privilege'])) {
+            $postData[$formName]['privilege'] = BaseUser::privilegeList2Num($postData[$formName]['privilege']);
         }
-        
+        if(isset($postData[$formName]['usage_limit'])) {
+            $postData[$formName]['usage_limit'] = json_decode($postData[$formName]['usage_limit']);
+        }
+
         $result = false;
         if ($model->load($postData) && $model->validate()) {
             //密码不为空则修改密码
@@ -214,6 +221,7 @@ class UserController extends Controller
         }
 
         if ($result) {
+            TagDependency::invalidate(Yii::$app->cache, 'User_'.$id);
             return $this->redirect(['view', 'id' => $model->id]);
         } else {
             return $this->render('update', [
