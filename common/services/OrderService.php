@@ -14,8 +14,10 @@ use common\exceptions\RoomTableException;
 use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
+use common\models\entities\Room;
 use common\models\entities\RoomTable;
 use common\operations\SubmitOperation;
+use common\operations\CancelOperation;
 
 /**
  * 预约相关服务类
@@ -28,6 +30,7 @@ class OrderService extends Component {
      * 提交一个申请
      *
      * @param Order $order 预约
+     * @param BaseUser $user 用户
      * @return null
      * @throws Exception 如果出现异常
      */
@@ -45,9 +48,44 @@ class OrderService extends Component {
 
             //清除缓存
             TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
+            TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
+            TagDependency::invalidate(Yii::$app->cache, 'User_'.$order->user_id);
+
+            Yii::info('提交申请, id='.$order->id, '申请操作');
         } catch (Exception $e) {
             $transaction->rollBack();
             throw $e;
+        }
+    }
+
+
+    /**
+     * 取消一个申请
+     *
+     * @param Order $order 预约
+     * @param BaseUser $user 用户
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function cancelOrder($order, $user) {
+        $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
+        $connection = Yii::$app->db;
+        $transaction = $connection->beginTransaction();
+        
+        try {
+            $operation = new CancelOperation($order, $user, $roomTable);
+            $operation->doOperation();
+            $transaction->commit();
+
+            //清除缓存
+            TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
+            TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
+            TagDependency::invalidate(Yii::$app->cache, 'User_'.$order->user_id);
+
+            Yii::info('取消申请, id='.$order->id, '申请操作');
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;    
         }
     }
 

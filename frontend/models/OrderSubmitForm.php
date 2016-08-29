@@ -13,6 +13,7 @@ use common\services\OrderService;
  * OrderSubmit form
  */
 class OrderSubmitForm extends Model {
+    public $order_id;
     public $date;
     public $room_id;
     public $hours;
@@ -23,6 +24,9 @@ class OrderSubmitForm extends Model {
     public $dept;
     public $number;
     public $secure;
+
+    const SCENARIO_SUBMIT_ORDER      = 'submitOrder';
+    const SCENARIO_CANCEL_ORDER      = 'cancelOrder';
 
     /**
      * @inheritdoc
@@ -38,7 +42,8 @@ class OrderSubmitForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios['submitOrder'] = ['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'number', 'secure'];
+        $scenarios[static::SCENARIO_SUBMIT_ORDER] = ['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'number', 'secure'];
+        $scenarios[static::SCENARIO_CANCEL_ORDER] = ['order_id'];
         return $scenarios;
     }
 
@@ -47,7 +52,7 @@ class OrderSubmitForm extends Model {
      */
     public function rules() {
         return [
-            [['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
+            [['order_id', 'date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
             [['date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['hours'], 'jsonValidator'],
         ];
@@ -118,6 +123,26 @@ class OrderSubmitForm extends Model {
         ];
 
         OrderService::submitOrder($order, $user);
-        return $order;
+        $this->setMessage('提交申请成功');
+        return true;
+    }
+
+
+    /**
+     * 取消申请.
+     *
+     * @return Order|false 是否成功
+     */
+    public function cancelOrder() {
+        $order = Order::findOne($this->order_id);
+        if(empty($order)){
+            $this->setErrorMessage('申请不存在');
+            return false;
+        }
+
+        $user = Yii::$app->user->getIdentity()->getUser();
+        OrderService::cancelOrder($order, $user);
+        $this->setMessage('取消申请成功');
+        return true;
     }
 }

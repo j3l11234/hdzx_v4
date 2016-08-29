@@ -29,12 +29,12 @@ class OrderController extends Controller
                 'class' => AccessControl::className(),
                 'only' => [
                     'order-page', 'myorder-page', 
-                    'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getmyorders', 'submitorder'],
+                    'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getusage', 'getmyorders', 'submitorder', 'cancelorder'],
                 'rules' => [
                     [
                         'actions' => [
                             'order-page', 'myorder-page', 
-                            'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getmyorders', 'submitorder'],
+                            'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getusage', 'getmyorders', 'submitorder', 'cancelorder'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -165,12 +165,12 @@ class OrderController extends Controller
             ];
         }
             
-        $model = new OrderSubmitForm(['scenario' => 'submitOrder']);
+        $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_SUBMIT_ORDER]);
         $model->load($reqData, '');
         if ($model->validate() && $resData = $model->submitOrder()) {
             return [
                 'error' => 0,
-                'message' => '提交成功',
+                'message' => $model->getMessage(),
             ];
         } else {
             return [
@@ -179,6 +179,33 @@ class OrderController extends Controller
             ];
         }
     }
+
+
+    /**
+     * 取消预约
+     *
+     * @return mixed
+     */
+    public function actionCancelorder() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $reqData = Yii::$app->request->post();
+            
+        $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_CANCEL_ORDER]);
+        $model->load($reqData, '');
+        if ($model->validate() && $resData = $model->cancelOrder()) {
+            return [
+                'error' => 0,
+                'message' => $model->getMessage(),
+            ];
+        } else {
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
+        }
+    }
+
 
     /**
      * 查询我的预约
