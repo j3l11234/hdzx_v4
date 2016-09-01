@@ -39,16 +39,16 @@ class Room extends ActiveRecord {
     /**
      * 房间类型 琴房
      */
-    const TYPE_SIMPLE     = 01;
+    const TYPE_SIMPLE     = 1;
     /**
      * 房间类型 活动室
      */
-    const TYPE_ACTIVITY   = 02;
+    const TYPE_ACTIVITY   = 2;
 
     /**
      * 房间状态 关闭
      */
-    const STATUS_CLOSE  = 00;
+    const STATUS_CLOSE  = 0;
     /**
      * 房间状态 开放申请
      */

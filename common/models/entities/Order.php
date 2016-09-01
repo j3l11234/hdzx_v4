@@ -34,15 +34,15 @@ class Order extends ActiveRecord {
     /**
      * 预约状态 初始化
      */
-    const STATUS_INIT               = 01;
+    const STATUS_INIT               = 1;
     /**
      * 预约状态 已通过
      */
-    const STATUS_PASSED             = 02;
+    const STATUS_PASSED             = 2;
     /**
      * 预约状态 取消
      */
-    const STATUS_CANCELED           = 03;
+    const STATUS_CANCELED           = 3;
     /**
      * 预约状态 负责人待审批
      */
@@ -62,7 +62,7 @@ class Order extends ActiveRecord {
     /**
      * 预约状态 校团委通过
      */
-    const STATUS_SCHOOL_APPROVED    = 02;
+    const STATUS_SCHOOL_APPROVED    = 2;
     /**
      * 预约状态 校团委驳回
      */

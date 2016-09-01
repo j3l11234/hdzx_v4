@@ -34,15 +34,15 @@ class OrderOperation extends ActiveRecord {
     /**
      * 操作类型 提交
      */
-    const TYPE_SUBMIT           = 00;
+    const TYPE_SUBMIT           = 0;
     /**
      * 操作类型 修改预约时间
      */
-    const TYPE_CHANGE_HOUR      = 01;
+    const TYPE_CHANGE_HOUR      = 1;
     /**
      * 操作类型 取消
      */
-    const TYPE_CANCEL           = 02;
+    const TYPE_CANCEL           = 2;
     /**
      * 操作类型 负责人审批通过
      */

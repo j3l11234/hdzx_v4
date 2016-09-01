@@ -89,23 +89,23 @@ class BaseUser extends ActiveRecord {
     /**
      * 用户状态 已删除
      */
-    const STATUS_DELETED = 00;
+    const STATUS_DELETED = 0;
     /**
      * 用户状态 启用中
      */
-    const STATUS_ACTIVE = 01;
+    const STATUS_ACTIVE = 1;
     /**
      * 用户状态 黑名单
      */
-    const STATUS_BLOCKED = 02;
+    const STATUS_BLOCKED = 2;
     /**
      * 用户状态 未激活
      */
-    const STATUS_UNACTIVE = 04;
+    const STATUS_UNACTIVE = 4;
     /**
      * 用户状态 未验证
      */
-    const STATUS_UNVERIFY = 05;
+    const STATUS_UNVERIFY = 5;
 
     /**
      * 场景 创建

@@ -29,19 +29,19 @@ class RoomTable extends ActiveRecord {
     /**
      * 时间状态 可用
      */
-    const STATUS_FREE       = 01;
+    const STATUS_FREE       = 1;
     /**
      * 时间状态 被预约
      */
-    const STATUS_ORDERED    = 02;
+    const STATUS_ORDERED    = 2;
     /**
      * 时间状态 被占用
      */
-    const STATUS_USED       = 03;
+    const STATUS_USED       = 3;
     /**
      * 时间状态 锁定
      */
-    const STATUS_LOCKED     = 04;
+    const STATUS_LOCKED     = 4;
 
     public $useOptimisticLock = true;
 
