@@ -35,7 +35,7 @@ class ManagerRevokeOperation extends BaseOrderOperation {
                 throw new Exception('该账号无负责人审批权限', Error::AUTH_FAILED);
             }else{
                 if(!Order::checkManager($this->user->id, $this->order->managers)) {
-                    throw new Exception('该账号对该预约无负责人审批权限', Error::AUTH_FAILED);
+                    throw new Exception('该账号对该申请无负责人审批权限', Error::AUTH_FAILED);
                 }
             }
         }
@@ -46,7 +46,7 @@ class ManagerRevokeOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_MANAGER_APPROVED && $this->order->status != Order::STATUS_MANAGER_REJECTED){
-            throw new Exception('预约状态异常', Error::INVALID_ORDER_STATUS);
+            throw new Exception('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 

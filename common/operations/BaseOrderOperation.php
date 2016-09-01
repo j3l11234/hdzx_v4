@@ -17,7 +17,7 @@ use common\models\entities\RoomTable;
 use common\services\RoomService;
 
 /**
- * 预约操作的基类
+ * 申请操作的基类
  * 
  */
 class BaseOrderOperation extends Component {
@@ -31,7 +31,7 @@ class BaseOrderOperation extends Component {
 
     /**
      * Constructor.
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @param User $user 用户
      * @param RoomTable $roomTable 房间表
      * @param mixed $extra 额外信息

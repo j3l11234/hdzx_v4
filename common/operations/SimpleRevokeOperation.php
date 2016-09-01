@@ -40,7 +40,7 @@ class SimpleRevokeOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_SIMPLE_APPROVED && $this->order->status != Order::STATUS_SIMPLE_REJECTED){
-            throw new Exception('预约状态异常', Error::INVALID_ORDER_STATUS);
+            throw new Exception('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 

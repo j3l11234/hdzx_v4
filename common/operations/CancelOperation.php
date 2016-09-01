@@ -16,13 +16,13 @@ use common\models\entities\User;
 use common\services\RoomService;
 
 /**
- * 取消预约操作
+ * 取消申请操作
  * 
  */
 class CancelOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_CANCEL;
-    protected static $opName = '取消预约';
+    protected static $opName = '取消申请';
 
     /**
      * @inheritdoc

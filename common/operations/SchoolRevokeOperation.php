@@ -40,7 +40,7 @@ class SchoolRevokeOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_SCHOOL_APPROVED && $this->order->status != Order::STATUS_SCHOOL_REJECTED){
-            throw new Exception('预约状态异常', Error::INVALID_ORDER_STATUS);
+            throw new Exception('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 
