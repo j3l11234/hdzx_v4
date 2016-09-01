@@ -3,6 +3,7 @@ namespace frontend\models;
 
 use Yii;
 use yii\base\Model;
+use yii\base\Exception;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\Department;
 use common\models\entities\Order;
@@ -71,60 +72,77 @@ class OrderSubmitForm extends Model {
      * @return Order|false 是否成功
      */
     public function submitOrder() {
-        $user = Yii::$app->user->getIdentity()->getUser();
+        try {
+            $user = Yii::$app->user->getIdentity()->getUser();
+            $hours = json_decode($this->hours, true);
 
-        $room = Room::findOne($this->room_id);
-        $orderType;
-        switch ($room->type) {
-            case Room::TYPE_SIMPLE:
-                $orderType = Order::TYPE_SIMPLE;
-                break;
-            case Room::TYPE_ACTIVITY:
-                $orderType = Order::TYPE_TWICE;
-                break;
-            default:
-                $orderType = Order::TYPE_TWICE;
-                break;
-        }
-        //验证日期
-        $roomData = $room->data;
-        if(!Room::checkOpen($this->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'])){
-            $this->setErrorMessage('该日期下的房间不可用');
+            $room = Room::findOne($this->room_id);
+            if ($room === null) {
+                $this->setErrorMessage('房间不存在');
+            }
+            $orderType;
+            switch ($room->type) {
+                case Room::TYPE_SIMPLE:
+                    $orderType = Order::TYPE_SIMPLE;
+                    break;
+                case Room::TYPE_ACTIVITY:
+                    $orderType = Order::TYPE_TWICE;
+                    break;
+                default:
+                    $orderType = Order::TYPE_TWICE;
+                    break;
+            }
+
+            //验证日期
+            $roomData = $room->data;
+            if(!Room::checkOpen($this->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'])){
+                $this->setErrorMessage('该日期下的房间不可用');
+                return false;
+            }
+
+            //验证额度
+            $usage = OrderService::queryUsage($user, strtotime($this->date), false);
+            if($usage['month'][$this->room_id]['avl'] < count($hours)){
+                $this->setErrorMessage('本月房间使用时长额度不足');
+                return false;
+            }
+            if($usage['week'][$this->room_id]['avl'] < count($hours)){
+                $this->setErrorMessage('本周房间使用时长额度不足');
+                return false;
+            }
+            
+            if($user->isStudent()) {
+                $deptName = '';
+            } else {
+                $deptName = $user->alias;
+            }
+            $order = new Order();
+            $order->date = $this->date;
+            $order->room_id = $this->room_id;
+            $order->user_id = $user->id;
+            $order->type = $orderType;
+            $order->status = Order::STATUS_INIT;
+            $order->hours = $hours;
+            $order->data = [
+                'name' => $this->name,
+                'student_no' => $user->isStudent() ? $user->id : '',
+                'phone' => $this->phone,
+                'title' => $this->title,
+                'content' => $this->content,
+                'number' => $this->number,
+                'secure' => $this->secure,
+                'dept_name' => $deptName,
+                'room_name' => $room->name.'('.$room->number.')',
+            ];
+
+        
+            OrderService::submitOrder($order, $user);
+            $this->setMessage('提交申请成功');
+            return true;
+        } catch (Exception $e) {
+            $this->setErrorMessage($e->getMessage());
             return false;
         }
-        $hours = json_decode($this->hours,true);
-        
-        $room = Room::findOne($this->room_id);
-        if ($room === null) {
-            $this->setErrorMessage('房间不存在');
-        }
-        if($user->isStudent()) {
-            $deptName = '';
-        } else {
-            $deptName = $user->alias;
-        }
-        $order = new Order();
-        $order->date = $this->date;
-        $order->room_id = $this->room_id;
-        $order->user_id = $user->id;
-        $order->type = $orderType;
-        $order->status = Order::STATUS_INIT;
-        $order->hours = $hours;
-        $order->data = [
-            'name' => $this->name,
-            'student_no' => $user->isStudent() ? $user->id : '',
-            'phone' => $this->phone,
-            'title' => $this->title,
-            'content' => $this->content,
-            'number' => $this->number,
-            'secure' => $this->secure,
-            'dept_name' => $deptName,
-            'room_name' => $room->name.'('.$room->number.')',
-        ];
-
-        OrderService::submitOrder($order, $user);
-        $this->setMessage('提交申请成功');
-        return true;
     }
 
 
@@ -134,15 +152,22 @@ class OrderSubmitForm extends Model {
      * @return Order|false 是否成功
      */
     public function cancelOrder() {
-        $order = Order::findOne($this->order_id);
-        if(empty($order)){
-            $this->setErrorMessage('申请不存在');
+        try {
+            $order = Order::findOne($this->order_id);
+            if(empty($order)){
+                $this->setErrorMessage('申请不存在');
+                return false;
+            }
+
+            $user = Yii::$app->user->getIdentity()->getUser();
+
+        
+            OrderService::cancelOrder($order, $user);
+            $this->setMessage('取消申请成功');
+            return true;
+        } catch (Exception $e) {
+            $this->setErrorMessage($e->getMessage());
             return false;
         }
-
-        $user = Yii::$app->user->getIdentity()->getUser();
-        OrderService::cancelOrder($order, $user);
-        $this->setMessage('取消申请成功');
-        return true;
     }
 }
