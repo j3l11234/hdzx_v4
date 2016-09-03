@@ -180,6 +180,10 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getMyOrders() {
+        $dateRange = RoomService::queryDateRange();
+        $startDate = !empty($this->start_date) ? strtotime($this->start_date) : $dateRange['start'];
+        $endDate = !empty($this->end_date) ? strtotime($this->end_date) : strtotime("+1 day", $dateRange['end']);
+
         $user = Yii::$app->user->getIdentity()->getUser();
 
         $range = static::getDateRange();
@@ -192,7 +196,10 @@ class OrderQueryForm extends Model {
 
         $data = OrderService::queryMyOrders($user, $this->start_date, $this->end_date);
 
-        return $data;
+        return array_merge($data, [
+            'start_date' => date('Y-m-d', $startDate),
+            'end_date' => date('Y-m-d', $endDate),
+        ]);
     }
 
      /**
