@@ -32,6 +32,7 @@ use common\models\entities\BaseUser;
     <?= $form->field($model, 'status')->dropDownList(BaseUser::getStatusTexts()) ?>
 
     <?= $form->field($model, 'usage_limit')->textArea(['value' => json_encode($model->usage_limit)]) ?>
+    
     <?= Alert::widget([
         'options' => [
             'class' => 'alert-info',

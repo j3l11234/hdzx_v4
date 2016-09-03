@@ -6,8 +6,8 @@ use yii\helpers\Html;
 /* @var $this yii\web\View */
 /* @var $model common\models\entities\Carousel */
 
-$this->title = 'Create Carousel';
-$this->params['breadcrumbs'][] = ['label' => 'Carousels', 'url' => ['index']];
+$this->title = '创建轮播';
+$this->params['breadcrumbs'][] = ['label' => '轮播', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="carousel-create">

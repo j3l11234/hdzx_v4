@@ -13,17 +13,35 @@ use yii\db\ActiveRecord;
  * @property string $title
  * @property string $content
  * @property string $picture
+ * @property integer $status
  * @property integer $align
  * @property integer $created_at
  * @property integer $updated_at
  */
 class Carousel extends ActiveRecord {
     /**
+     * 状态 禁用
+     */
+    const STATUS_DISABLED = 0;
+    /**
+     * 状态 正常显示
+     */
+    const STATUS_ENABLE = 1;
+
+    /**
      * @inheritdoc
      */
-    public static function tableName()
-    {
-        return 'hdzx_carousel';
+    public static function tableName() {
+        return '{{%carousel}}';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function behaviors() {
+        return [
+            TimestampBehavior::className(),
+        ];
     }
 
     /**
@@ -32,10 +50,40 @@ class Carousel extends ActiveRecord {
     public function rules()
     {
         return [
-            [['align', 'created_at', 'updated_at'], 'integer'],
-            [['title', 'content', 'picture'], 'string', 'max' => 255],
+            [['title', 'content', 'picture', ], 'safe'],
+            [['status', ], 'required'],
+            [['align', ], 'integer'],
+            ['status', 'in', 'range' => [static::STATUS_DISABLED, static::STATUS_ENABLE]],
         ];
     }
+
+     /**
+     * 得到启用的轮播
+     *
+     * @param Lock $lock_id 房间锁
+     * @return json
+     */
+    public static function getCarousels()
+    {
+        return static::find()
+            ->where(['status' => self::STATUS_ENABLE])
+            ->orderBy('align')
+            ->all();
+    }
+
+
+    /**
+     * 获取状态文本
+     * 
+     * @return array 状态文本
+     */
+    public static function getStatusTexts() {
+        return [
+            static::STATUS_DISABLED => '禁用',
+            static::STATUS_ENABLE   => '启用',
+        ];
+    }
+
 
     /**
      * @inheritdoc
@@ -44,12 +92,13 @@ class Carousel extends ActiveRecord {
     {
         return [
             'id' => 'ID',
-            'title' => 'Title',
-            'content' => 'Content',
-            'picture' => 'Picture',
-            'align' => 'Align',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
+            'title' => '标题',
+            'content' => '内容',
+            'picture' => '图片',
+            'status' => '状态',
+            'align' => '排序',
+            'created_at' => '创建时间',
+            'updated_at' => '更新时间',
         ];
     }
 }

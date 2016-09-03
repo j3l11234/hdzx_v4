@@ -69,7 +69,10 @@ AppAsset::register($this);
             ];
             $menuItems[] = ['label' => '房间锁', 'url' => ['/lock']];
         }
-
+        $menuItems[] = [
+            'label' => '轮播管理',
+            'url' => ['/carousel']
+        ];
         $menuItems[] = [
             'label' => Yii::$app->user->identity->username.' ('. Yii::$app->user->identity->alias.')',
             'items'=>[
