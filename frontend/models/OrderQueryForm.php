@@ -64,18 +64,18 @@ class OrderQueryForm extends Model {
     }
 
     function dateRangeValidator($attribute, $params) {
-        $range = static::getDateRange();
-        
+        $range = static::getDefaultDateRange();      
         $date = strtotime($this->$attribute);   
+
         if($date < $range['start']  || $date > $range['end']){
             $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内的记录');
         }
     }
 
-    public static function getDateRange(){
+    public static function getDefaultDateRange() {
         $today = strtotime(date('Y-m-d', time()));
-        $start = strtotime("-31 day",$today);
-        $end = strtotime("+31 day",$today);
+        $start = strtotime("-1 month",$today);
+        $end = strtotime("+1 month",$today);
 
         return [
             'start' => $start,
@@ -91,7 +91,7 @@ class OrderQueryForm extends Model {
     public function getRoomTables() {
         $dateRange = RoomService::queryDateRange();
         $startDate = !empty($this->start_date) ? strtotime($this->start_date) : $dateRange['start'];
-        $endDate = !empty($this->end_date) ? strtotime($this->end_date) : strtotime("+1 day", $dateRange['end']);
+        $endDate = !empty($this->end_date) ? strtotime($this->end_date) : $dateRange['end'];
         $roomList = Room::getOpenRooms(true);
         $rooms = !empty($this->rooms) ? json_decode($this->rooms, true) : $roomList;
 
@@ -180,25 +180,17 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getMyOrders() {
-        $dateRange = RoomService::queryDateRange();
-        $startDate = !empty($this->start_date) ? strtotime($this->start_date) : $dateRange['start'];
-        $endDate = !empty($this->end_date) ? strtotime($this->end_date) : strtotime("+1 day", $dateRange['end']);
+        $dateRange = static::getDefaultDateRange();
+        $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d', $dateRange['start']);
+        $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
 
         $user = Yii::$app->user->getIdentity()->getUser();
 
-        $range = static::getDateRange();
-        if(empty($this->start_date)){
-            $this->start_date = date('Y-m-d', $range['start']);
-        }
-        if(empty($this->end_date)){
-            $this->end_date = date('Y-m-d', $range['end']);
-        }
-
-        $data = OrderService::queryMyOrders($user, $this->start_date, $this->end_date);
+        $data = OrderService::queryMyOrders($user, $startDate, $endDate);
 
         return array_merge($data, [
-            'start_date' => date('Y-m-d', $startDate),
-            'end_date' => date('Y-m-d', $endDate),
+            'start_date' => $startDate,
+            'end_date' => $endDate,
         ]);
     }
 

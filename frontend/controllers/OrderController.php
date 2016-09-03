@@ -94,11 +94,7 @@ class OrderController extends Controller
      */
     public function actionMyorderPage()
     {
-        $dateRange = OrderQueryForm::getDateRange();
-        return $this->render('/page/myorder', [
-            'start_date' => date('Y-m-d'),
-            'end_date' => date('Y-m-d', $dateRange['end']),
-        ]);
+        return $this->render('/page/myorder');
     }
 
     /**

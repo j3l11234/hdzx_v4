@@ -36,7 +36,7 @@ class ApproveController extends Controller
                         'actions' => [
                             'approve-auto-page', 'approve-manager-page', 'approve-school-page',
                             'getorders', 'getdepts', 'approveorder', 'rejectorder', 'revokeorder',
-                        ]
+                        ],
                         'roles' => ['@'],
                         'allow' => true,
                         'privileges' => [BaseUser::PRIV_ADMIN],

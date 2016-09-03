@@ -79,21 +79,19 @@ class ApproveQueryForm extends Model {
      * @return User|null the saved model or null if saving fails
      */
     public function getApproveOrder() {
+        $dateRange = static::getDefaultDateRange();
+        $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d',$dateRange['start']);
+        $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
+
         $user = Yii::$app->user->getIdentity()->getUser();
         $numType = $this->getType($this->type);
-        $range = static::getDefaultDateRange();
-        if(empty($this->start_date)){
-            $this->start_date = date('Y-m-d', $range['start']);
-        }
-        if(empty($this->end_date)){
-            $this->end_date = date('Y-m-d', $range['end']);
-        }
-        if(strtotime($this->end_date) - strtotime($this->start_date) > 93 * 86400) {
+
+        if( strtotime($endDate) -strtotime($startDate) > 93 * 86400) {
             $this->setErrorMessage('查询日期间隔不能大于3个月');
             return false;
         }
 
-        $data = ApproveService::queryApproveOrder($user, $numType, $this->start_date, $this->end_date);
+        $data = ApproveService::queryApproveOrder($user, $numType, $startDate, $endDate);
 
         //解析roomTable，用于分析冲突
         $roomTables = [];
@@ -111,8 +109,8 @@ class ApproveQueryForm extends Model {
             $roomTables[$room_id.'_'.$date] = $roomTable;
         }
         $data['roomTables'] = $roomTables;
-        $data['start_date'] = $this->start_date;
-        $data['end_date'] = $this->end_date;
+        $data['start_date'] = $startDate;
+        $data['end_date'] = $endDate;
 
         return $data;
     }
