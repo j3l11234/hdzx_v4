@@ -3,7 +3,7 @@
 use yii\bootstrap\Carousel;
 /* @var $this yii\web\View */
 
-$this->title = 'My Yii Application';
+$this->title = '学活场地申请系统';
 ?>
 <div class="site-index">
     <?php
