@@ -10,6 +10,8 @@ use common\services\ApproveService;
 use common\services\OrderService;
 use backend\models\ApproveQueryForm;
 use backend\models\ApproveForm;
+use common\filter\PrivilegeRule;
+use common\models\entities\BaseUser;
 
 /**
  * Order controller
@@ -30,13 +32,17 @@ class ApproveController extends Controller
                 ],
                 'rules' => [
                     [
+                        'class' => PrivilegeRule::className(),
                         'actions' => [
                             'approve-auto-page', 'approve-manager-page', 'approve-school-page',
                             'getorders', 'getdepts', 'approveorder', 'rejectorder', 'revokeorder',
-                        ],
-                        'allow' => true,
+                        ]
                         'roles' => ['@'],
+                        'allow' => true,
+                        'privileges' => [BaseUser::PRIV_ADMIN],
                     ],
+
+
                 ],
             ]
         ];

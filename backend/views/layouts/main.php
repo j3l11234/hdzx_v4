@@ -40,7 +40,7 @@ AppAsset::register($this);
         ],
     ]);
     $menuItems = [
-        ['label' => 'Home', 'url' => ['/site/index']],
+        ['label' => '首页', 'url' => ['/site/index']],
     ];
     
     if (Yii::$app->user->isGuest) {
@@ -59,20 +59,18 @@ AppAsset::register($this);
         ];
 
         $user = Yii::$app->user->getIdentity()->getUser();
-        if ($user->checkPrivilege(BaseUser::PRIV_ADMIN)){
-            $menuItems[] = [
-                'label' => '用户管理',
-                'items'=>[
-                    ['label' => '普通用户', 'url' => ['/user/index']],
-                    ['label' => '学生用户', 'url' => ['/user/student']],
-                ],
-            ];
+        if ($user->checkPrivilege(BaseUser::PRIV_ADMIN)) {
             $menuItems[] = ['label' => '房间锁', 'url' => ['/lock']];
+            $menuItems[] = [
+                'label' => '系统管理',
+                'items'=>[
+                    ['label' => '普通用户管理', 'url' => ['/user/index']],
+                    ['label' => '学生用户管理', 'url' => ['/user/student']],
+                    ['label' => '轮播管理','url' => ['/carousel']],
+                    ['label' => '房间管理','url' => ['/room']],
+                ],
+            ]; 
         }
-        $menuItems[] = [
-            'label' => '轮播管理',
-            'url' => ['/carousel']
-        ];
         $menuItems[] = [
             'label' => Yii::$app->user->identity->username.' ('. Yii::$app->user->identity->alias.')',
             'items'=>[

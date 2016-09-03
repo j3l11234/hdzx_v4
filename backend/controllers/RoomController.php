@@ -3,11 +3,13 @@
 namespace backend\controllers;
 
 use Yii;
-use common\models\entities\Room;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
+
+use common\filter\PrivilegeRule;
+use common\models\entities\BaseUser;
+use common\models\entities\Room;
 
 /**
  * RoomController implements the CRUD actions for Room model.
@@ -19,13 +21,20 @@ class RoomController extends Controller
      */
     public function behaviors()
     {
-        return [
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['POST'],
+         return [
+            'access' => [
+                'class' => AccessControl::className(),
+                'only' => ['index', 'view', 'create', 'update', 'delete'],
+                'rules' => [
+                    [
+                        'class' => PrivilegeRule::className(),
+                        'actions' => ['index', 'view', 'create', 'update', 'delete'],
+                        'roles' => ['@'],
+                        'allow' => true,
+                        'privileges' => [BaseUser::PRIV_ADMIN],
+                    ],
                 ],
-            ],
+            ]
         ];
     }
 

@@ -11,6 +11,7 @@ use yii\filters\AccessControl;
 use common\models\entities\BaseUser;
 use backend\models\LockQueryForm;
 use backend\models\LockForm;
+use common\filter\PrivilegeRule;
 
 /**
  * Lock controller
@@ -26,15 +27,17 @@ class LockController extends Controller
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => [
-                    'lock-page', 'getlocks', 'approveorder', 'rejectorder', 'revokeorder',
+                    'lock-page', 'getlocks', 'submitlock', 'deletelock', 'applylock',
                 ],
                 'rules' => [
                     [
+                        'class' => PrivilegeRule::className(),
                         'actions' => [
-                            'lock-page', 'getlocks',
+                            'lock-page', 'getlocks', 'submitlock', 'deletelock', 'applylock',
                         ],
-                        'allow' => true,
                         'roles' => ['@'],
+                        'allow' => true,
+                        'privileges' => [BaseUser::PRIV_ADMIN],
                     ],
                 ],
             ],
@@ -60,7 +63,6 @@ class LockController extends Controller
      */
     public function actionLockPage()
     {
-        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
         return $this->render('/page/lock', [
             'type' => 'admin',
         ]);
@@ -73,7 +75,6 @@ class LockController extends Controller
      */
     public function actionGetlocks() {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
 
         $data = Yii::$app->request->get();
         $model = new LockQueryForm(['scenario' => 'getLocks']);
@@ -99,7 +100,6 @@ class LockController extends Controller
      */
     public function actionSubmitlock() {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
 
         $reqData = Yii::$app->request->post(); 
         $model = new LockForm();
@@ -129,7 +129,6 @@ class LockController extends Controller
      */
     public function actionDeletelock() {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
 
         $reqData = Yii::$app->request->post(); 
         $model = new LockForm();
@@ -156,7 +155,6 @@ class LockController extends Controller
      */
     public function actionApplylock() {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $this->checkPrivilege(BaseUser::PRIV_ADMIN);
 
         $reqData = Yii::$app->request->post(); 
         $model = new LockForm();
@@ -173,13 +171,6 @@ class LockController extends Controller
                 'error' => 1,
                 'message' => $model->getErrorMessage(),
             ];
-        }
-    }
-
-    protected function checkPrivilege($privilege) {
-        $user = Yii::$app->user->getIdentity()->getUser();
-        if(empty($user) || !$user->checkPrivilege($privilege)){
-            throw new ForbiddenHttpException('您没有权限执行该操作');
         }
     }
 }

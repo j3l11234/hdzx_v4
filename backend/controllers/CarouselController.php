@@ -3,11 +3,15 @@
 namespace backend\controllers;
 
 use Yii;
-use common\models\entities\Carousel;
 use yii\data\ActiveDataProvider;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+
+use common\models\entities\Carousel;
+use common\filter\PrivilegeRule;
+use common\models\entities\BaseUser;
 
 /**
  * CarouselController implements the CRUD actions for Carousel model.
@@ -20,12 +24,19 @@ class CarouselController extends Controller
     public function behaviors()
     {
         return [
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['POST'],
+            'access' => [
+                'class' => AccessControl::className(),
+                'only' => ['index', 'view', 'create', 'update', 'delete'],
+                'rules' => [
+                    [
+                        'class' => PrivilegeRule::className(),
+                        'actions' => ['index', 'view', 'create', 'update', 'delete'],
+                        'roles' => ['@'],
+                        'allow' => true,
+                        'privileges' => [BaseUser::PRIV_ADMIN],
+                    ],
                 ],
-            ],
+            ]
         ];
     }
 
@@ -35,6 +46,7 @@ class CarouselController extends Controller
      */
     public function actionIndex()
     {
+
         $dataProvider = new ActiveDataProvider([
             'query' => Carousel::find(),
         ]);
@@ -51,6 +63,7 @@ class CarouselController extends Controller
      */
     public function actionView($id)
     {
+
         return $this->render('view', [
             'model' => $this->findModel($id),
         ]);
@@ -63,6 +76,7 @@ class CarouselController extends Controller
      */
     public function actionCreate()
     {
+
         $model = new Carousel();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
@@ -82,6 +96,7 @@ class CarouselController extends Controller
      */
     public function actionUpdate($id)
     {
+
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
@@ -101,6 +116,7 @@ class CarouselController extends Controller
      */
     public function actionDelete($id)
     {
+
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);

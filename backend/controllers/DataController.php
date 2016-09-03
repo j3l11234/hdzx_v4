@@ -19,10 +19,10 @@ class DataController extends Controller
         return [
              'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['getrooms', 'getdepts',],
+                'only' => ['getrooms',],
                 'rules' => [
                     [
-                        'actions' => ['getrooms', 'getdepts',],
+                        'actions' => ['getrooms',],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
