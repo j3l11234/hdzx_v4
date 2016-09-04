@@ -84,7 +84,7 @@ class RoomService extends Component {
                 'roomList' => $roomList,
                 'rooms' => $rooms,
             ];
-            $cache->set($cacheKey, $data);
+            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => $cacheKey]));
         }else{
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }

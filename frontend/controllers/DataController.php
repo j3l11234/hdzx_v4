@@ -58,5 +58,4 @@ class DataController extends Controller
             'error' => 0,
         ]);
     }
-
 }

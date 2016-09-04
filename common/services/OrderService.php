@@ -27,7 +27,48 @@ use common\operations\IssueOperation;
  * 提交取消等
  */
 class OrderService extends Component {
-    
+    /**
+     * 查询部门列表(带缓存)
+     * 优先从缓存中查询
+     *
+     * @return json
+     */
+    public static function queryDeptList() {
+        $cacheKey = 'deptList';
+        $cache = Yii::$app->cache;
+        $data = $cache->get($cacheKey);
+        if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效'); 
+            $data = [];
+            $result = Department::find()
+                ->where(['status' => Department::STATUS_ENABLE])
+                ->select(['id', 'name', 'parent_id', 'choose', 'usage_limit'])
+                ->orderBy('align')
+                ->all();
+
+
+            $deptMap = [];
+            $depts = [];
+            foreach ($result as $key => $dept) {
+                $dept = $dept->toArray(['id', 'name', 'parent_id', 'choose', 'usage_limit',]);
+                if(!isset($deptMap[$dept['parent_id']])){
+                    $deptMap[$dept['parent_id']] = [];
+                }
+                $deptMap[$dept['parent_id']][] = $dept['id'];
+                $depts[$dept['id']] = $dept;
+            }
+            $data = [
+                'deptMap' => $deptMap,
+                'depts' => $depts,
+            ];
+            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => $cacheKey]));
+        }else{
+            Yii::trace($cacheKey.':缓存命中'); 
+        }
+        return $data;
+    }
+
+
     /**
      * 提交一个申请
      *

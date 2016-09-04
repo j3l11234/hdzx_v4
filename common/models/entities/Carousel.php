@@ -1,4 +1,9 @@
 <?php
+/**
+ * @link http://www.j3l11234.com/
+ * @copyright Copyright (c) 2015 j3l11234
+ * @author j3l11234@j3l11234.com
+ */
 
 namespace common\models\entities;
 
