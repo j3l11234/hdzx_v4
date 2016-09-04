@@ -19,6 +19,7 @@ class OrderSubmitForm extends Model {
     public $room_id;
     public $hours;
     public $name;
+    public $student_no;
     public $phone;
     public $title;
     public $content;
@@ -43,7 +44,7 @@ class OrderSubmitForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios[static::SCENARIO_SUBMIT_ORDER] = ['date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'number', 'secure'];
+        $scenarios[static::SCENARIO_SUBMIT_ORDER] = ['date', 'room_id', 'hours', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'];
         $scenarios[static::SCENARIO_CANCEL_ORDER] = ['order_id'];
         return $scenarios;
     }
@@ -53,7 +54,8 @@ class OrderSubmitForm extends Model {
      */
     public function rules() {
         return [
-            [['order_id', 'date', 'room_id', 'hours', 'name', 'phone', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
+            [['order_id', 'date', 'room_id', 'hours', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
+            [['student_no'], 'match', 'pattern' => '/^\d{8}$/'],
             [['date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['hours'], 'jsonValidator'],
         ];
@@ -125,7 +127,7 @@ class OrderSubmitForm extends Model {
             $order->hours = $hours;
             $order->data = [
                 'name' => $this->name,
-                'student_no' => $user->isStudent() ? $user->id : '',
+                'student_no' => $user->isStudent() ? substr($user->id,1) : $this->student_no,
                 'phone' => $this->phone,
                 'title' => $this->title,
                 'content' => $this->content,

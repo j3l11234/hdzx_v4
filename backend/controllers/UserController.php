@@ -187,6 +187,7 @@ class UserController extends Controller
         $postData = Yii::$app->request->post();
         if($id == 1 &&!empty($postData[$formName])){
             $postData[$formName]['privilege'][] = BaseUser::PRIV_ADMIN;
+            $postData[$formName]['privilege'][] = BaseUser::PRIV_BACKEND;
             $postData[$formName]['status'] = BaseUser::STATUS_ACTIVE;
         }
 
