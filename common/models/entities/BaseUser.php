@@ -82,7 +82,7 @@ class BaseUser extends ActiveRecord {
     /**
      * 开门条发放权限
      */
-    const PRIV_TYPE_ISSUE           = 0b0100000000;
+    const PRIV_ISSUE           = 0b0100000000;
 
 
 
@@ -239,7 +239,7 @@ class BaseUser extends ActiveRecord {
             static::PRIV_APPROVE_SIMPLE => '琴房审批',
             static::PRIV_BACKEND => '后台登陆',
             static::PRIV_ADMIN => '系统管理',
-            static::PRIV_TYPE_ISSUE => '开门条',  
+            static::PRIV_ISSUE => '开门条',  
         ];
     }
 
@@ -261,7 +261,7 @@ class BaseUser extends ActiveRecord {
                 static::PRIV_APPROVE_SIMPLE,
                 static::PRIV_BACKEND,
                 static::PRIV_ADMIN,
-                static::PRIV_TYPE_ISSUE,
+                static::PRIV_ISSUE,
             ] as $privNum) {
                 if (in_array($privNum, $privList)){
                     $privilege += $privNum;
@@ -288,7 +288,7 @@ class BaseUser extends ActiveRecord {
             static::PRIV_APPROVE_SIMPLE,
             static::PRIV_BACKEND,
             static::PRIV_ADMIN,
-            static::PRIV_TYPE_ISSUE,
+            static::PRIV_ISSUE,
         ] as $privNum) {
             if (($privilege & $privNum) == $privNum){
                 $privList[] = $privNum;

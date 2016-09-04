@@ -20,7 +20,7 @@ use common\services\RoomService;
  * 发放开门条 操作
  *
  */
-class AutoRevokeOperation extends BaseOrderOperation {
+class IssueOperation extends BaseOrderOperation {
 
     protected static $type = OrderOperation::TYPE_ISSUE;
     protected static $opName = '发放开门条';
@@ -30,7 +30,7 @@ class AutoRevokeOperation extends BaseOrderOperation {
      * 该方法将会检查用户是否拥有审批权限
      */
     protected function checkAuth() {
-        if (!$this->user->checkPrivilege(User::PRIV_TYPE_ISSUE)) {
+        if (!$this->user->checkPrivilege(User::PRIV_ISSUE)) {
             throw new Exception('该账号无开门条发放权限', Error::AUTH_FAILED);
         }
     }
@@ -39,7 +39,7 @@ class AutoRevokeOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkPreStatus() {
-        if ($this->order->status != STATUS_PASSED){
+        if ($this->order->status != Order::STATUS_PASSED){
             throw new Exception('当前申请不可发放开门条', Error::INVALID_ORDER_STATUS);
         }
     }
@@ -62,7 +62,7 @@ class AutoRevokeOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function setPostStatus() {
-        
+        $this->order->issue_time = time();
     }
 
 }

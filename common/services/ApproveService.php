@@ -215,7 +215,7 @@ class ApproveService extends Component {
         $transaction = $connection->beginTransaction();
 
         try {
-            $operation = new $operationClass($order, $user, $roomTable,$extra);
+            $operation = new $operationClass($order, $user, $roomTable, $extra);
             $operation->doOperation();
 
             $transaction->commit();

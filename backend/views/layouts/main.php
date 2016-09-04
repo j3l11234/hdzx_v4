@@ -59,6 +59,12 @@ AppAsset::register($this);
         ];
 
         $user = Yii::$app->user->getIdentity()->getUser();
+        if ($user->checkPrivilege(BaseUser::PRIV_ISSUE)) {
+            $menuItems[] = [
+                'label' => '开门条',
+                'url' => ['/issue']
+            ]; 
+        }
         if ($user->checkPrivilege(BaseUser::PRIV_ADMIN)) {
             $menuItems[] = ['label' => '房间锁', 'url' => ['/lock']];
             $menuItems[] = [

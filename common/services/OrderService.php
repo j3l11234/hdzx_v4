@@ -11,6 +11,7 @@ use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
 use common\exceptions\RoomTableException;
+use common\models\entities\BaseUser;
 use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -18,6 +19,7 @@ use common\models\entities\Room;
 use common\models\entities\RoomTable;
 use common\operations\SubmitOperation;
 use common\operations\CancelOperation;
+use common\operations\IssueOperation;
 
 /**
  * 预约相关服务类
@@ -91,6 +93,41 @@ class OrderService extends Component {
 
 
     /**
+     * 发放开门条
+     *
+     * @param Order $order 预约
+     * @param BaseUser $user 用户
+     * @param String $comment 备注
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function issueOrder($order, $user, $comment = null) {
+        $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
+        $extra = [
+            'comment' => $comment,
+        ];
+
+        $connection = Yii::$app->db;
+        $transaction = $connection->beginTransaction();
+        
+
+        try {
+            $operation = new IssueOperation($order, $user, $roomTable, $extra);
+            $operation->doOperation();
+            $transaction->commit();
+
+            //清除缓存
+            TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
+
+            Yii::info('发放开门条, id='.$order->id, '申请操作');
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;    
+        }
+    }
+
+
+    /**
      * 查询单个用户的预约
      * 数据会包含操作记录
      *
@@ -119,6 +156,55 @@ class OrderService extends Component {
 
             $orderList[] = $order['id'];
             $orders[$order['id']] = $order;
+        }
+
+        $data = [
+            'orderList' => $orderList,
+            'orders' => $orders,
+        ];
+
+        return $data;
+    }
+
+
+    /**
+     * 查询单个用户的预约
+     * 数据会包含操作记录
+     *
+     * @param User $user 用户
+     * @param String $student_no 学号
+     * @param String $start_date 开始时间
+     * @param String $end_date 结束时间
+     * @return json
+     */
+    public static function queryIssueOrders($user, $student_no, $start_date, $end_date) {
+        if (!$user->checkPrivilege(BaseUser::PRIV_ISSUE)) {
+            throw new Exception('该账号无开门条发放权限', Error::AUTH_FAILED);
+        }
+
+        $where = ['and'];
+
+        //$where[] = ['=', 'user_id', $user->id];
+
+        if ($start_date !== null){
+            $where[] = ['>=', 'date', $start_date];
+        }
+        if ($end_date !== null){
+            $where[] = ['<=', 'date', $end_date];
+        }
+
+        $result = Order::find()->select(['id'])->where($where)->all();
+
+        $orderList = [];
+        $orders = [];
+        foreach ($result as $key => $order) {
+
+            $order = static::queryOneOrder($order->id);
+            Yii::trace($order);
+            if($order['student_no'] == $student_no){
+                $orderList[] = $order['id'];
+                $orders[$order['id']] = $order;
+            }   
         }
 
         $data = [
@@ -216,7 +302,7 @@ class OrderService extends Component {
             $monthStart = mktime(0, 0, 0, $month, 1, $year);
             $monthEnd = mktime(23, 59, 59, $month, date('t', $now), $year);
             $weekStart = mktime(0, 0, 0, $month, $monthDay-(($weekDay + 6) % 7), $year);
-            $weekEnd = mktime(23, 59, 59, $month, $monthDay+(6 - ($weekDay + 6) % 7), $year); 
+            $weekEnd = mktime(23, 59, 59, $month, $monthDay+(6 - ($weekDay + 6) % 7), $year);
 
             //查找本月的申请
             $where = ['and'];

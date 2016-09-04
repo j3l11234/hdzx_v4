@@ -22,6 +22,7 @@ return [
                 '/approve/manager' => 'approve/approve-manager-page',
                 '/approve/school' => 'approve/approve-school-page',
                 '/lock' => 'lock/lock-page',
+                '/issue' => 'order/issue-page',
             ]
         ],
         'user' => [
