@@ -33,9 +33,9 @@ $this->params['breadcrumbs'][] = $this->title;
             'alias',
             [
                 'class' => DataColumn::className(),
-                'attribute' => 'managers',
+                'attribute' => 'manage_depts',
                 'content' => function ($model, $key, $index, $column){
-                    return json_encode($model->managers);
+                    return json_encode($model->manage_depts);
                 },
             ],
             [

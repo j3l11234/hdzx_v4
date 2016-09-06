@@ -21,7 +21,7 @@ use common\behaviors\JsonBehavior;
  * @property integer $room_id 房间id
  * @property json $hours 申请的小时
  * @property integer $user_id 申请id(如果是普通账号)
- * @property json $managers 负责人审批者
+ * @property integer $dept_id 部门单位
  * @property integer $type 申请类型(普通申请 后台申请)
  * @property integer $status 申请状态
  * @property integer $submit_time 提交时间
@@ -120,7 +120,7 @@ class Order extends ActiveRecord {
                 'createdAtAttribute' => false,
             ],[
                 'class' => JsonBehavior::className(),
-                'attributes' => ['hours', 'managers', 'data'],
+                'attributes' => ['hours', 'data'],
             ],
         ];
     }
@@ -131,7 +131,7 @@ class Order extends ActiveRecord {
     public function rules()
     {
         return [
-            [['id', 'date', 'room_id', 'hours', 'user_id', 'managers', 'type', 'status', 'submit_time', 'data', 'issue_time'], 'safe'],
+            [['id', 'date', 'room_id', 'hours', 'user_id', 'type', 'dept_id', 'status', 'submit_time', 'data', 'issue_time'], 'safe'],
         ];
     }
 
@@ -159,26 +159,6 @@ class Order extends ActiveRecord {
         return $find->all();
     }
 
-    /**
-     * 检查该order是否能被该用户审批
-     *
-     * @param string $user_id 用户id
-     * @param string/json $managers 用户id 
-     * @return boolean 是否可以
-     */
-    public static function checkManager($user_id, $managers) {
-        if (is_array($managers)) {
-            return in_array($user_id, $managers);
-        }else if (is_numeric($managers)) {
-            return $user_id === $managers;
-        }else if (is_string($managers)) {
-            $managers = json_decode($managers);
-            if (!empty($managers)) {
-                return in_array($user_id, $managers);
-            }
-        }
-        return false;    
-    }
 
     /**
      * 得到房间表状态

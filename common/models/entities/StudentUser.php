@@ -13,7 +13,7 @@ use Yii;
  * @property string $password_reset_token
  * @property string $email
  * @property string $alias
- * @property json $managers 负责人List
+ * @property json $manage_depts 可负责人审批dept
  * @property integer $privilege
  * @property integer $status
  * @property integer $created_at

@@ -136,14 +136,13 @@ class UserController extends Controller
     {
         $model = new User();
         $model->scenario = BaseUser::SCENARIO_CREATE;
-        $model->managers = [1];
         $model->status = BaseUser::STATUS_ACTIVE;
         $model->generateAuthKey();
         
         $formName = $model->formName();
         $postData = Yii::$app->request->post();
-        if(!empty($postData[$formName]['managers'])){
-            $postData[$formName]['managers'] = json_decode($postData[$formName]['managers']);
+        if(!empty($postData[$formName]['manage_depts'])){
+            $postData[$formName]['manage_depts'] = json_decode($postData[$formName]['manage_depts']);
         }
         if(!empty($postData[$formName]['privilege'])){
             $postData[$formName]['privilege'] = BaseUser::privilegeList2Num($postData[$formName]['privilege']);
@@ -191,8 +190,8 @@ class UserController extends Controller
             $postData[$formName]['status'] = BaseUser::STATUS_ACTIVE;
         }
 
-        if(isset($postData[$formName]['managers'])){
-            $postData[$formName]['managers'] = json_decode($postData[$formName]['managers']);
+        if(isset($postData[$formName]['manage_depts'])){
+            $postData[$formName]['manage_depts'] = json_decode($postData[$formName]['manage_depts']);
         }
         if(isset($postData[$formName]['privilege'])) {
             $postData[$formName]['privilege'] = BaseUser::privilegeList2Num($postData[$formName]['privilege']);

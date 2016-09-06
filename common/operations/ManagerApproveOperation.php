@@ -15,6 +15,7 @@ use common\models\entities\Order;
 use common\models\entities\OrderOperation;
 use common\models\entities\User;
 use common\services\RoomService;
+use common\services\ApproveService;
 
 /**
  * 负责人审批通过 操作
@@ -46,7 +47,7 @@ class ManagerApproveOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_MANAGER_PENDING){
-            throw new Exception('申请状态异常', Error::INVALID_ORDER_STATUS);
+            throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 

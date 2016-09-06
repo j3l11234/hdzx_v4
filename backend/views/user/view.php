@@ -51,8 +51,8 @@ $this->params['breadcrumbs'][] = $this->title;
             'email:email',
             'alias',
             [
-                'attribute' => 'managers',
-                'value' => json_encode($model->managers),
+                'attribute' => 'manage_depts',
+                'value' => json_encode($model->manage_depts),
             ],
             [
                 'attribute' => 'privilege',

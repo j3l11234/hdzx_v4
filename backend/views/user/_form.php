@@ -25,7 +25,7 @@ use common\models\entities\BaseUser;
 
     <?= $form->field($model, 'alias')->textInput() ?>
 
-    <?= $form->field($model, 'managers')->textInput(['value' => json_encode($model->managers)]) ?>
+    <?= $form->field($model, 'manage_depts')->textInput(['value' => json_encode($model->manage_depts)]) ?>
     
     <?= $form->field($model, 'privilege')->checkboxList(BaseUser::getPrivilegeTexts(),['separator' => '<br>']) ?>
 

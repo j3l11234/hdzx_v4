@@ -15,6 +15,7 @@ use common\models\entities\Order;
 use common\models\entities\OrderOperation;
 use common\models\entities\User;
 use common\services\RoomService;
+use common\services\ApproveService;
 
 /**
  * 负责人审批驳回 操作
@@ -34,7 +35,7 @@ class ManagerRejectOperation extends BaseOrderOperation {
             if(!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
                 throw new HdzxException('该账号无负责人审批权限', Error::AUTH_FAILED);
             }else{
-                if(!Order::checkManager($this->user->id, $this->order->managers)) {
+                if(!in_array($this->order->dept_id, ApproveService::queryUserDepts($this->user))) {
                     throw new HdzxException('该账号对该申请无负责人审批权限', Error::AUTH_FAILED);
                 }
             }

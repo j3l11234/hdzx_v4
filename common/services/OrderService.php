@@ -27,6 +27,7 @@ use common\operations\IssueOperation;
  * 提交取消等
  */
 class OrderService extends Component {
+
     /**
      * 查询部门列表(带缓存)
      * 优先从缓存中查询
@@ -46,7 +47,6 @@ class OrderService extends Component {
                 ->orderBy('align')
                 ->all();
 
-
             $deptMap = [];
             $depts = [];
             foreach ($result as $key => $dept) {
@@ -61,7 +61,7 @@ class OrderService extends Component {
                 'deptMap' => $deptMap,
                 'depts' => $depts,
             ];
-            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => $cacheKey]));
+            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => [$cacheKey, 'Dept']]));
         }else{
             Yii::trace($cacheKey.':缓存命中'); 
         }
@@ -79,7 +79,6 @@ class OrderService extends Component {
      */
     public static function submitOrder($order, $user) {
         $roomTable = RoomService::getRoomTable($order->date, $order->room_id);
-        $order->managers = $user->managers;
         $connection = Yii::$app->db;
         $transaction = $connection->beginTransaction();
 
@@ -272,7 +271,7 @@ class OrderService extends Component {
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $order = Order::findOne($order_id);
-            $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
+            $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
             $data = array_merge($data, $data['data']);
             unset($data['data']);
 

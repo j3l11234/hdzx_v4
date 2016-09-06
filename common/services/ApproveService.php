@@ -45,6 +45,21 @@ class ApproveService extends Component {
         02 => '负责人',
         03 => '校级',
     ];
+
+
+
+
+    // /**
+    //  * 检查该用户是否能够审批该dept的order
+    //  *
+    //  * @return boolean 是否可以
+    //  */
+    // public function checkApproveDept($dept_id) {
+    //     return in_array($dept_id, $this->_approve_dept);
+    // }
+
+
+
     /**
      * 查询审批申请
      * 数据会包含操作记录
@@ -71,7 +86,7 @@ class ApproveService extends Component {
                 $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED, Order::STATUS_MANAGER_REJECTED, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
                 if ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
                 } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
-                    $menagerFilter = true;
+                    $where[] = ['in', 'dept_id', static::queryUserDepts($user)];
                 } else {
                     throw new HdzxException('没有查询权限', Error::AUTH_FAILED);
                 }
@@ -95,26 +110,17 @@ class ApproveService extends Component {
             $where[] = ['<=', 'date', $end_date];
         }
 
-        $result = Order::find()->select(['id', 'managers'])->where($where)->asArray()->all();
+        $result = Order::find()->select(['id'])->where($where)->asArray()->all();
 
         $orderList = [];
         $orders = [];
-        if ($menagerFilter) {
-            foreach ($result as $key => $order) {
-                if(!Order::checkManager($user->id, $order['managers'])) {
-                    continue;
-                }
-                $order = OrderService::queryOneOrder($order['id']);
-                $orderList[] = $order['id'];
-                $orders[$order['id']] = $order;
-            }
-        } else {
-            foreach ($result as $key => $order) {
-                $order = OrderService::queryOneOrder($order['id']);
-                $orderList[] = $order['id'];
-                $orders[$order['id']] = $order;
-            }
+
+        foreach ($result as $key => $order) {
+            $order = OrderService::queryOneOrder($order['id']);
+            $orderList[] = $order['id'];
+            $orders[$order['id']] = $order;
         }
+
         $data = [
             'orderList' => $orderList,
             'orders' => $orders,
@@ -143,7 +149,7 @@ class ApproveService extends Component {
                 $operationClass = 'common\operations\SchoolApproveOperation';
                 break;
             default:
-                throw new Exception('无效审批类型', Error::INVALID_APPROVE_TYPE);
+                throw new HdzxException('无效审批类型', Error::INVALID_APPROVE_TYPE);
                 break;
         }
 
@@ -170,7 +176,7 @@ class ApproveService extends Component {
                 $operationClass = 'common\operations\SchoolRejectOperation';
                 break;
             default:
-                throw new Exception('无效审批类型', Error::INVALID_APPROVE_TYPE);
+                throw new HdzxException('无效审批类型', Error::INVALID_APPROVE_TYPE);
                 break;
         }
 
@@ -310,6 +316,58 @@ class ApproveService extends Component {
         }
 
         return $result;
+    }
+
+
+     /**
+     * 查询一个用户所有可审批的dept
+     * 优先从缓存中查询
+     *
+     * @param User $user 用户
+     * @return json
+     */
+    public static function queryUserDepts($user) {
+        $cacheKey = 'UserDepts'.$user->id;
+        $cache = Yii::$app->cache;
+        $data = $cache->get($cacheKey);
+        if ($data == null) {
+            Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
+            $data = [];
+            $result = Department::find()
+                ->where(['status' => Department::STATUS_ENABLE])
+                ->select(['id', 'name', 'parent_id',])
+                ->asArray()
+                ->all();
+
+            $deptMap = [];
+            $depts = [];
+            foreach ($result as $key => $dept) {
+                if(!isset($deptMap[$dept['parent_id']])){
+                    $deptMap[$dept['parent_id']] = [];
+                }
+                $deptMap[$dept['parent_id']][] = $dept['id'];
+                $depts[$dept['id']] = $dept;
+            }
+
+            $cascadeDepts = array_merge($user->manage_depts);
+            for ($i=0; $i < count($cascadeDepts); $i++) { 
+                if (!isset($deptMap[$cascadeDepts[$i]])){
+                    continue;
+                }
+                $childList = $deptMap[$cascadeDepts[$i]];
+                foreach ($childList as $dept) {
+                    if(!in_array($dept, $cascadeDepts)){
+                        $cascadeDepts[] = $dept;
+                    }
+                }
+            }
+
+            $data = $cascadeDepts;
+            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => ['User_'.$user->id, 'Dept']]));
+        }else{
+            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
+        }
+        return $data;
     }
 
 

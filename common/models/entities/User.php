@@ -21,7 +21,7 @@ use yii\db\ActiveRecord;
  * @property string $password_reset_token
  * @property string $email
  * @property string $alias 显示用户名
- * @property json $managers 负责人List
+ * @property json $manage_depts 可负责人审批dept
  * @property integer $privilege 权限表
  * @property integer $status 用户状态
  * @property integer $created_at

@@ -22,7 +22,7 @@ use common\behaviors\JsonBehavior;
  * @property string $password_reset_token
  * @property string $email
  * @property string $alias
- * @property json $managers 负责人List
+ * @property json $manage_depts 可负责人审批dept
  * @property integer $privilege
  * @property integer $status
  * @property json $usage_limit 房间使用限额
@@ -55,7 +55,7 @@ class BaseUser extends ActiveRecord {
     const PRIV_ORDER_ACTIVITY       = 0b0000000010;
 
     /**
-     * 负责人审批权限_按managers (审批/驳回/撤销)
+     * 负责人审批权限_按manage_depts (审批/驳回/撤销)
      */
     const PRIV_APPROVE_MANAGER_DEPT = 0b0000000100;
     /**
@@ -126,7 +126,7 @@ class BaseUser extends ActiveRecord {
             TimestampBehavior::className(),
             [
                 'class' => JsonBehavior::className(),
-                'attributes' => ['managers','usage_limit'],
+                'attributes' => ['manage_depts','usage_limit'],
             ],
         ];
     }
@@ -136,8 +136,8 @@ class BaseUser extends ActiveRecord {
      */
     public function scenarios() {
         $scenarios = parent::scenarios();
-        $scenarios[static::SCENARIO_CREATE] = ['username', 'password', 'status', 'email', 'alias', 'managers', 'privilege', 'status', 'usage_limit'];
-        $scenarios[static::SCENARIO_UPDATE] = ['username', 'password', 'status', 'email', 'alias', 'managers', 'privilege', 'status', 'usage_limit'];
+        $scenarios[static::SCENARIO_CREATE] = ['username', 'password', 'status', 'email', 'alias', 'manage_depts', 'privilege', 'status', 'usage_limit'];
+        $scenarios[static::SCENARIO_UPDATE] = ['username', 'password', 'status', 'email', 'alias', 'manage_depts', 'privilege', 'status', 'usage_limit'];
         return $scenarios;
     }
 
@@ -148,7 +148,7 @@ class BaseUser extends ActiveRecord {
      */
     public function rules() {
         return [
-            [['id', 'username', 'email', 'alias', 'managers', 'status',], 'required'],
+            [['id', 'username', 'email', 'alias', 'status',], 'required'],
             ['password', 'required', 'on' => static::SCENARIO_CREATE],
             ['username', 'string', 'min' => 2, 'max' => 20],
             ['username', 'unique'], 
@@ -200,7 +200,7 @@ class BaseUser extends ActiveRecord {
             'password' => '密码',
             'email' => '邮箱',
             'alias' => '显示名',
-            'managers' => '负责人审批者',
+            'manage_depts' => '可审批的社团列表',
             'status' => '状态',
             'privilege' => '权限',
             'usage_limit' => '房间使用限额',
@@ -380,5 +380,4 @@ class BaseUser extends ActiveRecord {
     public function removePasswordResetToken() {
         $this->password_reset_token = null;
     }
-
 }

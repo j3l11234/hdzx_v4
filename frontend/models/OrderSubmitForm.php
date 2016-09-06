@@ -18,6 +18,7 @@ class OrderSubmitForm extends Model {
     public $date;
     public $room_id;
     public $hours;
+    public $dept_id;
     public $name;
     public $student_no;
     public $phone;
@@ -44,7 +45,7 @@ class OrderSubmitForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios[static::SCENARIO_SUBMIT_ORDER] = ['date', 'room_id', 'hours', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'];
+        $scenarios[static::SCENARIO_SUBMIT_ORDER] = ['date', 'room_id', 'hours', 'dept_id', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'];
         $scenarios[static::SCENARIO_CANCEL_ORDER] = ['order_id'];
         return $scenarios;
     }
@@ -54,7 +55,7 @@ class OrderSubmitForm extends Model {
      */
     public function rules() {
         return [
-            [['order_id', 'date', 'room_id', 'hours', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
+            [['order_id', 'date', 'room_id', 'hours', 'dept_id', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
             [['student_no'], 'match', 'pattern' => '/^\d{8}$/'],
             [['date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['hours'], 'jsonValidator'],
@@ -78,6 +79,10 @@ class OrderSubmitForm extends Model {
             $user = Yii::$app->user->getIdentity()->getUser();
             $hours = json_decode($this->hours, true);
 
+            $dept = Department::findOne($this->dept_id);
+            if ($dept === null) {
+                $this->setErrorMessage('社团单位不存在');
+            }
             $room = Room::findOne($this->room_id);
             if ($room === null) {
                 $this->setErrorMessage('房间不存在');
@@ -122,6 +127,7 @@ class OrderSubmitForm extends Model {
             $order->date = $this->date;
             $order->room_id = $this->room_id;
             $order->user_id = $user->id;
+            $order->dept_id = $this->dept_id;
             $order->type = $orderType;
             $order->status = Order::STATUS_INIT;
             $order->hours = $hours;

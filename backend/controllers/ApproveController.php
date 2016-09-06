@@ -39,7 +39,7 @@ class ApproveController extends Controller
                         ],
                         'roles' => ['@'],
                         'allow' => true,
-                        'privileges' => [BaseUser::PRIV_ADMIN],
+                        //'privileges' => [BaseUser::PRIV_ADMIN],
                     ],
 
 
