@@ -3,7 +3,7 @@ namespace backend\models;
 
 use Yii;
 use yii\base\Model;
-use yii\base\Exception;
+use common\helpers\HdzxException;
 
 use common\behaviors\ErrorBehavior;
 use common\models\entities\Lock;
@@ -121,7 +121,7 @@ class LockForm extends Model {
                 $this->setMessage('修改房间锁成功');
             }
             return true;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
@@ -143,7 +143,7 @@ class LockForm extends Model {
             LockService::deleteLock($lock);
             $this->setMessage('删除房间锁成功');
             return true;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
@@ -168,7 +168,7 @@ class LockForm extends Model {
             LockService::applyLock($startDate, $endDate);
             $this->setMessage('应用房间锁成功');
             return true;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }

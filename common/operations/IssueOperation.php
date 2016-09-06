@@ -9,7 +9,7 @@ namespace common\operations;
 
 use Yii;
 use yii\base\Component;
-use yii\base\Exception;
+use common\helpers\HdzxException;
 use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -31,7 +31,7 @@ class IssueOperation extends BaseOrderOperation {
      */
     protected function checkAuth() {
         if (!$this->user->checkPrivilege(User::PRIV_ISSUE)) {
-            throw new Exception('该账号无开门条发放权限', Error::AUTH_FAILED);
+            throw new HdzxException('该账号无开门条发放权限', Error::AUTH_FAILED);
         }
     }
 
@@ -40,7 +40,7 @@ class IssueOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_PASSED){
-            throw new Exception('当前申请不可发放开门条', Error::INVALID_ORDER_STATUS);
+            throw new HdzxException('当前申请不可发放开门条', Error::INVALID_ORDER_STATUS);
         }
     }
 

@@ -3,7 +3,7 @@ namespace backend\models;
 
 use Yii;
 use yii\base\Model;
-use yii\base\Exception;
+use common\helpers\HdzxException;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\Order;
@@ -88,7 +88,7 @@ class ApproveForm extends Model {
                 ApproveService::rejectConflictOrder($order, $user, ApproveService::TYPE_MANAGER);
             }
             return $order;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         } 
@@ -113,7 +113,7 @@ class ApproveForm extends Model {
         try {
             ApproveService::rejectOrder($order, $user, $type, $this->comment);
             return $order;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         } 
@@ -138,7 +138,7 @@ class ApproveForm extends Model {
         try {
             ApproveService::revokeOrder($order, $user, $type, $this->comment);
             return $order;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         } 

@@ -3,7 +3,7 @@ namespace backend\models;
 
 use Yii;
 use yii\base\Model;
-use yii\base\Exception;
+use common\helpers\HdzxException;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\Department;
 use common\models\entities\Order;
@@ -66,7 +66,7 @@ class OrderForm extends Model {
             OrderService::issueOrder($order, $user, $this->comment);
             $this->setMessage('发放开门条成功');
             return true;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }

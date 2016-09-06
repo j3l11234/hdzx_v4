@@ -10,7 +10,7 @@ namespace common\services;
 use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
-use yii\base\Exception;
+use common\helpers\HdzxException;
 use common\helpers\Error;
 use common\models\entities\Department;
 use common\models\entities\Order;
@@ -63,7 +63,7 @@ class ApproveService extends Component {
                 $where[] = ['=', 'type', Order::TYPE_SIMPLE];
                 $where[] = ['in', 'status', [Order::STATUS_SIMPLE_PENDING, Order::STATUS_SIMPLE_APPROVED, Order::STATUS_SIMPLE_REJECTED]];
                 if (!$user->checkPrivilege(User::PRIV_APPROVE_SIMPLE)) {
-                    throw new Exception('没有查询权限', Error::AUTH_FAILED);
+                    throw new HdzxException('没有查询权限', Error::AUTH_FAILED);
                 }
                 break;
             case static::TYPE_MANAGER:
@@ -73,18 +73,18 @@ class ApproveService extends Component {
                 } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
                     $menagerFilter = true;
                 } else {
-                    throw new Exception('没有查询权限', Error::AUTH_FAILED);
+                    throw new HdzxException('没有查询权限', Error::AUTH_FAILED);
                 }
                 break;
             case static::TYPE_SCHOOL:
                 $where[] = ['=', 'type', Order::TYPE_TWICE];
                 $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
                 if (!$user->checkPrivilege(User::PRIV_APPROVE_SCHOOL)) {
-                    throw new Exception('没有查询权限', Error::AUTH_FAILED);
+                    throw new HdzxException('没有查询权限', Error::AUTH_FAILED);
                 }
                 break;
             default:
-                throw new Exception('无效审批类型', Error::INVALID_APPROVE_TYPE);
+                throw new HdzxException('无效审批类型', Error::INVALID_APPROVE_TYPE);
                 break;
         }
 
@@ -197,7 +197,7 @@ class ApproveService extends Component {
                 $operationClass = 'common\operations\SchoolRevokeOperation';
                 break;
             default:
-                throw new Exception('无效审批类型', Error::INVALID_APPROVE_TYPE);
+                throw new HdzxException('无效审批类型', Error::INVALID_APPROVE_TYPE);
                 break;
         }
 
@@ -299,7 +299,7 @@ class ApproveService extends Component {
                 $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING]];
                 break;
             default:
-                throw new Exception('无效审批类型', Error::INVALID_APPROVE_TYPE);
+                throw new HdzxException('无效审批类型', Error::INVALID_APPROVE_TYPE);
                 break;
         }
         $find = Order::find()->where($where)->orderBy('submit_time ASC');

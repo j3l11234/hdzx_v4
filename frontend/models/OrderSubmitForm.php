@@ -3,7 +3,7 @@ namespace frontend\models;
 
 use Yii;
 use yii\base\Model;
-use yii\base\Exception;
+use common\helpers\HdzxException;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\Department;
 use common\models\entities\Order;
@@ -141,7 +141,7 @@ class OrderSubmitForm extends Model {
             OrderService::submitOrder($order, $user);
             $this->setMessage('提交申请成功');
             return true;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
@@ -167,7 +167,7 @@ class OrderSubmitForm extends Model {
             OrderService::cancelOrder($order, $user);
             $this->setMessage('取消申请成功');
             return true;
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }

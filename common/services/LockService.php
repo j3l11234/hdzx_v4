@@ -10,7 +10,7 @@ namespace common\services;
 use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
-use yii\base\Exception;
+use common\helpers\HdzxException;
 use common\helpers\Error;
 use common\models\entities\Lock;
 use common\models\entities\RoomTable;
@@ -198,7 +198,7 @@ class LockService extends Component {
         $result = $lock->save();
         if (!$result) {
             Yii::error($lock->getErrors(), __METHOD__);
-            throw new Exception('房间锁保存失败', Error::SAVE_LOCK);
+            throw new HdzxException('房间锁保存失败', Error::SAVE_LOCK);
         }
         TagDependency::invalidate(Yii::$app->cache, 'LockTable');
     }
@@ -213,7 +213,7 @@ class LockService extends Component {
         $result = $lock->save();
         if (!$result) {
             Yii::error($lock->getErrors(), __METHOD__);
-            throw new Exception('房间锁保存失败', Error::SAVE_LOCK);
+            throw new HdzxException('房间锁保存失败', Error::SAVE_LOCK);
         }
         TagDependency::invalidate(Yii::$app->cache, 'Lock'.'_'.$lock->id); 
         //读取解析lock的room和date，使其缓存失效
@@ -229,7 +229,7 @@ class LockService extends Component {
         $result = $lock->delete();
         if (!$result) {
             Yii::error($lock->getErrors(), __METHOD__);
-            throw new Exception('房间锁删除失败', Error::SAVE_LOCK);
+            throw new HdzxException('房间锁删除失败', Error::SAVE_LOCK);
         }
         TagDependency::invalidate(Yii::$app->cache, 'Lock'.'_'.$lock->id);
         TagDependency::invalidate(Yii::$app->cache, 'LockTable');

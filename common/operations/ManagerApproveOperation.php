@@ -9,7 +9,7 @@ namespace common\operations;
 
 use Yii;
 use yii\base\Component;
-use yii\base\Exception;
+use common\helpers\HdzxException;
 use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -32,10 +32,10 @@ class ManagerApproveOperation extends BaseOrderOperation {
     protected function checkAuth() {
         if (!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
             if(!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
-                throw new Exception('该账号无负责人审批权限', Error::AUTH_FAILED);
-            }else{
-                if(!Order::checkManager($this->user->id, $this->order->managers)) {
-                    throw new Exception('该账号对该申请无负责人审批权限', Error::AUTH_FAILED);
+                throw new HdzxException('该账号无负责人审批权限', Error::AUTH_FAILED);
+            }else{  
+                if(!in_array($this->order->dept_id, ApproveService::queryUserDepts($this->user))) {
+                    throw new HdzxException('该账号对该申请无负责人审批权限', Error::AUTH_FAILED);
                 }
             }
         }

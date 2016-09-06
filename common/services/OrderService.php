@@ -220,7 +220,7 @@ class OrderService extends Component {
      */
     public static function queryIssueOrders($user, $student_no, $start_date, $end_date) {
         if (!$user->checkPrivilege(BaseUser::PRIV_ISSUE)) {
-            throw new Exception('该账号无开门条发放权限', Error::AUTH_FAILED);
+            throw new HdzxException('该账号无开门条发放权限', Error::AUTH_FAILED);
         }
 
         $where = ['and'];
