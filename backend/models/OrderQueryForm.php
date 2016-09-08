@@ -51,18 +51,7 @@ class OrderQueryForm extends Model {
             [['student_no'], 'required'],
             [['student_no'], 'match', 'pattern' => '/^\d{8}$/'],
             [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
-            [['start_date', 'end_date'], 'dateRangeValidator'],
         ];
-    }
-
-
-    function dateRangeValidator($attribute, $params) {
-        $range = static::getDefaultDateRange();
-        
-        $date = strtotime($this->$attribute);   
-        if($date < $range['start']  || $date > $range['end']){
-            $this->addError($attribute, $attribute.'超出范围，只能查询当日起至后一个月内的记录');
-        }
     }
 
     public static function getDefaultDateRange() {
@@ -87,6 +76,10 @@ class OrderQueryForm extends Model {
         $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d',$dateRange['start']);
         $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
 
+        if (strtotime($endDate) -strtotime($startDate) > 31*3 * 86400) {
+            $this->setErrorMessage('查询日期间隔不能大于3个月');
+            return false;
+        }
 
         $user = Yii::$app->user->getIdentity()->getUser();
 

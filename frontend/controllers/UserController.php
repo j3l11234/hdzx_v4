@@ -141,7 +141,7 @@ class UserController extends Controller {
         if (\Yii::$app->user->isGuest) {
             $user = null;
         }else {
-            $user = Yii::$app->user->getIdentity()->getUser()->toArray(['email', 'alias', 'privilege']);
+            $user = Yii::$app->user->getIdentity()->getUser()->toArray(['email', 'alias', 'privilege', 'username']);
         }
 
         return [

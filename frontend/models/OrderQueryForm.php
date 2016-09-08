@@ -53,7 +53,6 @@ class OrderQueryForm extends Model {
             [['date'], 'required', 'on' => 'getRoomUse'],
             [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['rooms'], 'jsonValidator'],
-            [['start_date', 'end_date'], 'dateRangeValidator'],
         ];
     }
 
@@ -66,6 +65,7 @@ class OrderQueryForm extends Model {
     function dateRangeValidator($attribute, $params) {
         $range = static::getDefaultDateRange();      
         $date = strtotime($this->$attribute);   
+
 
         if($date < $range['start']  || $date > $range['end']){
             $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内的记录');
@@ -94,6 +94,13 @@ class OrderQueryForm extends Model {
         $endDate = !empty($this->end_date) ? strtotime($this->end_date) : $dateRange['end'];
         $roomList = Room::getOpenRooms(true);
         $rooms = !empty($this->rooms) ? json_decode($this->rooms, true) : $roomList;
+
+
+        $limitRange = static::getDefaultDateRange();  
+        if ($startDate < $limitRange['start']  || $endDate > $limitRange['end']) {
+            $this->setErrorMessage('日期超出范围，只能查询前后一个月内的记录');
+            return false;
+        }
 
         //计算hourTables
         $roomTables = [];
@@ -183,6 +190,11 @@ class OrderQueryForm extends Model {
         $dateRange = static::getDefaultDateRange();
         $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d', $dateRange['start']);
         $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
+
+        if (strtotime($endDate) -strtotime($startDate) > 31*6 * 86400) {
+            $this->setErrorMessage('查询日期间隔不能大于6个月');
+            return false;
+        }
 
         $user = Yii::$app->user->getIdentity()->getUser();
 
