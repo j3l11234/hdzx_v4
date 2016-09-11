@@ -189,13 +189,12 @@ class OrderService extends Component {
 
         $result = Order::find()->select(['id'])->where($where)->all();
 
+        $order_idList = array_column($result, 'id');
+        $orders = static::queryOrders($order_idList);
         $orderList = [];
-        $orders = [];
-        foreach ($result as $key => $order) {
-            $order = static::queryOneOrder($order->id);
 
-            $orderList[] = $order['id'];
-            $orders[$order['id']] = $order;
+        foreach ($orders as $order_id => $order) {
+            $orderList[] = $order_id; 
         }
 
         $data = [
@@ -233,18 +232,17 @@ class OrderService extends Component {
             $where[] = ['<=', 'date', $end_date];
         }
 
-        $result = Order::find()->select(['id'])->where($where)->all();
-
+        $result = Order::find()
+            ->select(['id'])
+            ->where($where)
+            ->orderBy('submit_time')
+            ->all();
+        $order_idList = array_column($result, 'id');
+        $orders = static::queryOrders($order_idList);
         $orderList = [];
-        $orders = [];
-        foreach ($result as $key => $order) {
 
-            $order = static::queryOneOrder($order->id);
-            Yii::trace($order);
-            if($order['student_no'] == $student_no){
-                $orderList[] = $order['id'];
-                $orders[$order['id']] = $order;
-            }   
+        foreach ($orders as $order_id => $order) {
+            $orderList[] = $order_id; 
         }
 
         $data = [
@@ -291,6 +289,68 @@ class OrderService extends Component {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
+    }
+
+
+    /**
+     * 查询多条预约的详细信息(带缓存)
+     * 数据会包含操作记录
+     * 优先使用缓存
+     *
+     * @param array $order_idList order_id列表
+     * @param boolean $useCache 是否使用缓存
+     * @return json
+     */
+    public static function queryOrders($order_idList, $useCache = true) {
+        $cache = Yii::$app->cache;
+        $result = [];
+        $missList = [];
+        foreach ($order_idList as $order_id) {
+            $cacheKey = 'Order'.'_'.$order_id;
+            $data = $cache->get($cacheKey);
+            if ($data == null || !$useCache) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $missList[] = $order_id;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $result[(string)$order_id] = $data;
+            }
+        }
+        if(count($missList) > 0) {
+            $orders = [];
+            $chunks = array_chunk($missList, 100);
+            foreach ($chunks as $chunk) {
+                $orderResult = Order::find()
+                    ->where(['in', 'id', $chunk])
+                    ->select(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time'])
+                    ->asArray()->all();
+                foreach ($orderResult as $order) {
+                    $order['hours'] = json_decode($order['hours'], true);
+                    $order = array_merge($order, json_decode($order['data'], true));
+                    unset($order['data']);
+                    $order['opList'] = [];
+                    $orders[(string)$order['id']] = $order;
+
+                }
+                $opResult = OrderOperation::find()
+                    ->where(['in', 'order_id', $chunk])
+                    ->select(['id', 'order_id', 'user_id', 'time', 'type', 'data'])
+                    ->orderBy('time')
+                    ->asArray()->all();
+                foreach ($opResult as $orderOp) {
+                    $orderOp = array_merge($orderOp, json_decode($orderOp['data'], true));
+                    unset($orderOp['data']);
+                    $orders[$orderOp['order_id']]['opList'][] = $orderOp;
+                }
+            }
+            foreach ($orders as $order_id => $order) {
+                $result[(string)$order_id] = $order;
+                $cacheKey = 'Order'.'_'.$order_id;
+                $cache->set($cacheKey, $order, 0, new TagDependency(['tags' => $cacheKey]));
+                Yii::trace($cacheKey.':写入缓存, $cacheKey='.$cacheKey, '数据缓存'); 
+            }
+        }
+        return $result;
     }
 
     /**
