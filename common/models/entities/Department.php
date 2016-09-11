@@ -80,10 +80,14 @@ class Department extends ActiveRecord
     {
         return [
             'id' => 'ID',
-            'name' => 'Name',
-            'align' => 'Align',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
+            'name' => '名称',
+            'parent_id' => '父社团id',
+            'status' => '状态',
+            'choose' => '是否可选择',
+            'usage_limit' => '使用限额(不可用)',
+            'align' => '排序',
+            'created_at' => '创建时间',
+            'updated_at' => '修改时间',
         ];
     }
 }
