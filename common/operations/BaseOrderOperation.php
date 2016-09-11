@@ -134,7 +134,7 @@ class BaseOrderOperation extends Component {
     protected function getOpData() {
         $opData = [];
         $opData['operator'] = $this->user->alias;
-        $opData['commemt'] = !empty($this->extra['comment']) ? $this->extra['comment'] : static::$opName;
+        $opData['comment'] = !empty($this->extra['comment']) ? $this->extra['comment'] : static::$opName;
         if ($this->user->isStudent()) {
             $opData['studentn_no'] = substr($this->user->id,1);
         }

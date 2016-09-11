@@ -26,7 +26,7 @@ use common\behaviors\JsonBehavior;
  * $data = [
  *     'operator' => 张三, //操作人名字
  *     'studentn_no' => 12301120, //操作人学号(如果是学生)
- *     'commemt' => '提交预约', //操作备注
+ *     'comment' => '提交预约', //操作备注
  * ]
  * ``` 
  */
