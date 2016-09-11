@@ -302,10 +302,23 @@ class BaseUser extends ActiveRecord {
      * Finds user by username
      *
      * @param string $username
+     * @param int $status
+     * @param boolean $onlyId 仅获取id
      * @return static|null
      */
-    public static function findByUsername($username, $status = self::STATUS_ACTIVE) {
-        return static::findOne(['username' => $username, 'status' => $status]);
+    public static function findByUsername($username, $status = self::STATUS_ACTIVE, $onlyId = false) {
+        $where = ['username' => $username];
+        if (!is_null($status)) {
+            $where['status'] = $status;
+        }
+        $find = static::find()->where($where);
+        if ($onlyId) {
+            $result = $find->select(['id'])->asArray()->one();
+            $data = !empty($result) ? $result['id'] : NULL;
+        } else {
+            $data = $find->one();
+        }
+        return $data;
     }
 
     /**
