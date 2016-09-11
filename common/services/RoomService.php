@@ -103,7 +103,7 @@ class RoomService extends Component {
         $cache = Yii::$app->cache;
         $cacheKey = 'Room_'.$room_id.'_dateRange';
         $data = $cache->get($cacheKey);
-        if ($data == null || $useCache) {
+        if ($data == null || !$useCache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存');
 
             $now = time();
