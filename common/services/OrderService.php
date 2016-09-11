@@ -12,6 +12,8 @@ use yii\base\Component;
 use yii\caching\TagDependency;
 use common\exceptions\RoomTableException;
 use common\models\entities\BaseUser;
+use common\models\entities\User;
+use common\models\entities\StudentUser;
 use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -211,26 +213,31 @@ class OrderService extends Component {
      * 数据会包含操作记录
      *
      * @param User $user 用户
-     * @param String $student_no 学号
+     * @param String $username 用户名
      * @param String $start_date 开始时间
      * @param String $end_date 结束时间
      * @return json
      */
-    public static function queryIssueOrders($user, $student_no, $start_date, $end_date) {
+    public static function queryIssueOrders($user, $username, $start_date, $end_date) {
         if (!$user->checkPrivilege(BaseUser::PRIV_ISSUE)) {
             throw new HdzxException('该账号无开门条发放权限', Error::AUTH_FAILED);
         }
+        $user_id = User::findByUsername($username, NULL, true);
+        if(!is_null($user_id)){
+            $user_ids[] = $user_id;
+        }
+        if (preg_match("/^\d{8}$/",$username)) {
+            $user_ids[] = 'S'.$username;
+        }
 
         $where = ['and'];
-
-        //$where[] = ['=', 'user_id', $user->id];
-
         if ($start_date !== null){
             $where[] = ['>=', 'date', $start_date];
         }
         if ($end_date !== null){
             $where[] = ['<=', 'date', $end_date];
         }
+        $where[] = ['in', 'user_id', $user_ids];
 
         $result = Order::find()
             ->select(['id'])

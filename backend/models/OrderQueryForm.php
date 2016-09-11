@@ -18,7 +18,7 @@ use common\services\LockService;
 class OrderQueryForm extends Model {
     public $start_date;
     public $end_date;
-    public $student_no;
+    public $username;
 
     /**
      * 场景 查询开门条
@@ -39,7 +39,7 @@ class OrderQueryForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios[static::SCENARIO_GET_ISSUE] = ['start_date', 'end_date', 'student_no'];
+        $scenarios[static::SCENARIO_GET_ISSUE] = ['start_date', 'end_date', 'username'];
         return $scenarios;
     }
 
@@ -48,8 +48,7 @@ class OrderQueryForm extends Model {
      */
     public function rules() {
         return [
-            [['student_no'], 'required'],
-            [['student_no'], 'match', 'pattern' => '/^\d{8}$/'],
+            [['username'], 'required'],
             [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
         ];
     }
@@ -78,12 +77,12 @@ class OrderQueryForm extends Model {
 
         if (strtotime($endDate) -strtotime($startDate) > 31*3 * 86400) {
             $this->setErrorMessage('查询日期间隔不能大于3个月');
-            return false;
+            //return false;
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();
 
-        $data = OrderService::queryIssueOrders($user, $this->student_no, $startDate, $endDate);
+        $data = OrderService::queryIssueOrders($user, $this->username, $startDate, $endDate);
 
         return array_merge($data, [
             'start_date' => $startDate,
@@ -100,7 +99,7 @@ class OrderQueryForm extends Model {
         return [
             'start_date' => '开始日期',
             'end_date' => '结束日期',
-            'student_no' => '学号'
+            'username' => '用户名/学号'
         ];
     }
 }
