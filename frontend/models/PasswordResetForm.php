@@ -1,5 +1,5 @@
 <?php
-namespace common\models;
+namespace frontend\models;
 
 use Yii;
 use yii\base\InvalidParamException;
@@ -79,7 +79,7 @@ class PasswordResetForm extends Model {
                     ->compose(['html' => 'passwordResetToken-html', 'text' => 'passwordResetToken-text'], ['user' => $user])
                     ->setFrom([\Yii::$app->params['supportEmail'] => \Yii::$app->name . ' robot'])
                     ->setTo($user->email)
-                    ->setSubject('Password reset for ' . \Yii::$app->name)
+                    ->setSubject('密码重设 - ' . \Yii::$app->name)
                     ->send()){
                     return true;
                 }else{

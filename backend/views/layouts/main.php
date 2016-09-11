@@ -82,7 +82,7 @@ AppAsset::register($this);
             'label' => Yii::$app->user->identity->username.' ('. Yii::$app->user->identity->alias.')',
             'items'=>[
                 ['label' => '注销', 'url' => ['/user/logout'], 'linkOptions' => ['data-method' => 'post']],
-                ['label' => '修改密码', 'url' => ['/user/request-password-reset']],
+                ['label' => '修改密码', 'url' => ['/user/reset-password']],
             ],
         ];
     }

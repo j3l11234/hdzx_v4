@@ -21,6 +21,7 @@ use common\models\entities\User;
 use common\models\entities\StudentUser;
 use common\services\UserService;
 use backend\models\LoginForm;
+use backend\models\PasswordResetForm;
 
 /**
  * UserController implements the CRUD actions for User model.
@@ -32,14 +33,14 @@ class UserController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout', 'logout', 'index', 'student', 'create', 'view', 'update', 'delete'],
+                'only' => ['logout', 'logout', 'reset-password', 'index', 'student', 'create', 'view', 'update', 'delete'],
                 'rules' => [
                     [
                         'actions' => ['login',],
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout',],
+                        'actions' => ['logout','reset-password'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -76,6 +77,33 @@ class UserController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
+    }
+
+    /**
+     * 申请重设密码
+     *
+     * @return mixed
+     */
+    public function actionResetPassword() {
+        $model = new PasswordResetForm(['scenario' => PasswordResetForm::SCENARIO_RESET]);
+
+        $result = false;
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            if ($model->resetPassword()) {
+                $result = true;
+            }
+        }
+        
+        if ($result) {
+            Yii::$app->session->setFlash('success', $model->getMessage());
+            return $this->redirect('reset-password');
+        } else {
+            Yii::$app->session->setFlash('error', $model->getErrorMessage());
+            return $this->render('resetPassword', [
+                'model' => $model,
+            ]);
+        }
+        
     }
 
     /**

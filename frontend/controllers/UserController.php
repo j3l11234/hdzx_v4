@@ -11,7 +11,7 @@ use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\filters\Cors;
 use frontend\models\LoginForm;
-use common\models\PasswordResetForm;
+use frontend\models\PasswordResetForm;
 use frontend\models\UserActiveForm;
 
 /**
