@@ -31,7 +31,7 @@ AppAsset::register($this);
 <div class="wrap">
     <?php
     NavBar::begin([
-        'brandLabel' => '学活场地申请系统',
+        'brandLabel' => Yii::$app->name,
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
             'class' => 'navbar-inverse navbar-fixed-top',
@@ -49,7 +49,7 @@ AppAsset::register($this);
             'items'=>[
                 ['label' => '登录', 'url' => ['/login']],
                 ['label' => '激活学生账户', 'url' => ['/user/request-student-user']],
-                ['label' => '激活社团账户', 'url' => ['/user/request-dept-user']],
+                ['label' => '进入后台系统', 'url' => ['../../backend/web']],
             ],
         ];
     } else {

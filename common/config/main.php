@@ -15,6 +15,7 @@ return [
             'enableAutoLogin' => true,
         ]
     ],
+    'name'=>'学活场地申请系统',
     'timeZone'=>'Asia/Chongqing',
     'language'=>'zh-CN',
     'params' => $params
