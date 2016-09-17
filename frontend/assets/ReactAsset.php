@@ -1,29 +1,44 @@
 <?php
 /**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
+ * @link http://www.j3l11234.com/
+ * @copyright Copyright (c) 2015 j3l11234
+ * @author j3l11234@j3l11234.com
  */
 
 namespace frontend\assets;
 
+use Yii;
 use yii\web\AssetBundle;
 
-/**
- * @author Qiang Xue <qiang.xue@gmail.com>
- * @since 2.0
- */
-class ReactAsset extends AssetBundle
-{
-    public $basePath = '@webroot';
-    public $baseUrl = '@web';
+class ReactAsset extends AssetBundle{
+    public $sourcePath = '@vendor/html_assets';
+
     public $css = [
+        'css/app.css',
     ];
+
     public $js = [
         'js/common.js',
+        'js/lock.js',
+        'js/login.js',
+        'js/myorder.js',
+        'js/order.js',
     ];
+
     public $depends = [
         'yii\web\JqueryAsset',
         'yii\bootstrap\BootstrapPluginAsset',
     ];
+
+    public function registerAssetFiles($view)
+    {
+        $this->js = [
+            'js/common.js',
+        ];
+        if (isset($view->params['page'])) {
+            $this->js[] = 'js/'.$view->params['page'].'.js';
+        }
+        
+        parent::registerAssetFiles($view);
+    }
 }

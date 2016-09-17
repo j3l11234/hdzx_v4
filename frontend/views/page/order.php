@@ -3,9 +3,8 @@
 /* @var $this yii\web\View */
 
 use frontend\assets\ReactAsset;
-
+$this->params['page'] = 'order';
 ReactAsset::register($this);
-$this->registerJsFile('@web/js/order.js', ['depends'=>[ReactAsset::className()]]);
 $this->title = '房间预约';
 ?>
 <div id="order-page">

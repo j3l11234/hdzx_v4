@@ -4,8 +4,9 @@
 
 use frontend\assets\ReactAsset;
 
+$this->params['page'] = 'myorder';
 ReactAsset::register($this);
-$this->registerJsFile('@web/js/myorder.js', ['depends'=>[ReactAsset::className()]]);
+
 $this->title = '我的预约';
 ?>
 <div id="myorder-page">

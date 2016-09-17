@@ -3,8 +3,9 @@
 /* @var $this yii\web\View */
 use backend\assets\ReactAsset;
 
+$this->params['page'] = 'approve';
 ReactAsset::register($this);
-$this->registerJsFile('@web/js/approve.js', ['depends'=>[ReactAsset::className()]]);
+
 $this->title = '预约审批';
 ?>
 <div id="approve-page">

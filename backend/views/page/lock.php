@@ -3,8 +3,9 @@
 /* @var $this yii\web\View */
 use backend\assets\ReactAsset;
 
+$this->params['page'] = 'lock';
 ReactAsset::register($this);
-$this->registerJsFile('@web/js/lock.js', ['depends'=>[ReactAsset::className()]]);
+
 $this->title = '房间锁';
 ?>
 <div id="lock-page">
