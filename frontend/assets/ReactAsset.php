@@ -14,7 +14,6 @@ class ReactAsset extends AssetBundle{
     public $sourcePath = '@vendor/html_assets';
 
     public $css = [
-        'css/app.css',
     ];
 
     public $js = [

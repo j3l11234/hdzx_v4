@@ -49,7 +49,7 @@ AppAsset::register($this);
             'items'=>[
                 ['label' => '登录', 'url' => ['/login']],
                 ['label' => '激活学生账户', 'url' => ['/user/request-student-user']],
-                ['label' => '进入后台系统', 'url' => ['../../backend/web']],
+                ['label' => '进入后台系统', 'url' => [Yii::$app->params['backendUrl']]],
             ],
         ];
     } else {

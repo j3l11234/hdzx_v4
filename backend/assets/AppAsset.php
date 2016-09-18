@@ -1,23 +1,20 @@
 <?php
 /**
- * @link http://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license http://www.yiiframework.com/license/
+ * @link http://www.j3l11234.com/
+ * @copyright Copyright (c) 2015 j3l11234
+ * @author j3l11234@j3l11234.com
  */
 
 namespace backend\assets;
 
 use yii\web\AssetBundle;
 
-/**
- * @author Qiang Xue <qiang.xue@gmail.com>
- * @since 2.0
- */
 class AppAsset extends AssetBundle
 {
-    public $basePath = '@webroot';
-    public $baseUrl = '@web';
+    public $sourcePath = '@vendor/html_assets';
+
     public $css = [
+        'css/app.css',
     ];
     public $js = [
     ];
