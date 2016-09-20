@@ -104,17 +104,18 @@ class RoomService extends Component {
         return $result;
     }
 
+
     /**
      * 查询所有打开房间(带缓存)
      * 优先从缓存中查询
      *
      * @return json
      */
-    public static function queryRoomList() {
+    public static function queryRoomList($useCache = true) {
         $cacheKey = 'roomList';
         $cache = Yii::$app->cache;
         $data = $cache->get($cacheKey);
-        if ($data == null) {
+        if ($data == null || !$useCache) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $data = [];
             $roomList_ = Room::getOpenRooms(false);
@@ -131,8 +132,8 @@ class RoomService extends Component {
                 'roomList' => $roomList,
                 'rooms' => $rooms,
             ];
-            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => $cacheKey]));
-        }else{
+            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => [$cacheKey, 'Room']]));
+        } else {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
@@ -167,6 +168,47 @@ class RoomService extends Component {
         return $data;
     }
 
+    /**
+     * 批量得到房间的日期范围(带缓存)
+     *
+     * @param list $room_idList
+     * @param boolean $useCache 是否使用缓存
+     * @return json
+     */
+    public static function queryDateRanges($room_idList, $useCache = true) {
+        $cache = Yii::$app->cache;
+        $result = [];
+        $missList = [];
+        foreach ($room_idList as $room_id) {
+            $cacheKey = 'Room_'.$room_id.'_dateRange';
+            $data = $cache->get($cacheKey);
+            if ($data == null || !$useCache) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $missList[] = $room_id;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $result[(string)$room_id] = $data;
+            }
+        }
+        if(count($missList) > 0) {
+            $now = time();
+            $rooms = Room::find()->where(['in', 'id', $missList])->all();
+            foreach ($rooms as $room) {
+                $room_id = $room->id;
+                $roomData = $room->data;
+                $dateRange = Room::getDateRange($roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'], $now);
+                $result[$room_id] = $dateRange;
+
+                $cacheKey = 'Room_'.$room_id.'_dateRange';
+                $cache->set($cacheKey, $dateRange, $dateRange['expired'], new TagDependency(['tags' => 'Room_'.$room_id]));
+                Yii::trace($cacheKey.':写入缓存, $expired='.$dateRange['expired'], '数据缓存'); 
+            }
+        }
+
+        return $result;
+    }
+
+
 
     /**
      * 查询所有房间的日期范围(带缓存)
@@ -175,7 +217,7 @@ class RoomService extends Component {
      * @param boolean $useCache 是否使用缓存
      * @return json
      */
-    public static function queryDateRange($useCache = true) {
+    public static function queryWholeDateRange($useCache = true) {
         $cacheKey = 'dateRange';
         $cache = Yii::$app->cache;
         $data = $cache->get($cacheKey);
@@ -188,8 +230,8 @@ class RoomService extends Component {
             $expired = 86400;
 
             $roomList = Room::getOpenRooms(true);
-            foreach ($roomList as $room_id) {
-                $dateRange = static::queryRoomDateRange($room_id, $useCache);
+            $dateRanges = RoomService::queryDateRanges($roomList, $useCache);
+            foreach ($dateRanges as $dateRange) {
                 $endDate = max($endDate, $dateRange['end']);
                 $expired = min($expired,  $dateRange['expired']);
             }
@@ -197,7 +239,7 @@ class RoomService extends Component {
                 'start' => $startDate,
                 'end' => $endDate,
             ];
-            $cache->set($cacheKey, $data, $expired);
+            $cache->set($cacheKey, $data, $expired, new TagDependency(['tags' => 'Room']));
             Yii::trace($cacheKey.':写入缓存, $expired='.$expired, '数据缓存'); 
         }else{
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 

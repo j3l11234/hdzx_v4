@@ -160,7 +160,7 @@ class LockForm extends Model {
             return false;
         }
 
-        $dateRange = RoomService::queryDateRange();
+        $dateRange = RoomService::queryWholeDateRange();
         $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d', $dateRange['start']);
         $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
         
