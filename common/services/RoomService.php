@@ -48,13 +48,60 @@ class RoomService extends Component {
             for ($hour = $startHour; $hour <=$endHour ; $hour++) { 
                 $hours[] = $hour;
             }
-            $data['hourTable'] = $roomTable->getHourTable($hours);
+            $data['hourTable'] = RoomTable::getHourTable($data['ordered'], $data['used'], $data['locked'], $hours);
             $data['chksum'] = substr(md5(json_encode($data)), 0, 6);
             $cache->set($cacheKey, $data, 86400*7, new TagDependency(['tags' => $cacheKey]));
         } else {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
+    }
+
+    /**
+     * 查询一系列房间表(带缓存)
+     * 优先从缓存中查询
+     *
+     * @param string $dateRoomList 日期房间的列表
+     * @param integer $room_id 房间id
+     * @param boolean $useCache 是否使用缓存
+     * @return json
+     */
+    public static function queryRoomTables($dateRoomList, $useCache = true) {
+        $cache = Yii::$app->cache;
+        $result = [];
+        $missList = [];
+        foreach ($dateRoomList as $dateRoom) {
+            $cacheKey = 'RoomTable'.'_'.$dateRoom;
+            $data = $cache->get($cacheKey);
+            if ($data == null || !$useCache) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $missList[] = $dateRoom;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $result[$dateRoom] = $data;
+            }
+        }
+
+        if(count($missList) > 0) {
+            $roomTables = static::getRoomTables($missList, true, true);
+
+            $startHour = Yii::$app->params['order.startHour'];
+            $endHour = Yii::$app->params['order.endHour'];
+            $hours = [];
+            for ($hour = $startHour; $hour <=$endHour ; $hour++) { 
+                $hours[] = $hour;
+            }
+            foreach ($roomTables as $dateRoom => $roomTable) {
+                $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked'], $hours);
+                $roomTable['chksum'] = substr(md5(json_encode($roomTable)), 0, 6);
+                $result[$dateRoom] = $roomTable;
+                $cacheKey = 'RoomTable'.'_'.$dateRoom;
+                $cache->set($cacheKey, $roomTable, 0, new TagDependency(['tags' => $cacheKey]));
+                Yii::trace($cacheKey.':写入缓存, $cacheKey='.$cacheKey, '数据缓存'); 
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -173,6 +220,7 @@ class RoomService extends Component {
         $roomTable = RoomTable::findByDateRoom($date, $room_id);
         if ($roomTable === null) {
             $roomTable = new RoomTable();
+            $roomTable->id = $date.'_'.$room_id;
             $roomTable->date = $date;
             $roomTable->room_id = $room_id;
 
@@ -206,6 +254,82 @@ class RoomService extends Component {
             $roomTable = RoomTable::findByDateRoom($date, $room_id);
         }
         return $roomTable;
+    }
+
+    /**
+     * 批量得到房间表
+     * 如果方法不存在将会创建新的，多并发情况下可能会出现创建失败的情况，但是保证一定会存在。
+     * 调用此方法时不要开事务！
+     *
+     * @param string $dateRoomList 日期房间的列表
+     * @param integer $applyOrder 是否自动应用预约
+     * @param integer $applyLock 是否自动应用房间锁
+     * @return array of roomtable(array)
+     */
+    public static function getRoomTables($dateRoomList, $applyOrder = false, $applyLock = false) {
+        $roomTables = [];
+        foreach (RoomTable::find()
+            ->where(['in', 'id', $dateRoomList])
+            ->select(['id', 'ordered', 'used', 'locked'])
+            ->asArray()->each(100) as $roomTable) {
+            $roomTable['ordered'] = json_decode($roomTable['ordered'], true);
+            $roomTable['used'] = json_decode($roomTable['used'], true);
+            $roomTable['locked'] = json_decode($roomTable['locked'], true);
+            $roomTables[$roomTable['id']] = $roomTable;
+        }
+
+        //判断不存在的roomTable
+        $missList = [];
+        foreach ($dateRoomList as $dateRoom) {
+            if (!isset($roomTables[$dateRoom])) {
+                $missList[] = $dateRoom;
+            }
+        }
+
+        foreach ($missList as  $dateRoom) {
+            $temp = explode('_', $dateRoom);
+            if(count($temp) != 2) {
+                continue;
+            }
+            $date = $temp[0];
+            $room_id = $temp[1];
+
+            $roomTable = new RoomTable();
+            $roomTable->id = $dateRoom;
+            $roomTable->date = $date;
+            $roomTable->room_id = $room_id;
+
+             //应用预约
+            if ($applyOrder) {
+                $orderList = Order::findByDateRoom($date, $room_id);
+                //codecept_debug($orderList);
+                
+                foreach ($orderList as $key => $order) {
+                    $rtStatus = Order::getRoomTableStatus($order->status);
+                    if ($rtStatus == Order::ROOMTABLE_ORDERED) {
+                        $roomTable->addOrdered($order->id, $order->hours);
+                    } if ($rtStatus == Order::ROOMTABLE_USED) {
+                        $roomTable->addUsed($order->id, $order->hours);
+                    } 
+                }
+            };
+
+            //应用房间锁
+            if ($applyLock) {
+                $lockList = LockService::queryLockTable($date, $room_id);
+                foreach ($lockList as $key => $lock_id) {
+                    $lock = LockService::queryOneLock($lock_id);
+                    $roomTable->addLocked($lock_id, $lock['hours']);
+                }
+            }
+
+            $roomTable->save();
+            $roomTable = RoomTable::findOne($dateRoom);
+            $roomTable = $roomTable->toArray(['id', 'ordered', 'used', 'locked']);
+            $roomTables[$dateRoom] = $roomTable;
+        }
+
+        return $roomTables;
     }
 
     /**

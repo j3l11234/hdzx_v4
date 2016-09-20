@@ -272,15 +272,15 @@ class RoomTable extends ActiveRecord {
      * 
      * @return array
      */
-    public function getHourTable($hours) {
+    public static function getHourTable($ordered, $used, $locked, $hours) {
         $hourTable = [];
 
         foreach ($hours as $hour) {
-            if(isset($this->locked[$hour]) && sizeof($this->locked[$hour]) > 0){
+            if(isset($locked[$hour]) && sizeof($locked[$hour]) > 0){
                 $hourTable[$hour] = self::STATUS_LOCKED;
-            }else if(isset($this->used[$hour]) && sizeof($this->used[$hour]) > 0){
+            }else if(isset($used[$hour]) && sizeof($used[$hour]) > 0){
                 $hourTable[$hour] = self::STATUS_USED;
-            }else if(isset($this->ordered[$hour]) && sizeof($this->ordered[$hour]) > 0){
+            }else if(isset($ordered[$hour]) && sizeof($ordered[$hour]) > 0){
                 $hourTable[$hour] = self::STATUS_ORDERED;
             }else{
                 $hourTable[$hour] = self::STATUS_FREE;

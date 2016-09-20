@@ -62,16 +62,6 @@ class OrderQueryForm extends Model {
         }
     }
 
-    function dateRangeValidator($attribute, $params) {
-        $range = static::getDefaultDateRange();      
-        $date = strtotime($this->$attribute);   
-
-
-        if($date < $range['start']  || $date > $range['end']){
-            $this->addError($attribute, $attribute.'超出范围，只能查询前后一个月内的记录');
-        }
-    }
-
     public static function getDefaultDateRange() {
         $today = strtotime(date('Y-m-d', time()));
         $start = strtotime("-1 month",$today);
@@ -103,7 +93,8 @@ class OrderQueryForm extends Model {
         }
 
         //计算hourTables
-        $roomTables = [];
+        $dateTimeList = [];
+        $roomTableAvail = [];
         foreach ($roomList as $room_id) {
             if(!in_array($room_id, $rooms) ){
                 continue;
@@ -111,15 +102,19 @@ class OrderQueryForm extends Model {
             $roomDateRange = RoomService::queryRoomDateRange($room_id);
             for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {
                 $date = date('Y-m-d', $time);
-                $roomTable = RoomService::queryRoomTable($date, $room_id);
-                if(!$this->rt_detail){
-                    unset($roomTable['ordered']);
-                    unset($roomTable['used']);
-                    unset($roomTable['locked']);
-                }
-                $roomTable['available'] = $time >= $roomDateRange['start'] && $time <= $roomDateRange['end'];
-                $roomTables[$room_id.'_'.$date] = $roomTable;
+                $dateTimeList[] = $date.'_'.$room_id;
+                $roomTableAvail[$date.'_'.$room_id] = $time >= $roomDateRange['start'] && $time <= $roomDateRange['end'];
             }
+        }
+        $roomTables = RoomService::queryRoomTables($dateTimeList);
+        foreach ($roomTables as $dateTime => &$roomTable) {
+            unset($roomTable['id']);
+            if(!$this->rt_detail){
+                unset($roomTable['ordered']);
+                unset($roomTable['used']);
+                unset($roomTable['locked']);
+            }
+            $roomTable['available'] = $roomTableAvail[$dateTime];
         }
 
         //计算dateList
