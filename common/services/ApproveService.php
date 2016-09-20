@@ -112,13 +112,12 @@ class ApproveService extends Component {
 
         $result = Order::find()->select(['id'])->where($where)->asArray()->all();
 
+        $order_idList = array_column($result, 'id');
+        $orders = OrderService::queryOrders($order_idList);
         $orderList = [];
-        $orders = [];
 
-        foreach ($result as $key => $order) {
-            $order = OrderService::queryOneOrder($order['id']);
-            $orderList[] = $order['id'];
-            $orders[$order['id']] = $order;
+        foreach ($orders as $order_id => $order) {
+            $orderList[] = $order_id; 
         }
 
         $data = [

@@ -292,6 +292,7 @@ class OrderService extends Component {
             $data['opList'] = $operationList;
             
             $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
+            Yii::trace($cacheKey.':写入缓存, $cacheKey='.$cacheKey, '数据缓存'); 
         } else {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
@@ -323,32 +324,28 @@ class OrderService extends Component {
                 $result[(string)$order_id] = $data;
             }
         }
+
         if(count($missList) > 0) {
             $orders = [];
-            $chunks = array_chunk($missList, 100);
-            foreach ($chunks as $chunk) {
-                $orderResult = Order::find()
-                    ->where(['in', 'id', $chunk])
-                    ->select(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time'])
-                    ->asArray()->all();
-                foreach ($orderResult as $order) {
-                    $order['hours'] = json_decode($order['hours'], true);
-                    $order = array_merge($order, json_decode($order['data'], true));
-                    unset($order['data']);
-                    $order['opList'] = [];
-                    $orders[(string)$order['id']] = $order;
+            foreach (Order::find()
+                ->where(['in', 'id', $missList])
+                ->select(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time'])
+                ->asArray()->each(100) as $order) {
+                $order['hours'] = json_decode($order['hours'], true);
+                $order = array_merge($order, json_decode($order['data'], true));
+                unset($order['data']);
+                $order['opList'] = [];
+                $orders[(string)$order['id']] = $order;
+            }
 
-                }
-                $opResult = OrderOperation::find()
-                    ->where(['in', 'order_id', $chunk])
-                    ->select(['id', 'order_id', 'user_id', 'time', 'type', 'data'])
-                    ->orderBy('time')
-                    ->asArray()->all();
-                foreach ($opResult as $orderOp) {
-                    $orderOp = array_merge($orderOp, json_decode($orderOp['data'], true));
-                    unset($orderOp['data']);
-                    $orders[$orderOp['order_id']]['opList'][] = $orderOp;
-                }
+            foreach (OrderOperation::find()
+                ->where(['in', 'order_id', $missList])
+                ->select(['id', 'order_id', 'user_id', 'time', 'type', 'data'])
+                ->orderBy('time')
+                ->asArray()->each(100) as $orderOp) {
+                $orderOp = array_merge($orderOp, json_decode($orderOp['data'], true));
+                unset($orderOp['data']);
+                $orders[$orderOp['order_id']]['opList'][] = $orderOp;
             }
             foreach ($orders as $order_id => $order) {
                 $result[(string)$order_id] = $order;

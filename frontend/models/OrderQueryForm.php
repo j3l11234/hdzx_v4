@@ -156,19 +156,16 @@ class OrderQueryForm extends Model {
             'orders' => [],
             'locks' => [],
         ];
-        foreach ($ordered as $order_id) {
-            $order = OrderService::queryOneOrder($order_id);
+
+        $orders = OrderService::queryOrders($ordered);
+        foreach ($orders as $order_id => &$order) {
             unset($order['opList']);
-            if ($order !== null) {
-                $data['orders'][$order_id] = $order;
-            }
+            $data['orders'][$order_id] = $order;
         }
-        foreach ($used as $order_id) {
-            $order = OrderService::queryOneOrder($order_id);
+        $orders = OrderService::queryOrders($used);
+        foreach ($orders as $order_id => &$order) {
             unset($order['opList']);
-            if ($order !== null) {
-                $data['orders'][$order_id] = $order;
-            }
+            $data['orders'][$order_id] = $order;
         }
         foreach ($locked as $lock_id) {
             $lock = LockService::queryOneLock($lock_id);
