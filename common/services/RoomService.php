@@ -390,7 +390,9 @@ class RoomService extends Component {
 
             //应用房间锁
             if ($applyLock) {
-                $roomTable->locked = $lockTables[$roomTable->id];
+                if (isset($lockTables[$roomTable->id])) {
+                    $roomTable->locked = $lockTables[$roomTable->id];
+                }
             }
 
             $insertData = $roomTable->getInsertData($roomTableAttrs);
