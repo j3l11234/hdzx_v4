@@ -292,7 +292,7 @@ class OrderService extends Component {
             $data['opList'] = $operationList;
             
             $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
-            Yii::trace($cacheKey.':写入缓存, $cacheKey='.$cacheKey, '数据缓存'); 
+            Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
         } else {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
@@ -351,7 +351,7 @@ class OrderService extends Component {
                 $result[(string)$order_id] = $order;
                 $cacheKey = 'Order'.'_'.$order_id;
                 $cache->set($cacheKey, $order, 0, new TagDependency(['tags' => $cacheKey]));
-                Yii::trace($cacheKey.':写入缓存, $cacheKey='.$cacheKey, '数据缓存'); 
+                Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
             }
         }
         return $result;

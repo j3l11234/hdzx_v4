@@ -93,7 +93,7 @@ class OrderQueryForm extends Model {
         }
 
         //计算hourTables
-        $dateTimeList = [];
+        $dateRoomList = [];
         $roomTableAvail = [];
         $dateRanges = RoomService::queryDateRanges($roomList);
         foreach ($roomList as $room_id) {
@@ -103,15 +103,12 @@ class OrderQueryForm extends Model {
             $dateRange = $dateRanges[$room_id];
             for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {
                 $date = date('Y-m-d', $time);
-                $dateTimeList[] = $date.'_'.$room_id;
+                $dateRoomList[] = [$date,$room_id];
                 $roomTableAvail[$date.'_'.$room_id] = $time >= $dateRange['start'] && $time <= $dateRange['end'];
             }
         }
 
-        
-
-
-        $roomTables = RoomService::queryRoomTables($dateTimeList);
+        $roomTables = RoomService::queryRoomTables($dateRoomList);
         foreach ($roomTables as $dateTime => &$roomTable) {
             unset($roomTable['id']);
             if(!$this->rt_detail){
@@ -121,7 +118,7 @@ class OrderQueryForm extends Model {
             }
             $roomTable['available'] = $roomTableAvail[$dateTime];
         }
-
+        
         //计算dateList
         $dateList = [];
         for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {

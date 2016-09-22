@@ -95,7 +95,7 @@ class RoomTable extends ActiveRecord {
      */
     public static function findByDateRoom($date, $room_id)  
     {
-        return static::findOne(['date' => $date, 'room_id' => $room_id]);
+        return static::findOne($date.'_'.$room_id);
     }
 
     /**
@@ -287,5 +287,14 @@ class RoomTable extends ActiveRecord {
             }
         }
         return $hourTable;
+    }
+
+    public function getInsertData($attributes = null) {
+        if (!$this->beforeSave(true)) {
+            return NULL;
+        }
+        $values = $this->toArray($attributes);
+        $this->afterSave(true, $attributes);
+        return $values;
     }
 }

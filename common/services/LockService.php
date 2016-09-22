@@ -56,8 +56,8 @@ class LockService extends Component {
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存');
 
-            $lock = Lock::findOne($lock_id);
-            $dateList = Lock::getDateList($lock->data['loop_type'], $lock->data['loop_day'], $lock->start_date, $lock->end_date);
+            $lock = static::queryOneLock($lock_id);
+            $dateList = Lock::getDateList($lock['loop_type'], $lock['loop_day'], $lock['start_date'], $lock['end_date']);
             
             $data = $dateList;
             $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => 'Lock_'.$lock_id]));
@@ -108,7 +108,88 @@ class LockService extends Component {
         return $data;
     }
 
+     /**
+     * 批量查询锁定表(带缓存)
+     * 优先从缓存中查询
+     *
+     * @param array $dateRoomList 日期房间的列表
+     * @param integer $room_id 房间id
+     * @return Array lock_id列表
+     */
+    public static function queryLockTables($dateRoomList) {
+        $cache = Yii::$app->cache;
+        $result = [];
+        $missList = [];
 
+        foreach ($dateRoomList as $dateRoom) {
+            $cacheKey = 'LockTable'.'_'.$dateRoom[0].'_'.$dateRoom[1];            
+            $data = $cache->get($cacheKey);
+            if ($data == null || !$useCache) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $missList[] = $dateRoom;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $result[$dateRoom] = $data;
+            }
+        }
+
+        if(count($missList) > 0) {
+            $startDateTs = -1;
+            $endDateTs = -1;
+            $room_ids = [];
+            foreach ($missList as $dateRoom) {
+                $dateTs = strtotime($dateRoom[0]);
+                if($startDateTs == -1 || $startDateTs > $dateTs){
+                    $startDateTs = $dateTs;
+                }
+                if($endDateTs == -1 || $endDateTs < $dateTs){
+                    $endDateTs = $dateTs;
+                }
+                $room_ids[$dateRoom[1]] = true;
+            }
+            $room_ids =array_keys($room_ids);
+            Yii::trace('$startDateTs='.$startDateTs, '数据');
+            Yii::trace('$endDateTs='.$endDateTs, '数据');
+            Yii::trace('$room_ids='.var_export($room_ids,TRUE), '数据');
+
+            $result = Lock::find()->select(['id'])->where(['status' => Lock::STATUS_ENABLE])
+            ->asArray()->all();
+            $lock_idList = array_column($result, 'id');
+            $locks = static::queryLocks($lock_idList);
+
+            $lockTables = [];
+            foreach ($locks as $lock_id => $lock) {
+                $dateList = self::queryLockDateList($lock_id);
+                foreach ($dateList as $date) {
+                    $dateTs = strtotime($date);
+                    if ($dateTs < $startDateTs || $dateTs > $endDateTs) {
+                        continue;
+                    }
+                    foreach ($lock['rooms'] as $room_id) {
+                        if(!empty($room_ids) && !in_array($room_id, $lock['rooms'])){
+                            continue;
+                        }
+                        if (!isset($lockTables[$date.'_'.$room_id])) {
+                            $lockTables[$date.'_'.$room_id] = [];
+                        }
+                        $lockTables[$date.'_'.$room_id] = RoomTable::addTable($lockTables[$date.'_'.$room_id], $lock['id'], $lock['hours']);
+                    }
+                }
+            }
+
+            Yii::beginProfile('LockTable写入缓存', '数据缓存');
+            foreach ($lockTables as $dateRoomKey => $lockTable) {
+                $result[$dateRoomKey] = $lockTable;
+
+                $cacheKey = 'LockTable'.'_'.$dateRoomKey;
+                $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => [$cacheKey, 'LockTable']]));
+                Yii::trace($cacheKey.':写入缓存', '数据缓存');
+            }
+            Yii::endProfile('LockTable写入缓存', '数据缓存');
+
+            return $result; 
+        }
+    }
     /**
      * 应用房间锁到时间表
      *
@@ -122,17 +203,17 @@ class LockService extends Component {
 
         $lockList = Lock::find()->select(['id'])->where(['status' => Lock::STATUS_ENABLE])->all();
         $lockTables = [];
-        foreach ($lockList as $key => $lock) {
+        foreach ($lockList as $lock) {
             $lock = static::queryOneLock($lock['id']);
             $dateList = static::queryLockDateList($lock['id']);
 
-            foreach ($dateList as $key => $date) {
+            foreach ($dateList as $date) {
                 $dateTs = strtotime($date);
                 if($dateTs < $startDateTs || $dateTs > $endDateTs) {
                     continue;
                 }
 
-                foreach ($lock['rooms'] as $key => $room_id) {
+                foreach ($lock['rooms'] as $room_id) {
                     if (!isset($lockTables[$room_id])) {
                         $lockTables[$room_id] = [];
                     }
@@ -181,10 +262,53 @@ class LockService extends Component {
             unset($data['data']);
 
             $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
+            Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
         } else {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
         return $data;
+    }
+
+
+    /**
+     * 批量查询锁(带缓存)
+     *
+     * @param array $lock_idList 房间锁id
+     * @return array
+     */
+    public static function queryLocks($lock_idList, $useCache= true) {
+        $cache = Yii::$app->cache;
+        $result = [];
+        $missList = [];
+        foreach ($lock_idList as $lock_id) {
+            $cacheKey = 'Lock'.'_'.$lock_id;
+            $data = $cache->get($cacheKey);
+            if ($data == null || !$useCache) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $missList[] = $lock_id;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $result[(string)$lock_id] = $data;
+            }
+        }
+        if(count($missList) > 0) {
+            foreach (Lock::find()
+                ->where(['in', 'id', $missList])
+                ->select(['id', 'rooms', 'hours', 'start_date', 'end_date', 'status', 'data'])
+                ->asArray()->each(100) as $lock) {
+                $lock['rooms'] = json_decode($lock['rooms'], true);
+                $lock['hours'] = json_decode($lock['hours'], true);
+                $lock = array_merge($lock, json_decode($lock['data'], true));
+                unset($lock['data']);
+                $result[(string)$lock['id']] = $lock;
+
+                $cacheKey = 'Lock'.'_'.$lock['id'];
+                $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
+                Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
+            }
+        }
+
+        return $result;
     }
 
 
