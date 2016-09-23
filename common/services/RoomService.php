@@ -340,81 +340,86 @@ class RoomService extends Component {
             }
         }
 
-        //批量获取申请
-        $orderFind = Order::find()->where('1=0')->select(['id', 'date', 'room_id', 'status', 'hours']);
-        foreach ($orderWhere as $date => $rooms_ids) {
-            $orderFind->union(Order::find()->where(['date'=>$date,'room_id'=>$rooms_ids])->select(['id', 'date', 'room_id', 'status', 'hours']));
-        }
-        $result = $orderFind->asArray()->all();
-        $orders = [];           
-        foreach ($result as $order) {
-            $dateRoom = $order['date'].'_'.$order['room_id'];
-            if (!isset($orders[$dateRoom])){
-                $orders[$dateRoom] = [];
-            }
-            $orders[$dateRoom][] = [
-                'id' => $order['id'],
-                'status' => $order['status'],
-                'hours' => json_decode($order['hours'],true),
-            ];
-        }
-
-        //批量获取房间锁
-        $lockTables = LockService::queryLockTables($missList);
-        
-        $roomTableRows = [];
-        $roomTableAttrs = ['id', 'date', 'room_id', 'ordered', 'used', 'locked', 'created_at','updated_at'];
-        foreach ($missList as  $dateRoom) {
-            $date = $dateRoom[0];
-            $room_id = $dateRoom[1];
-
-            $roomTable = new RoomTable();
-            $roomTable->id = $date.'_'.$room_id;
-            $roomTable->date = $date;
-            $roomTable->room_id = $room_id;
-
-             //应用预约
+        if(count($missList) > 0) {
             if ($applyOrder) {
-                if (isset($orders[$roomTable->id])) {
-                    $orderList = $orders[$roomTable->id];
-                    foreach ($orderList as $key => $order) {
-                        $rtStatus = Order::getRoomTableStatus($order['status']);
-                        if ($rtStatus == Order::ROOMTABLE_ORDERED) {
-                            $roomTable->addOrdered($order['id'], $order['hours']);
-                        } if ($rtStatus == Order::ROOMTABLE_USED) {
-                            $roomTable->addUsed($order['id'], $order['hours']);
-                        } 
+                //批量获取申请
+                $orderFind = Order::find()->where('1=0')->select(['id', 'date', 'room_id', 'status', 'hours']);
+                foreach ($orderWhere as $date => $rooms_ids) {
+                    $orderFind->union(Order::find()->where(['date'=>$date,'room_id'=>$rooms_ids])->select(['id', 'date', 'room_id', 'status', 'hours']));
+                }
+                $result = $orderFind->asArray()->all();
+                
+                $orders = [];           
+                foreach ($result as $order) {
+                    $dateRoom = $order['date'].'_'.$order['room_id'];
+                    if (!isset($orders[$dateRoom])){
+                        $orders[$dateRoom] = [];
                     }
-                } 
-            };
-
-            //应用房间锁
-            if ($applyLock) {
-                if (isset($lockTables[$roomTable->id])) {
-                    $roomTable->locked = $lockTables[$roomTable->id];
+                    $orders[$dateRoom][] = [
+                        'id' => $order['id'],
+                        'status' => $order['status'],
+                        'hours' => json_decode($order['hours'],true),
+                    ];
                 }
             }
+            if ($applyLock) {
+                //批量获取房间锁
+                $lockTables = LockService::queryLockTables($missList);
+            }
+            
+            $roomTableRows = [];
+            $roomTableAttrs = ['id', 'date', 'room_id', 'ordered', 'used', 'locked', 'created_at','updated_at'];
+            foreach ($missList as  $dateRoom) {
+                $date = $dateRoom[0];
+                $room_id = $dateRoom[1];
 
-            $insertData = $roomTable->getInsertData($roomTableAttrs);
-            $roomTableRows[] = [
-                'id' => $insertData['id'],
-                'date' => $insertData['date'],
-                'room_id' => $insertData['room_id'],
-                'ordered' => $insertData['ordered'],
-                'used' => $insertData['used'],
-                'locked' => $insertData['locked'],
-                'created_at' => $insertData['created_at'],
-                'updated_at' => $insertData['updated_at'],
-            ];
+                $roomTable = new RoomTable();
+                $roomTable->id = $date.'_'.$room_id;
+                $roomTable->date = $date;
+                $roomTable->room_id = $room_id;
 
-            $roomTable = $roomTable->toArray(['ordered', 'used', 'locked']);
-            $roomTables[$date.'_'.$room_id] = $roomTable;
+                 //应用预约
+                if ($applyOrder) {
+                    if (isset($orders[$roomTable->id])) {
+                        $orderList = $orders[$roomTable->id];
+                        foreach ($orderList as $key => $order) {
+                            $rtStatus = Order::getRoomTableStatus($order['status']);
+                            if ($rtStatus == Order::ROOMTABLE_ORDERED) {
+                                $roomTable->addOrdered($order['id'], $order['hours']);
+                            } if ($rtStatus == Order::ROOMTABLE_USED) {
+                                $roomTable->addUsed($order['id'], $order['hours']);
+                            } 
+                        }
+                    } 
+                };
+
+                //应用房间锁
+                if ($applyLock) {
+                    if (isset($lockTables[$roomTable->id])) {
+                        $roomTable->locked = $lockTables[$roomTable->id];
+                    }
+                }
+
+                $insertData = $roomTable->getInsertData($roomTableAttrs);
+                $roomTableRows[] = [
+                    $insertData['id'],
+                    $insertData['date'],
+                    $insertData['room_id'],
+                    $insertData['ordered'],
+                    $insertData['used'],
+                    $insertData['locked'],
+                    $insertData['created_at'],
+                    $insertData['updated_at'],
+                ];
+
+                $roomTable = $roomTable->toArray(['ordered', 'used', 'locked']);
+                $roomTables[$date.'_'.$room_id] = $roomTable;
+            }
+            $rows_chunks = array_chunk($roomTableRows, 100);
+            foreach ($rows_chunks as $rows_chunk) {
+                Yii::$app->db->createCommand()->batchInsert(RoomTable::tableName(), $roomTableAttrs, $rows_chunk)->execute();
+            }
         }
-        $rows_chunks = array_chunk($roomTableRows, 100);
-        foreach ($rows_chunks as $rows_chunk) {
-            Yii::$app->db->createCommand()->batchInsert(RoomTable::tableName(), $roomTableAttrs, $rows_chunk)->execute();
-        }
-        
         return $roomTables;
     }
 
