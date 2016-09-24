@@ -169,6 +169,80 @@ class OrderService extends Component {
     }
 
 
+
+    /**
+     * 查询预约的详细信息(带缓存)
+     * 数据会包含操作记录
+     * 优先使用缓存
+     *
+     * @param Array $order_ids order_id列表
+     * @param boolean $useCache 是否使用缓存
+     * @return Array order的Map
+     */
+    public static function getOrders($order_ids, $useCache = true) {
+        $orders = [];
+
+        //读取缓存
+        $cacheMisses;
+        if ($useCache) {
+            $cacheMisses = [];
+            Yii::beginProfile('Order读取缓存', '数据缓存');
+            foreach ($order_ids as $order_id) {
+                $cacheKey = 'Order'.'_'.$order_id;
+                $cacheData = Yii::$app->cache->get($cacheKey);
+                if ($cacheData == null) {
+                    Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                    $cacheMisses[] = $order_id;
+                } else {
+                    Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                    $orders[$order_id] = $cacheData;
+                }
+            }
+            Yii::endProfile('Order读取缓存', '数据缓存');
+        } else {
+            $cacheMisses = $order_ids;
+        }
+
+        //获取剩下数据(缓存miss的)
+        if(count($cacheMisses) > 0) {
+            $cacheNews = [];
+            foreach (Order::find()
+                ->where(['in', 'id', $cacheMisses])
+                ->select(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time'])
+                ->asArray()->each(100) as $order) {
+                $order['hours'] = json_decode($order['hours'], true);
+                $order = array_merge($order, json_decode($order['data'], true));
+                unset($order['data']);
+                $order['opList'] = [];
+                $orders[$order['id']] = $order;
+                $cacheNews[] = $order['id'];
+            }
+
+            foreach (OrderOperation::find()
+                ->where(['in', 'order_id', $cacheMisses])
+                ->select(['id', 'order_id', 'user_id', 'time', 'type', 'data'])
+                ->orderBy('time')
+                ->asArray()->each(100) as $orderOp) {
+                $orderOp = array_merge($orderOp, json_decode($orderOp['data'], true));
+                unset($orderOp['data']);
+                $orders[$orderOp['order_id']]['opList'][] = $orderOp;
+            }
+
+            //写入缓存
+            Yii::beginProfile('Order写入缓存', '数据缓存');
+            foreach ($cacheNews as $order_id) {
+                $order = $orders[$order_id];
+                $cacheKey = 'Order'.'_'.$order_id;
+                Yii::$app->cache->set($cacheKey, $order, 0, new TagDependency(['tags' => [$cacheKey, 'Order']]));
+                Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
+            }
+            Yii::endProfile('Order写入缓存', '数据缓存');
+        }
+
+        return $orders;
+    }
+
+
     /**
      * 查询单个用户的预约
      * 数据会包含操作记录
@@ -261,101 +335,57 @@ class OrderService extends Component {
     }
 
 
-    /**
-     * 查询单条预约的详细信息(带缓存)
-     * 数据会包含操作记录
-     * 优先使用缓存
-     *
-     * @param int $type 审批类型
-     * @return json
-     */
-    public static function queryOneOrder($order_id) {
-        $cache = Yii::$app->cache;
-        $cacheKey = 'Order'.'_'.$order_id;
-        $data = $cache->get($cacheKey);
-        if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
-            $order = Order::findOne($order_id);
-            $data = $order->toArray(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time']);
-            $data = array_merge($data, $data['data']);
-            unset($data['data']);
 
-            $result = OrderOperation::find()->where(['order_id' => $order_id])->all();
-            $operationList = [];
-            foreach ($result as $key => $orderOp) {
-                $orderOp = $orderOp->toArray(['id', 'user_id', 'time', 'type', 'data']);
-                $orderOp = array_merge($orderOp, $orderOp['data']);
-                unset($orderOp['data']);
-
-                $operationList[] = $orderOp;
-            }
-            $data['opList'] = $operationList;
-            
-            $cache->set($cacheKey, $data, 0, new TagDependency(['tags' => $cacheKey]));
-            Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
-        } else {
-            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
-        }
-        return $data;
-    }
 
 
     /**
-     * 查询多条预约的详细信息(带缓存)
-     * 数据会包含操作记录
-     * 优先使用缓存
+     * 批量获取OrderTable
      *
-     * @param array $order_idList order_id列表
-     * @param boolean $useCache 是否使用缓存
-     * @return json
+     * @param Array $dateRooms [日期房间]的数组
+     * @return Array Map形式的OrderTable
      */
-    public static function queryOrders($order_idList, $useCache = true) {
-        $cache = Yii::$app->cache;
-        $result = [];
-        $missList = [];
-        foreach ($order_idList as $order_id) {
-            $cacheKey = 'Order'.'_'.$order_id;
-            $data = $cache->get($cacheKey);
-            if ($data == null || !$useCache) {
-                Yii::trace($cacheKey.':缓存失效', '数据缓存');
-                $missList[] = $order_id;
-            } else {
-                Yii::trace($cacheKey.':缓存命中', '数据缓存');
-                $result[(string)$order_id] = $data;
+
+    public static function getOrderTables($dateRooms) {
+        $orderTables = [];
+
+        //生成搜索条件
+        $orderWhere = [];
+        foreach ($dateRooms as $dateRoom) {
+            $dateRoomSplit = explode('_', $dateRoom);
+            $date = $dateRoomSplit[0];
+            $room_id = $dateRoomSplit[1];
+            if (!isset($orderWhere[$date])){
+                $orderWhere[$date] = [];
             }
+            $orderWhere[$date][] = $room_id;
+
+            $orderTables[$dateRoom] = [
+                'ordered' => [],
+                'used' => [],
+            ];
         }
 
-        if(count($missList) > 0) {
-            $orders = [];
-            foreach (Order::find()
-                ->where(['in', 'id', $missList])
-                ->select(['id', 'date', 'room_id', 'hours', 'user_id', 'dept_id', 'type', 'status', 'submit_time', 'data', 'issue_time'])
-                ->asArray()->each(100) as $order) {
-                $order['hours'] = json_decode($order['hours'], true);
-                $order = array_merge($order, json_decode($order['data'], true));
-                unset($order['data']);
-                $order['opList'] = [];
-                $orders[(string)$order['id']] = $order;
-            }
 
-            foreach (OrderOperation::find()
-                ->where(['in', 'order_id', $missList])
-                ->select(['id', 'order_id', 'user_id', 'time', 'type', 'data'])
-                ->orderBy('time')
-                ->asArray()->each(100) as $orderOp) {
-                $orderOp = array_merge($orderOp, json_decode($orderOp['data'], true));
-                unset($orderOp['data']);
-                $orders[$orderOp['order_id']]['opList'][] = $orderOp;
-            }
-            foreach ($orders as $order_id => $order) {
-                $result[(string)$order_id] = $order;
-                $cacheKey = 'Order'.'_'.$order_id;
-                $cache->set($cacheKey, $order, 0, new TagDependency(['tags' => $cacheKey]));
-                Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
-            }
+        $orderFind = Order::find()->where('1=0')->select(['id', 'date', 'room_id', 'status', 'hours']);
+        foreach ($orderWhere as $date => $rooms_ids) {
+            $orderFind->union(Order::find()->where(['date'=>$date,'room_id'=>$rooms_ids])
+                ->select(['id', 'date', 'room_id', 'status', 'hours']));
         }
-        return $result;
+        
+        foreach ($orderFind->asArray()->each(100) as $order) {
+            $dateRoom = $order['date'].'_'.$order['room_id'];
+            $order['hours'] = json_decode($order['hours'], true);
+
+            $rtStatus = Order::getRoomTableStatus($order['status']);
+            if ($rtStatus == Order::ROOMTABLE_ORDERED) {
+                 $orderTables[$dateRoom]['ordered'] = RoomTable::addTable($orderTables[$dateRoom]['ordered'], $order['id'], $order['hours']);
+            } else if ($rtStatus == Order::ROOMTABLE_USED) {
+                $orderTables[$dateRoom]['used'] = RoomTable::addTable($orderTables[$dateRoom]['used'], $order['id'], $order['hours']);
+            } 
+        }
+        return $orderTables;
     }
+
 
     /**
      * 查询单个用户本周本月的使用情况

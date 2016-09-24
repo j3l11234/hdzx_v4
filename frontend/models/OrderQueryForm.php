@@ -79,57 +79,48 @@ class OrderQueryForm extends Model {
      * @return User|null the saved model or null if saving fails
      */
     public function getRoomTables() {
-        $dateRange = RoomService::queryWholeDateRange();
-        $startDate = !empty($this->start_date) ? strtotime($this->start_date) : $dateRange['start'];
-        $endDate = !empty($this->end_date) ? strtotime($this->end_date) : $dateRange['end'];
-        $roomList = Room::getOpenRooms(true);
-        $rooms = !empty($this->rooms) ? json_decode($this->rooms, true) : $roomList;
+        $defaultDateRange = RoomService::getSumDateRange();
+        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
+        $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
+        $room_ids = !empty($this->rooms) ? array_intersect(json_decode($this->rooms, TRUE), RoomService::getRoomList(TRUE)) : RoomService::getRoomList(TRUE);
 
-
-        $limitRange = static::getDefaultDateRange();  
-        if ($startDate < $limitRange['start']  || $endDate > $limitRange['end']) {
-            $this->setErrorMessage('日期超出范围，只能查询前后一个月内的记录');
-            return false;
+        if ($endDateTs - $startDateTs > 31 * 86400) {
+            $this->setErrorMessage('查询日期间隔不能大于1个月');
+            return FALSE;
         }
 
-        //计算hourTables
-        $dateRoomList = [];
-        $roomTableAvail = [];
-        $dateRanges = RoomService::queryDateRanges($roomList);
-        foreach ($roomList as $room_id) {
-            if(!in_array($room_id, $rooms) ){
-                continue;
-            }
-            $dateRange = $dateRanges[$room_id];
-            for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {
-                $date = date('Y-m-d', $time);
-                $dateRoomList[] = [$date,$room_id];
-                $roomTableAvail[$date.'_'.$room_id] = $time >= $dateRange['start'] && $time <= $dateRange['end'];
-            }
+        $dateRooms = [];
+        $avails = [];
+        $dateList = [];
+        $dateRanges = RoomService::getDateRanges($room_ids);
+        for ($time = $startDateTs; $time <= $endDateTs; $time = strtotime("+1 day", $time)) {
+            $date = date('Y-m-d', $time);
+            $dateList[] = $date;
+            foreach ($room_ids as $room_id) {
+                $dateRoom = $date.'_'.$room_id;
+                $dateRange = $dateRanges[$room_id];
+                $dateRooms[] = $dateRoom;
+                $avails[$dateRoom] = $time >= $dateRange['start'] && $time <= $dateRange['end'];;
+            }  
         }
 
-        $roomTables = RoomService::queryRoomTables($dateRoomList);
+        $roomTables = RoomService::getRoomTables($dateRooms);
         foreach ($roomTables as $dateTime => &$roomTable) {
             unset($roomTable['id']);
-            if(!$this->rt_detail){
+            if (!$this->rt_detail) {
                 unset($roomTable['ordered']);
                 unset($roomTable['used']);
                 unset($roomTable['locked']);
             }
-            $roomTable['available'] = $roomTableAvail[$dateTime];
-        }
-        
-        //计算dateList
-        $dateList = [];
-        for ($time=$startDate; $time <= $endDate; $time = strtotime("+1 day", $time)) {
-            $dateList[] = date('Y-m-d', $time);
+            $roomTable['available'] = $avails[$dateTime];
         }
 
         return [
             'dateList' => $dateList,
+            'roomList' => $room_ids,
             'roomTables' => $roomTables,
-            'start_date' => date('Y-m-d', $startDate),
-            'end_date' => date('Y-m-d', $endDate),
+            'start_date' => date('Y-m-d', $startDateTs),
+            'end_date' => date('Y-m-d', $endDateTs),
         ];
     }
 
@@ -139,40 +130,41 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getRoomUse() {
-        $data = RoomService::queryRoomTable($this->date, $this->room);
-        $roomDateRange = RoomService::queryRoomDateRange($this->room);
-        $time = strtotime($this->date);
-        $data['available'] = $time >= $roomDateRange['start'] && $time <= $roomDateRange['end'];
+        $room_ids = RoomService::getRoomList(TRUE);
+        if (!in_array($this->room, $room_ids)) {
+            $this->setErrorMessage('room错误，不存在此房间');
+            return FALSE;
+        }
 
-        $ordered = RoomTable::getTable($data['ordered']);
-        $used = RoomTable::getTable($data['used']);
-        $locked = RoomTable::getTable($data['locked']);
+        $dateRoom = $this->date.'_'.$this->room;
+        $roomTable = RoomService::getRoomTables([$dateRoom])[$dateRoom];
+        $dateRange = RoomService::getDateRanges([$this->room])[$this->room];
+        $dateTs = strtotime($this->date);
+        $roomTable['available'] = $dateTs >= $dateRange['start'] && $dateTs <= $dateRange['end'];
 
-        $data = [
-            'roomTable' => $data,
+
+
+        $ordered_ids = RoomTable::getTable($roomTable['ordered']);
+        $used_ids = RoomTable::getTable($roomTable['used']);
+        $locked_ids = RoomTable::getTable($roomTable['locked']);
+
+        $roomUse = [
+            'roomTable' => $roomTable,
             'orders' => [],
             'locks' => [],
         ];
 
-        $orders = OrderService::queryOrders($ordered);
+        $orders = OrderService::getOrders(array_merge($ordered_ids, $used_ids));
         foreach ($orders as $order_id => &$order) {
             unset($order['opList']);
-            $data['orders'][$order_id] = $order;
+            $roomUse['orders'][$order_id] = $order;
         }
-        $orders = OrderService::queryOrders($used);
-        foreach ($orders as $order_id => &$order) {
-            unset($order['opList']);
-            $data['orders'][$order_id] = $order;
-        }
-        foreach ($locked as $lock_id) {
-            $lock = LockService::queryOneLock($lock_id);
-            if ($lock !== null) {
-                $data['locks'][$lock_id] = $lock;
-            }
+        $locks = LockService::getLocks($locked_ids);
+        foreach ($locks as $lock_id => &$lock) {
+            $roomUse['locks'][$lock_id] = $lock;
         }
         
-        return $data;
-
+        return $roomUse;
     }
 
     /**

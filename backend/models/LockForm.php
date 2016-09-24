@@ -160,12 +160,12 @@ class LockForm extends Model {
             return false;
         }
 
-        $dateRange = RoomService::queryWholeDateRange();
+        $dateRange = RoomService::getSumDateRange(FALSE);
         $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d', $dateRange['start']);
         $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
         
         try {
-            LockService::applyLock($startDate, $endDate);
+            RoomService::applyLock($startDate, $endDate);
             $this->setMessage('应用房间锁成功');
             return true;
         } catch (HdzxException $e) {

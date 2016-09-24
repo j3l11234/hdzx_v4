@@ -15,22 +15,28 @@ class Error {
     /**
      * 权限认证失败
      */
-    const AUTH_FAILED           = 1;
+    const AUTH_FAILED           = 10;
 
     /**
      * 预约状态异常
      */
-    const INVALID_ORDER_STATUS  = 2;
+    const INVALID_ORDER_STATUS  = 11;
+
 
     /**
      * 时段被占用
      */
-    const ROOMTABLE_USED         = 3;
+    const ROOMTABLE_USED         = 20;
 
     /**
      * 时段被锁定
      */
-    const ROOMTABLE_LOCKED      = 4;
+    const ROOMTABLE_LOCKED      = 21;
+    /**
+     * 创建房间表失败
+     */
+    const ROOMTABLE_ADD  = 22;
+
 
     /**
      * 并发竞争错误
@@ -56,4 +62,6 @@ class Error {
      * 保存房间锁失败
      */
     const SAVE_LOCK = 9;
+
+    
 }

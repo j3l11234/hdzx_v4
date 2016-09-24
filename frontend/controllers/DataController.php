@@ -39,8 +39,8 @@ class DataController extends Controller
     public function actionGetrooms() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $roomList = RoomService::queryRoomList();
-        return array_merge($roomList, [
+        $data = RoomService::getRoomList();
+        return array_merge($data, [
             'error' => 0,
         ]);
     }
