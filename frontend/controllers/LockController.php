@@ -7,8 +7,7 @@ use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\AccessControl;
 
-use backend\models\LockQueryForm;
-use backend\models\LockForm;
+use frontend\models\LockQueryForm;
 
 /**
  * Lock controller

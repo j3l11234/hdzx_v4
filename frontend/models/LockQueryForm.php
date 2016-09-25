@@ -1,5 +1,5 @@
 <?php
-namespace backend\models;
+namespace frontend\models;
 
 use Yii;
 use yii\base\Model;
@@ -44,7 +44,7 @@ class LockQueryForm extends Model {
      * @return json
      */
     public function getLocks() {
-        $data = LockService::getLockList(FALSE, FALSE);
+        $data = LockService::getLockList(FALSE, TRUE);
 
         return $data;
     }

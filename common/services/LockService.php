@@ -23,13 +23,62 @@ use common\services\RoomService;
 class LockService extends Component {
 
     /**
+     * 查询锁列表
+     * 批量查询锁(带缓存)
+     *
+     * @param boolean $onlyId 仅获取id
+     * @param $useCache 是否使用缓存(默认为是)
+     * @return Array 如果onlyId未真，返回lock_id的列表，否则返回Lock的Map
+     */
+    public static function getLockList($onlyId = FALSE, $useCache = TRUE) {
+        $lockList;
+
+        //读取缓存
+        $cacheMiss;
+        if ($useCache) {
+            $cacheKey = 'LockList';
+            $cacheData = Yii::$app->cache->get($cacheKey);
+            if ($cacheData == null) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $cacheMiss = TRUE;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $lockList = $cacheData;
+                $cacheMiss = FALSE;
+            }
+        } else {
+            $cacheMiss = TRUE;
+        }
+        if($cacheMiss) {
+            $locks = Lock::find()->select(['id'])->asArray()->all();
+            $lock_ids = array_column($locks, 'id');
+            $locks = static::getLocks($lock_ids, $useCache);
+
+            $lockList = [
+                'lockList' => array_keys($locks),
+                'locks' => $locks,
+            ];
+
+            //写入缓存
+            $cacheKey = 'LockList';
+            Yii::$app->cache->set($cacheKey, $lockList, 0, new TagDependency(['tags' => ['Lock']]));
+            Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
+        }
+
+        if ($onlyId) {
+            return $lockList['roomList'];
+        }
+        return $lockList;
+    }
+
+    /**
      * 批量查询锁(带缓存)
      *
      * @param Array $lock_ids lock_id的列表
      * @param $useCache 是否使用缓存(默认为是)
      * @return Array locks的Map
      */
-    public static function getLocks($lock_ids, $useCache = true) {
+    public static function getLocks($lock_ids, $useCache = TRUE) {
         $locks = [];
 
         //读取缓存
@@ -58,9 +107,9 @@ class LockService extends Component {
                 ->where(['in', 'id', $cacheMisses])
                 ->select(['id', 'rooms', 'hours', 'start_date', 'end_date', 'status', 'data'])
                 ->asArray()->each(100) as $lock) {
-                $lock['rooms'] = json_decode($lock['rooms'], true);
-                $lock['hours'] = json_decode($lock['hours'], true);
-                $lock = array_merge($lock, json_decode($lock['data'], true));
+                $lock['rooms'] = json_decode($lock['rooms'], TRUE);
+                $lock['hours'] = json_decode($lock['hours'], TRUE);
+                $lock = array_merge($lock, json_decode($lock['data'], TRUE));
                 unset($lock['data']);
                 $locks[$lock['id']] = $lock;
                 $cacheNews[] = $lock['id'];
@@ -105,7 +154,7 @@ class LockService extends Component {
 
         $locks = Lock::find()->select(['id'])->where(['status' => Lock::STATUS_ENABLE])->asArray()->all();
         $lock_ids = array_column($locks, 'id');
-        $locks = static::getLocks($lock_ids);
+        $locks = static::getLocks($lock_ids, FALSE);
         foreach ($locks as $lock_id => $lock) {
             $dateList = Lock::getDateList($lock['loop_type'], $lock['loop_day'], $lock['start_date'], $lock['end_date']);
             //计算交集提升效率
@@ -155,7 +204,7 @@ class LockService extends Component {
             Yii::error($lock->getErrors(), __METHOD__);
             throw new HdzxException('房间锁保存失败', Error::SAVE_LOCK);
         }
-        TagDependency::invalidate(Yii::$app->cache, 'Lock_'.$lock_id); 
+        TagDependency::invalidate(Yii::$app->cache, 'Lock_'.$lock->id); 
     }
     /**
      * 删除一个房间锁
