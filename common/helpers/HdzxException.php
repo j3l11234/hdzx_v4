@@ -7,7 +7,8 @@
 
 namespace common\helpers;
 
-use common\helpers\HdzxException;
+use yii\base\Exception;
+
 /**
  * 预约操作出现异常
  */
