@@ -36,38 +36,59 @@ class OrderService extends Component {
      *
      * @return json
      */
-    public static function queryDeptList() {
-        $cacheKey = 'deptList';
-        $cache = Yii::$app->cache;
-        $data = $cache->get($cacheKey);
-        if ($data == null) {
-            Yii::trace($cacheKey.':缓存失效'); 
-            $data = [];
-            $result = Department::find()
+    public static function queryDeptList($onlyId = FALSE, $useCache = TRUE) {
+        $deptList;
+
+        //读取缓存
+        $cacheMiss;
+        if ($useCache) {
+            $cacheKey = 'DeptList';
+            $cacheData = Yii::$app->cache->get($cacheKey);
+            if ($cacheData == null) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $cacheMiss = TRUE;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $deptList = $cacheData;
+                $cacheMiss = FALSE;
+            }
+        } else {
+            $cacheMiss = TRUE;
+        }
+
+        if($cacheMiss) {
+            $deptMap = [];
+            $depts = [];
+            foreach (Department::find()
                 ->where(['status' => Department::STATUS_ENABLE])
                 ->select(['id', 'name', 'parent_id', 'choose', 'usage_limit'])
                 ->orderBy('align')
-                ->all();
-
-            $deptMap = [];
-            $depts = [];
-            foreach ($result as $key => $dept) {
-                $dept = $dept->toArray(['id', 'name', 'parent_id', 'choose', 'usage_limit',]);
-                if(!isset($deptMap[$dept['parent_id']])){
-                    $deptMap[$dept['parent_id']] = [];
+                ->asArray('align')
+                ->each(100) as $dept) {
+                $dept['usage_limit'] = json_decode('usage_limit');
+                $parent_id = $dept['parent_id'];
+                if(!isset($deptMap[$parent_id])){
+                    $deptMap[$parent_id] = [];
                 }
-                $deptMap[$dept['parent_id']][] = $dept['id'];
+                $deptMap[$parent_id][] = $dept['id'];
                 $depts[$dept['id']] = $dept;
             }
-            $data = [
+
+            $deptList = [
                 'deptMap' => $deptMap,
                 'depts' => $depts,
             ];
-            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => [$cacheKey, 'Dept']]));
-        }else{
-            Yii::trace($cacheKey.':缓存命中'); 
+
+            //写入缓存
+            $cacheKey = 'DeptList';
+            Yii::$app->cache->set($cacheKey, $deptList, 0, new TagDependency(['tags' => ['Room']]));
+            Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
         }
-        return $data;
+
+        if ($onlyId) {
+            return array_keys($deptList['depts']);
+        }
+        return $deptList;
     }
 
 
@@ -265,8 +286,8 @@ class OrderService extends Component {
 
         $result = Order::find()->select(['id'])->where($where)->all();
 
-        $order_idList = array_column($result, 'id');
-        $orders = static::queryOrders($order_idList);
+        $order_ids = array_column($result, 'id');
+        $orders = static::queryOrders($order_ids);
         $orderList = [];
 
         foreach ($orders as $order_id => $order) {

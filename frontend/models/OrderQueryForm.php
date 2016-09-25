@@ -88,6 +88,15 @@ class OrderQueryForm extends Model {
             $this->setErrorMessage('查询日期间隔不能大于1个月');
             return FALSE;
         }
+        $now = time();
+        if ($now - $startDateTs > 10 * 366 * 86400) {
+            $this->setErrorMessage('您查询了太久远的历史');
+            return FALSE;
+        }
+        if ($endDateTs - $now > 10 * 366 * 86400) {
+            $this->setErrorMessage('您查询了太遥远的将来');
+            return FALSE;
+        }
 
         $dateRooms = [];
         $avails = [];
@@ -136,14 +145,22 @@ class OrderQueryForm extends Model {
             return FALSE;
         }
 
+        $dateTs = strtotime($this->date);
+        $now = time();
+        if ($now - $dateTs > 10 * 366 * 86400) {
+            $this->setErrorMessage('您查询了太久远的历史');
+            return FALSE;
+        }
+        if ($dateTs - $now > 10 * 366 * 86400) {
+            $this->setErrorMessage('您查询了太遥远的将来');
+            return FALSE;
+        }
+
         $dateRoom = $this->date.'_'.$this->room;
         $roomTable = RoomService::getRoomTables([$dateRoom])[$dateRoom];
         $dateRange = RoomService::getDateRanges([$this->room])[$this->room];
-        $dateTs = strtotime($this->date);
+  
         $roomTable['available'] = $dateTs >= $dateRange['start'] && $dateTs <= $dateRange['end'];
-
-
-
         $ordered_ids = RoomTable::getTable($roomTable['ordered']);
         $used_ids = RoomTable::getTable($roomTable['used']);
         $locked_ids = RoomTable::getTable($roomTable['locked']);

@@ -32,28 +32,41 @@ class RoomService extends Component {
      * @return 如果onlyId未真，返回room_id的列表，否则返回room的Map
      */
     public static function getRoomList($onlyId = FALSE, $useCache = TRUE) {
-        $cacheKey = 'RoomList';
-        $data = Yii::$app->cache->get($cacheKey);
-        if ($data == null || !$useCache) {
-            Yii::trace($cacheKey.':缓存失效', '数据缓存');
+        $roomList;
 
-            $rooms = Room::getOpenRooms(false);
-            $roomList = array_keys($rooms);
-            
-            $data = [
-                'roomList' => $roomList,
+        //读取缓存
+        $cacheMiss;
+        if ($useCache) {
+            $cacheKey = 'RoomList';
+            $cacheData = Yii::$app->cache->get($cacheKey);
+            if ($cacheData == null) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $cacheMiss = TRUE;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $roomList = $cacheData;
+                $cacheMiss = FALSE;
+            }
+        } else {
+            $cacheMiss = TRUE;
+        }
+        if($cacheMiss) {
+            $rooms = Room::getOpenRooms(FALSE);
+            $roomList = [
+                'roomList' => array_keys($rooms),
                 'rooms' => $rooms,
             ];
-            Yii::$app->cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => ['Room']]));
+
+            //写入缓存
+            $cacheKey = 'RoomList';
+            Yii::$app->cache->set($cacheKey, $roomList, 0, new TagDependency(['tags' => ['Room']]));
             Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
-        } else {
-            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
 
         if ($onlyId) {
-            $data = $data['roomList'];
+            return $roomList['roomList'];
         }
-        return $data;
+        return $roomList;
     }
 
 
@@ -64,7 +77,7 @@ class RoomService extends Component {
      * @param boolean $useCache 是否使用缓存
      * @return Array DateRange的Map
      */
-    public static function getDateRanges($room_ids, $useCache = true) {
+    public static function getDateRanges($room_ids, $useCache = TRUE) {
         $dateRanges = [];
 
         //读取缓存
@@ -85,7 +98,7 @@ class RoomService extends Component {
             }
             Yii::endProfile('Room_DateRange读取缓存', '数据缓存');
         } else {
-            $cacheMisses = $room_id;
+            $cacheMisses = $room_ids;
         }
 
         //获取剩下数据(缓存miss的)
@@ -116,19 +129,32 @@ class RoomService extends Component {
 
 
     /**
-     * 查询所有房间的日期范围(带缓存)
+     * 查询所有房间的日期总范围(带缓存)
      * 优先从缓存中查询
      * 
      * @param boolean $useCache 是否使用缓存
      * @return json
      */
     public static function getSumDateRange($useCache = true) {
-        $cacheKey = 'WholeDateRange';
-        $cache = Yii::$app->cache;
-        $data = $cache->get($cacheKey);
-        if ($data == null || !$useCache) {
-            Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
+        $sumDateRange;
 
+        //读取缓存
+        $cacheMiss;
+        if ($useCache) {
+            $cacheKey = 'WholeDateRange';
+            $cacheData = Yii::$app->cache->get($cacheKey);
+            if ($cacheData == null) {
+                Yii::trace($cacheKey.':缓存失效', '数据缓存');
+                $cacheMiss = TRUE;
+            } else {
+                Yii::trace($cacheKey.':缓存命中', '数据缓存');
+                $sumDateRange = $cacheData;
+                $cacheMiss = FALSE;
+            }
+        } else {
+            $cacheMiss = TRUE;
+        }
+        if($cacheMiss) {
             $now = time();
             $startDate = mktime(0, 0, 0, date("m", $now), date("d", $now), date("Y", $now));
             $endDate = $startDate;
@@ -140,16 +166,18 @@ class RoomService extends Component {
                 $endDate = max($endDate, $dateRange['end']);
                 $expired = min($expired,  $dateRange['expired']);
             }
-            $data = [
+            $sumDateRange = [
                 'start' => $startDate,
                 'end' => $endDate,
             ];
-            $cache->set($cacheKey, $data, $expired, new TagDependency(['tags' => 'Room']));
+
+            //写入缓存
+            $cacheKey = 'WholeDateRange';
+            Yii::$app->cache->set($cacheKey, $sumDateRange, $expired, new TagDependency(['tags' => 'Room']));
             Yii::trace($cacheKey.':写入缓存, $expired='.$expired, '数据缓存'); 
-        }else{
-            Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
-        return $data;    
+
+        return $sumDateRange;
     }
 
 
@@ -164,8 +192,7 @@ class RoomService extends Component {
      * @param integer $applyLock 生成新的房间表时，是否应用房间锁 (默认为是)
      * @return Array Map形式的Roomtable
      */
-    public static function getRoomTables($dateRooms, $useCache = true,
-        $applyOrder = true, $applyLock = true) {
+    public static function getRoomTables($dateRooms, $useCache = TRUE, $applyOrder = TRUE, $applyLock = TRUE) {
         $roomTables = [];
 
         //读取缓存
@@ -217,42 +244,27 @@ class RoomService extends Component {
             
             //生成缺失数据(数据库中不存在的)
             if(count($dbMisses) > 0) {
-                static::addRoomTables($dbMisses, $applyOrder, $applyLock);
-                foreach (RoomTable::find()
-                    ->where(['in', 'id', $dbMisses])
-                    ->select(['id', 'ordered', 'used', 'locked'])
-                    ->asArray()->each(100) as $roomTable) {
-                    $roomTable['ordered'] = json_decode($roomTable['ordered'], true);
-                    $roomTable['used'] = json_decode($roomTable['used'], true);
-                    $roomTable['locked'] = json_decode($roomTable['locked'], true);
+                $roomTables_new = static::addRoomTables($dbMisses, $applyOrder, $applyLock);
+                foreach ($roomTables_new as $dateRoom => $roomTable) {
                     $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked'], $hours);
                     $roomTable['chksum'] = substr(md5(json_encode($roomTable)), 0, 6);
                     $roomTables[$roomTable['id']] = $roomTable;
                     $cacheNews[] = $roomTable['id'];
                 }
-
-                //验证是否全部添加成功
-                //即使在并发情况下，部分插入失败(那意味着其他并发已经插入了)，也能取得所有数据
-                $dbFails = [];
-                foreach ($dbMisses as $dateRoom) {
-                    if (!isset($roomTables[$dateRoom])) {
-                        $dbFails[] = $dateRoom;
-                    }
-                }
-                if(count($dbFails) > 0) {
-                    throw new HdzxException('房间表创建失败', Error::ROOMTABLE_ADD);
-                }
             }
 
-            //写入缓存
-            Yii::beginProfile('RoomTable写入缓存', '数据缓存');
-            foreach ($cacheNews as $dateRoom) {
-                $roomTable = $roomTables[$dateRoom];
-                $cacheKey = 'RoomTable'.'_'.$dateRoom;
-                Yii::$app->cache->set($cacheKey, $roomTable, 0, new TagDependency(['tags' => [$cacheKey, 'RoomTable']]));
-                Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
+            //$useCache = FALSE，的情况，基本都是取来作修改之用的，故不做缓存写入
+            if ($useCache) {
+                //写入缓存
+                Yii::beginProfile('RoomTable写入缓存', '数据缓存');
+                foreach ($cacheNews as $dateRoom) {
+                    $roomTable = $roomTables[$dateRoom];
+                    $cacheKey = 'RoomTable'.'_'.$dateRoom;
+                    Yii::$app->cache->set($cacheKey, $roomTable, 0, new TagDependency(['tags' => [$cacheKey, 'RoomTable']]));
+                    Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
+                }
+                Yii::endProfile('RoomTable写入缓存', '数据缓存');
             }
-            Yii::endProfile('RoomTable写入缓存', '数据缓存');
         }
         return $roomTables;
     }
@@ -278,8 +290,13 @@ class RoomService extends Component {
         }
 
         $roomTableRows = [];
+        $roomTables = [];
+        $room_ids = Room::getOpenRooms(TRUE);
         foreach ($dateRooms as $dateRoom) {
             $dateRoomSplit = explode('_', $dateRoom);
+            if (!in_array($dateRoomSplit[1], $room_ids)) {
+                continue;
+            }
             $roomTable = [
                 'id'        => $dateRoom,
                 'date'      => $dateRoomSplit[0],
@@ -302,6 +319,13 @@ class RoomService extends Component {
                 $roomTable['locked'] = $lockTables[$dateRoom];
             }
 
+            $roomTables[$dateRoom] = [
+                'id'        => $dateRoom,
+                'ordered'   => $roomTable['ordered'],
+                'used'      => $roomTable['used'],
+                'locked'    => $roomTable['locked'],
+            ];
+
             $roomTableRows[] = [
                 $roomTable['id'],
                 $roomTable['date'],
@@ -315,12 +339,15 @@ class RoomService extends Component {
         }
 
         //分组批量插入
-        $rowsChunks = array_chunk($roomTableRows, 100);
-        foreach ($rowsChunks as $rowsChunk) {
-            Yii::$app->db->createCommand()->batchInsert(RoomTable::tableName(),
+        $rows_chunks = array_chunk($roomTableRows, 100);
+        foreach ($rows_chunks as $rows_chunk) {
+            $sql = Yii::$app->db->getQueryBuilder()->batchInsert(RoomTable::tableName(), 
                 ['id', 'date', 'room_id', 'ordered', 'used', 'locked', 'created_at','updated_at'],
-                $rowsChunk)->execute();
+                $rows_chunk);
+            //如果存在重复值，会进行更新
+            Yii::$app->db->createCommand($sql.' ON DUPLICATE KEY UPDATE `ordered`=VALUES(`ordered`), `used`=VALUES(`used`), `locked`=VALUES(`locked`), `updated_at`=VALUES(`updated_at`)')->execute();
         }
+        return $roomTables;
     }
 
 
@@ -362,39 +389,38 @@ class RoomService extends Component {
     public static function applyLock($start_date, $end_date) {
         $startDateTs = strtotime($start_date);
         $endDateTs = strtotime($end_date);
-        $roomList = Room::getOpenRooms(true);
-        $dateRoomList = [];
-        foreach ($roomList as $room_id) {
+        $room_ids = Room::getOpenRooms(TRUE);
+        $dateRooms = [];
+        foreach ($room_ids as $room_id) {
             for ($time = $startDateTs; $time <= $endDateTs; $time = strtotime("+1 day", $time)) {
                 $date = date('Y-m-d', $time);
-                $dateRoomList[] = [$date,$room_id];
+                $dateRooms[] = $date.'_'.$room_id;
             }
         }
 
-        $lockTables = LockService::getLockTables($dateRoomList);
-
-        $roomTables = RoomService::getRoomTables($dateRoomList,true, false);
+        $lockTables = LockService::getLockTables($dateRooms);
+        $roomTables = RoomService::getRoomTables($dateRooms, FALSE, TRUE, FALSE);
         $roomTableRows = [];
-        foreach ($roomList as $room_id) {
-            for ($time = $startDateTs; $time <= $endDateTs; $time = strtotime("+1 day", $time)) {
-                $date = date('Y-m-d', $time);
-                $lockTable = $lockTables[$date.'_'.$room_id];
-                $roomTable = $roomTables[$date.'_'.$room_id];
-                if(json_encode($roomTable['locked']) != json_encode($lockTable)){
-                    $roomTable['locked'] = $lockTable;
-                    $roomTableRows[] = [$date.'_'.$room_id, json_encode($roomTable['locked'])];
-                    //清除缓存
-                    TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$date.'_'.$room_id);
-                }
+        foreach ($dateRooms as $dateRoom) {
+            $lockTable = $lockTables[$dateRoom];
+            $roomTable = $roomTables[$dateRoom];
+            if(md5(json_encode($roomTable['locked'])) !== md5(json_encode($lockTable))){
+                $roomTable['locked'] = $lockTable;
+                $roomTableRows[] = [$dateRoom, json_encode($roomTable['locked'])];
             }
         }
 
         $rows_chunks = array_chunk($roomTableRows, 100);
         foreach ($rows_chunks as $rows_chunk) {
             $sql = Yii::$app->db->getQueryBuilder()->batchInsert(RoomTable::tableName(), ['id','locked'], $rows_chunk);
-            Yii::$app->db->createCommand($sql.' ON DUPLICATE KEY UPDATE locked=VALUES(locked)')->execute();
+            Yii::$app->db->createCommand($sql.' ON DUPLICATE KEY UPDATE `locked`=VALUES(`locked`)')->execute();
         }
 
+        //清除缓存
+        foreach ($roomTableRows as $roomTable) {
+            $dateRoom = $roomTable[0];
+            TagDependency::invalidate(Yii::$app->cache, 'RoomTable_'.$dateRoom);
+        }
     }
 
 }
