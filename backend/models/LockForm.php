@@ -62,7 +62,7 @@ class LockForm extends Model {
         return [
             [['lock_id', 'rooms', 'loop_type', 'status', 'title', 'comment'], 'required'],
             [['start_date', 'end_date'], 'required', 'on'=>[static::SCENARIO_ADD_LOCK, static::SCENARIO_EDIT_LOCK]],
-            ['loop_day', 'number', 'min'=>1, 'max'=>31,],
+            ['loop_day', 'number', 'min'=>0, 'max'=>31,],
             ['start_hour', 'number', 'min'=>$startHour, 'max'=>$endHour-1,],
             ['start_hour', 'number', 'min'=>$startHour+1, 'max'=>$endHour,],
             [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
