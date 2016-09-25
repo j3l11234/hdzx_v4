@@ -13,7 +13,11 @@ return [
             'class' => 'yii\web\User',
             'identityClass' => 'common\services\UserService',
             'enableAutoLogin' => true,
-        ]
+        ],
+        'assetManager' => [
+            'class' => 'yii\web\AssetManager',
+            'forceCopy' => YII_DEBUG,
+        ],
     ],
     'name'=>'学活场地申请系统',
     'timeZone'=>'Asia/Chongqing',
