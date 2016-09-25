@@ -49,17 +49,6 @@ class ApproveQueryForm extends Model {
         ];
     }
 
-    public static function getDefaultDateRange(){
-        $today = strtotime(date('Y-m-d', time()));
-        $start = $today;
-        $end = strtotime("+1 month",$today);
-
-        return [
-            'start' => $start,
-            'end' => $end
-        ];
-    }
-
     function getType($type) {
         switch ($type) {
             case 'auto':
@@ -74,44 +63,47 @@ class ApproveQueryForm extends Model {
     }
 
     /**
-     * 查询房间使用表
+     * 查询可以审批的预约
      *
-     * @return User|null the saved model or null if saving fails
+     * @return null
      */
     public function getApproveOrder() {
-        $dateRange = static::getDefaultDateRange();
-        $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d',$dateRange['start']);
-        $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
+        $defaultDateRange = RoomService::getSumDateRange();
+        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
+        $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
+
+        if ($endDateTs - $startDateTs > 3 * 31 * 86400) {
+            $this->setErrorMessage('查询日期间隔不能大于3个月');
+            return FALSE;
+        }
 
         $user = Yii::$app->user->getIdentity()->getUser();
         $numType = $this->getType($this->type);
 
-        if( strtotime($endDate) -strtotime($startDate) > 93 * 86400) {
-            $this->setErrorMessage('查询日期间隔不能大于3个月');
-            return false;
-        }
-
-        $data = ApproveService::queryApproveOrder($user, $numType, $startDate, $endDate);
+        $data = ApproveService::getApproveOrders($user, $numType, date('Y-m-d', $startDateTs), date('Y-m-d', $endDateTs));
+        $orders = $data['orders'];
+        $orderList = $data['orderList'];
 
         //解析roomTable，用于分析冲突
-        $roomTables = [];
-        foreach ($data['orders'] as $id => $order) {
-            $room_id = $order['room_id'];
-            $date = $order['date'];
-            if (isset($roomTables[$room_id.'_'.$date])){
-                continue;
-            }
-
-            $roomTable = RoomService::queryRoomTable($date, $room_id);
+        $dateRooms = [];
+        foreach ($orders as $order_id => $order) {
+            $dateRooms[] = $order['date'].'_'.$order['room_id'];
+        }
+        $roomTables = RoomService::getRoomTables($dateRooms);
+        foreach ($roomTables as $dateRoom => &$roomTable) {
+            unset($roomTable['id']);
             unset($roomTable['locked']);
             unset($roomTable['hourTable']);
             unset($roomTable['chksum']);
-            $roomTables[$room_id.'_'.$date] = $roomTable;
         }
-        $data['roomTables'] = $roomTables;
-        $data['start_date'] = $startDate;
-        $data['end_date'] = $endDate;
 
+        $data = [
+            'orders' => $orders,
+            'orderList' => $orderList,
+            'roomTables' => $roomTables,
+            'start_date' => date('Y-m-d', $startDateTs),
+            'end_date' => date('Y-m-d', $endDateTs),
+        ];
         return $data;
     }
 }

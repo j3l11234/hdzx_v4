@@ -6,6 +6,7 @@ return [
     'order.startHour' => 8,
     'order.endHour' => 21,
     'order.hours' => [8,9,10,11,12,13,14,15,16,17,18,19,20,21],
+    'cache.duration' => 86400,
     'usageLimit' => [
     	[
     		'rooms' => [301, 302],
@@ -28,4 +29,5 @@ return [
     		'max' => 70,
     	]
     ],
+
 ];

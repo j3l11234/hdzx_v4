@@ -61,7 +61,9 @@ class LockService extends Component {
 
             //写入缓存
             $cacheKey = 'LockList';
-            Yii::$app->cache->set($cacheKey, $lockList, 0, new TagDependency(['tags' => ['Lock']]));
+            Yii::$app->cache->set($cacheKey, $lockList, 
+                Yii::$app->params['cache.duration'],
+                new TagDependency(['tags' => ['Lock']]));
             Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
         }
 
@@ -115,15 +117,19 @@ class LockService extends Component {
                 $cacheNews[] = $lock['id'];
             }
 
-            //写入缓存
-            Yii::beginProfile('Lock写入缓存', '数据缓存');
-            foreach ($cacheNews as $lock_id) {
-                $lock = $locks[$lock_id];
-                $cacheKey = 'Lock_'.$lock['id'];
-                Yii::$app->cache->set($cacheKey, $lock, 0, new TagDependency(['tags' => [$cacheKey, 'Lock']]));
-                Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
+            if ($useCache) {
+                //写入缓存
+                Yii::beginProfile('Lock写入缓存', '数据缓存');
+                foreach ($cacheNews as $lock_id) {
+                    $lock = $locks[$lock_id];
+                    $cacheKey = 'Lock_'.$lock['id'];
+                    Yii::$app->cache->set($cacheKey, $lock,
+                        Yii::$app->params['cache.duration'],
+                        new TagDependency(['tags' => [$cacheKey, 'Lock']]));
+                    Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
+                }
+                Yii::endProfile('Lock写入缓存', '数据缓存');
             }
-            Yii::endProfile('Lock写入缓存', '数据缓存');
         }
 
         return $locks;

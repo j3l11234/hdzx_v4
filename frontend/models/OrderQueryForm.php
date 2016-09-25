@@ -62,16 +62,6 @@ class OrderQueryForm extends Model {
         }
     }
 
-    public static function getDefaultDateRange() {
-        $today = strtotime(date('Y-m-d', time()));
-        $start = strtotime("-1 month",$today);
-        $end = strtotime("+1 month",$today);
-
-        return [
-            'start' => $start,
-            'end' => $end
-        ];
-    }
     
     /**
      * 查询房间使用表
@@ -190,22 +180,21 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getMyOrders() {
-        $dateRange = static::getDefaultDateRange();
-        $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d', $dateRange['start']);
-        $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
+        $defaultDateRange = RoomService::getSumDateRange();
+        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
+        $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
 
-        if (strtotime($endDate) -strtotime($startDate) > 31*6 * 86400) {
+        if ($endDateTs - $startDateTs > 31*6 * 86400) {
             $this->setErrorMessage('查询日期间隔不能大于6个月');
             return false;
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();
-
-        $data = OrderService::queryMyOrders($user, $startDate, $endDate);
+        $data = OrderService::getMyOrders($user, date('Y-m-d', $startDateTs), date('Y-m-d', $endDateTs));
 
         return array_merge($data, [
-            'start_date' => $startDate,
-            'end_date' => $endDate,
+            'start_date' => date('Y-m-d', $startDateTs),
+            'end_date' => date('Y-m-d', $endDateTs),
         ]);
     }
 

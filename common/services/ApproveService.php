@@ -47,19 +47,6 @@ class ApproveService extends Component {
     ];
 
 
-
-
-    // /**
-    //  * 检查该用户是否能够审批该dept的order
-    //  *
-    //  * @return boolean 是否可以
-    //  */
-    // public function checkApproveDept($dept_id) {
-    //     return in_array($dept_id, $this->_approve_dept);
-    // }
-
-
-
     /**
      * 查询审批申请
      * 数据会包含操作记录
@@ -70,7 +57,7 @@ class ApproveService extends Component {
      * @param String $end_date 结束时间
      * @return json
      */
-    public static function queryApproveOrder($user, $type, $start_date, $end_date) {
+    public static function getApproveOrders($user, $type, $start_date, $end_date) {
         $where = ['and'];
         $menagerFilter = false; //负责人审批筛选
         switch ($type) {
@@ -110,18 +97,12 @@ class ApproveService extends Component {
             $where[] = ['<=', 'date', $end_date];
         }
 
-        $result = Order::find()->select(['id'])->where($where)->asArray()->all();
-
-        $order_idList = array_column($result, 'id');
-        $orders = OrderService::queryOrders($order_idList);
-        $orderList = [];
-
-        foreach ($orders as $order_id => $order) {
-            $orderList[] = $order_id; 
-        }
+        $orders = Order::find()->select(['id'])->where($where)->asArray()->all();
+        $order_ids = array_column($orders, 'id');
+        $orders = OrderService::getOrders($order_ids);
 
         $data = [
-            'orderList' => $orderList,
+            'orderList' => array_keys($orders),
             'orders' => $orders,
         ];
 

@@ -59,7 +59,9 @@ class RoomService extends Component {
 
             //写入缓存
             $cacheKey = 'RoomList';
-            Yii::$app->cache->set($cacheKey, $roomList, 0, new TagDependency(['tags' => ['Room']]));
+            Yii::$app->cache->set($cacheKey, $roomList,
+                Yii::$app->params['cache.duration'],
+                new TagDependency(['tags' => ['Room']]));
             Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
         }
 
@@ -113,15 +115,17 @@ class RoomService extends Component {
                 $cacheNews[] = $room['id'];
             }
 
-            //写入缓存
-            Yii::beginProfile('Room_DateRange写入缓存', '数据缓存');
-            foreach ($cacheNews as $room_id) {
-                $dateRange = $dateRanges[$room_id];
-                $cacheKey = 'Room_'.$room_id.'_dateRange';
-                Yii::$app->cache->set($cacheKey, $dateRange, $dateRange['expired'], new TagDependency(['tags' => ['Room_'.$room_id,'Room']]));
-                Yii::trace($cacheKey.':写入缓存, $expired='.$dateRange['expired'], '数据缓存'); 
+            if ($useCache) {
+                //写入缓存
+                Yii::beginProfile('Room_DateRange写入缓存', '数据缓存');
+                foreach ($cacheNews as $room_id) {
+                    $dateRange = $dateRanges[$room_id];
+                    $cacheKey = 'Room_'.$room_id.'_dateRange';
+                    Yii::$app->cache->set($cacheKey, $dateRange, $dateRange['expired'], new TagDependency(['tags' => ['Room_'.$room_id,'Room']]));
+                    Yii::trace($cacheKey.':写入缓存, $expired='.$dateRange['expired'], '数据缓存'); 
+                }
+                Yii::endProfile('Room_DateRange写入缓存', '数据缓存');
             }
-            Yii::endProfile('Room_DateRange写入缓存', '数据缓存');
         }
 
         return $dateRanges;
@@ -180,6 +184,23 @@ class RoomService extends Component {
         return $sumDateRange;
     }
 
+    /**
+     * 获取单个RoomTable
+     * 如果对应时间表不存在，将会写入一个新的。
+     * 调用此方法时不要开事务！
+     *
+     * @param string $date 预约日期
+     * @param integer $room_id 房间id
+     * @return 获取单个RoomTable Map形式的Roomtable
+     */
+    public static function getRoomTable($date, $room_id) {
+        $roomTable = RoomTable::findByDateRoom($date, $room_id);
+        if ($roomTable === NULL) {
+            static::addRoomTables([$date.'_'.$room_id], TRUE, TRUE);
+            $roomTable = RoomTable::findByDateRoom($date, $room_id);
+        }
+        return $roomTable;
+    }
 
     /**
      * 获取房间表
@@ -253,14 +274,15 @@ class RoomService extends Component {
                 }
             }
 
-            //$useCache = FALSE，的情况，基本都是取来作修改之用的，故不做缓存写入
             if ($useCache) {
                 //写入缓存
                 Yii::beginProfile('RoomTable写入缓存', '数据缓存');
                 foreach ($cacheNews as $dateRoom) {
                     $roomTable = $roomTables[$dateRoom];
                     $cacheKey = 'RoomTable'.'_'.$dateRoom;
-                    Yii::$app->cache->set($cacheKey, $roomTable, 0, new TagDependency(['tags' => [$cacheKey, 'RoomTable']]));
+                    Yii::$app->cache->set($cacheKey, $roomTable,
+                        Yii::$app->params['cache.duration'],
+                        new TagDependency(['tags' => [$cacheKey, 'RoomTable']]));
                     Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
                 }
                 Yii::endProfile('RoomTable写入缓存', '数据缓存');

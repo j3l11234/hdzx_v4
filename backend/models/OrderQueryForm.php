@@ -82,7 +82,7 @@ class OrderQueryForm extends Model {
 
         $user = Yii::$app->user->getIdentity()->getUser();
 
-        $data = OrderService::queryIssueOrders($user, $this->username, $startDate, $endDate);
+        $data = OrderService::getIssueOrders($user, $this->username, $startDate, $endDate);
 
         return array_merge($data, [
             'start_date' => $startDate,

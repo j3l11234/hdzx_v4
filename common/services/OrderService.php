@@ -81,7 +81,9 @@ class OrderService extends Component {
 
             //写入缓存
             $cacheKey = 'DeptList';
-            Yii::$app->cache->set($cacheKey, $deptList, 0, new TagDependency(['tags' => ['Room']]));
+            Yii::$app->cache->set($cacheKey, $deptList,
+                Yii::$app->params['cache.duration'],
+                new TagDependency(['tags' => ['Room']]));
             Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
         }
 
@@ -254,7 +256,9 @@ class OrderService extends Component {
             foreach ($cacheNews as $order_id) {
                 $order = $orders[$order_id];
                 $cacheKey = 'Order'.'_'.$order_id;
-                Yii::$app->cache->set($cacheKey, $order, 0, new TagDependency(['tags' => [$cacheKey, 'Order']]));
+                Yii::$app->cache->set($cacheKey, $order,
+                    Yii::$app->params['cache.duration'],
+                    new TagDependency(['tags' => [$cacheKey, 'Order']]));
                 Yii::trace($cacheKey.':写入缓存', '数据缓存'); 
             }
             Yii::endProfile('Order写入缓存', '数据缓存');
@@ -274,7 +278,7 @@ class OrderService extends Component {
      * @param String $end_date 结束时间
      * @return json
      */
-    public static function queryMyOrders($user, $start_date, $end_date) {
+    public static function getMyOrders($user, $start_date, $end_date) {
         $where = ['and'];
         $where[] = ['=', 'user_id', $user->id];
         if ($start_date !== null){
@@ -284,10 +288,9 @@ class OrderService extends Component {
             $where[] = ['<=', 'date', $end_date];
         }
 
-        $result = Order::find()->select(['id'])->where($where)->all();
-
-        $order_ids = array_column($result, 'id');
-        $orders = static::queryOrders($order_ids);
+        $orders = Order::find()->select(['id'])->where($where)->all();
+        $order_ids = array_column($orders, 'id');
+        $orders = static::getOrders($order_ids);
         $orderList = [];
 
         foreach ($orders as $order_id => $order) {
@@ -313,7 +316,7 @@ class OrderService extends Component {
      * @param String $end_date 结束时间
      * @return json
      */
-    public static function queryIssueOrders($user, $username, $start_date, $end_date) {
+    public static function getIssueOrders($user, $username, $start_date, $end_date) {
         if (!$user->checkPrivilege(BaseUser::PRIV_ISSUE)) {
             throw new HdzxException('该账号无开门条发放权限', Error::AUTH_FAILED);
         }
@@ -334,29 +337,21 @@ class OrderService extends Component {
         }
         $where[] = ['in', 'user_id', $user_ids];
 
-        $result = Order::find()
+        $orders = Order::find()
             ->select(['id'])
             ->where($where)
             ->orderBy('submit_time')
             ->all();
-        $order_idList = array_column($result, 'id');
-        $orders = static::queryOrders($order_idList);
-        $orderList = [];
-
-        foreach ($orders as $order_id => $order) {
-            $orderList[] = $order_id; 
-        }
+        $order_ids = array_column($orders, 'id');
+        $orders = static::getOrders($order_ids);
 
         $data = [
-            'orderList' => $orderList,
+            'orderList' => array_keys($orders),
             'orders' => $orders,
         ];
 
         return $data;
     }
-
-
-
 
 
     /**
@@ -564,9 +559,11 @@ class OrderService extends Component {
             $data = [
                 'month' => $monthUsage,
                 'week' => $weekUsage,
-            ];;
+            ];
             
-            $cache->set($cacheKey, $data, 86400, new TagDependency(['tags' => 'User_'.$user->id]));
+            $cache->set($cacheKey, $data,
+                Yii::$app->params['cache.duration'],
+                new TagDependency(['tags' => 'User_'.$user->id]));
         } else {
             Yii::trace($cacheKey.':缓存命中', '数据缓存'); 
         }
