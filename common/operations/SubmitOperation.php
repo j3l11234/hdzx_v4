@@ -84,9 +84,7 @@ class SubmitOperation extends BaseOrderOperation {
     protected function setPostStatus() {
         $this->order->submit_time = time();
         if($this->order->type == Order::TYPE_SIMPLE) { //琴房申请
-            if(!$this->user->checkPrivilege(BaseUser::PRIV_APPROVE_MANAGER_DEPT)){
-                throw new HdzxException('该账号无负责人审批权限', Error::AUTH_FAILED);
-            }
+            $this->order->status = Order::STATUS_SIMPLE_PENDING;
         } else if($this->order->type == Order::TYPE_TWICE) { //二级审批
             $this->order->status = Order::STATUS_MANAGER_PENDING;
         } else {
