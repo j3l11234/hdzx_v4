@@ -63,7 +63,7 @@ class OrderSubmitForm extends Model {
     }
 
     function jsonValidator($attribute, $params) {
-        if (!is_string($this->$attribute) || !is_array(json_decode($this->$attribute, true))) {
+        if (!is_string($this->$attribute) || !is_array(json_decode($this->$attribute, TRUE))) {
             $this->addError($attribute, $attribute.'格式错误');
         }
     }
@@ -77,7 +77,7 @@ class OrderSubmitForm extends Model {
     public function submitOrder() {
         try {
             $user = Yii::$app->user->getIdentity()->getUser();
-            $hours = json_decode($this->hours, true);
+            $hours = array_intersect(json_decode($this->hours, TRUE), Yii::$app->params['order.hours']);
 
             $dept = Department::findOne($this->dept_id);
             if ($dept === null) {

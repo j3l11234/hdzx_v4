@@ -346,7 +346,7 @@ class OrderService extends Component {
         $orders = static::getOrders($order_ids);
 
         $data = [
-            'orderList' => array_keys($orders),
+            'orderList' => $order_ids,
             'orders' => $orders,
         ];
 

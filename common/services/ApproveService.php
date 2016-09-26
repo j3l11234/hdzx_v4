@@ -370,25 +370,25 @@ class ApproveService extends Component {
         $result = Order::find()->where($where)->orderBy('submit_time ASC')->all();
 
         $user = UserService::findIdentity(1)->getUser();
-        $approveList = [];
-        $rejectList = [];
+        $approves = [];
+        $rejects = [];
         foreach ($result as $order) {
-            if (in_array($order->id, $rejectList)) { //该申请因为冲突已经被驳回
+            if (in_array($order->id, $rejects)) { //该申请因为冲突已经被驳回
                 Yii::trace('跳过已被驳回的申请, id='.$order->id, '自动审批'); 
                 continue;
             }
             try {
                 Yii::info(static::$type_string[static::TYPE_SIMPLE].'审批通过, id='.$order->id.', reason=琴房审批自动通过', '自动审批');
                 static::approveOrder($order, $user, static::TYPE_SIMPLE, '琴房自动通过');
-                $approveList[] = $order->id;
-                $rejectList_1 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SIMPLE);
-                $rejectList = array_merge ($rejectList, $rejectList_1);  
+                $approves[] = $order->id;
+                $rejects_ = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SIMPLE);
+                $rejects = array_merge ($rejects, $rejectList_1);  
             } catch (Exception $e) {
             }   
         }
         return [
-            'approveList' => $approveList,
-            'rejectList' => $rejectList,
+            'approveList' => $approves,
+            'rejectList' => $rejects,
         ];
     }
 

@@ -239,7 +239,6 @@ class RoomService extends Component {
 
         //获取剩下数据(缓存miss的)
         if(count($cacheMisses) > 0) {
-            $hours = Yii::$app->params['order.hours'];
             $cacheNews = [];
 
             //从数据库获取剩余数据
@@ -250,7 +249,7 @@ class RoomService extends Component {
                 $roomTable['ordered'] = json_decode($roomTable['ordered'], true);
                 $roomTable['used'] = json_decode($roomTable['used'], true);
                 $roomTable['locked'] = json_decode($roomTable['locked'], true);
-                $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked'], $hours);
+                $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked']);
                 $roomTable['chksum'] = substr(md5(json_encode($roomTable)), 0, 6);
                 $roomTables[$roomTable['id']] = $roomTable;
                 $cacheNews[] = $roomTable['id'];
@@ -267,7 +266,7 @@ class RoomService extends Component {
             if(count($dbMisses) > 0) {
                 $roomTables_new = static::addRoomTables($dbMisses, $applyOrder, $applyLock);
                 foreach ($roomTables_new as $dateRoom => $roomTable) {
-                    $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked'], $hours);
+                    $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked']);
                     $roomTable['chksum'] = substr(md5(json_encode($roomTable)), 0, 6);
                     $roomTables[$roomTable['id']] = $roomTable;
                     $cacheNews[] = $roomTable['id'];

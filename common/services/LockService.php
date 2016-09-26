@@ -55,7 +55,7 @@ class LockService extends Component {
             $locks = static::getLocks($lock_ids, $useCache);
 
             $lockList = [
-                'lockList' => array_keys($locks),
+                'lockList' => $lock_ids,
                 'locks' => $locks,
             ];
 

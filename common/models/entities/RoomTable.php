@@ -110,7 +110,9 @@ class RoomTable extends ActiveRecord {
         if (!is_array($table)) {
             $table = [];
         }
-        if ($hours != null) {
+
+        if ($hours != NULL) {
+            $hours = array_intersect($hours, Yii::$app->params['order.hours']);
             foreach ($hours as $hour) {
                 $hour = (string)$hour;
                 if (isset($table[$hour])) {
@@ -272,7 +274,10 @@ class RoomTable extends ActiveRecord {
      * 
      * @return array
      */
-    public static function getHourTable($ordered, $used, $locked, $hours) {
+    public static function getHourTable($ordered, $used, $locked, $hours = NULL) {
+        if ($hours === NULL) {
+            $hours = Yii::$app->params['order.hours'];
+        }  
         $hourTable = [];
 
         foreach ($hours as $hour) {

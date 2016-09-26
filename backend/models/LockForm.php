@@ -15,8 +15,7 @@ use common\services\RoomService;
  */
 class LockForm extends Model {
     public $lock_id;
-    public $start_hour;
-    public $end_hour;
+    public $hours;
     public $rooms;
     public $loop_type;
     public $loop_day;
@@ -45,8 +44,8 @@ class LockForm extends Model {
      */
     public function scenarios(){
         $scenarios = parent::scenarios();
-        $scenarios[static::SCENARIO_ADD_LOCK] = ['start_hour', 'end_hour', 'rooms', 'loop_type', 'loop_day', 'start_date', 'end_date', 'status', 'title', 'comment'];
-        $scenarios[static::SCENARIO_EDIT_LOCK] = ['lock_id', 'start_hour', 'end_hour', 'rooms', 'loop_type', 'loop_day', 'start_date', 'end_date', 'status', 'title', 'comment'];
+        $scenarios[static::SCENARIO_ADD_LOCK] = ['hours', 'rooms', 'loop_type', 'loop_day', 'start_date', 'end_date', 'status', 'title', 'comment'];
+        $scenarios[static::SCENARIO_EDIT_LOCK] = ['lock_id', 'hours', 'rooms', 'loop_type', 'loop_day', 'start_date', 'end_date', 'status', 'title', 'comment'];
         $scenarios[static::SCENARIO_DELETE_LOCK] = ['lock_id',];
         $scenarios[static::SCENARIO_APPLY_LOCK] = ['start_date', 'end_date'];
         return $scenarios;
@@ -63,10 +62,9 @@ class LockForm extends Model {
             [['lock_id', 'rooms', 'loop_type', 'status', 'title', 'comment'], 'required'],
             [['start_date', 'end_date'], 'required', 'on'=>[static::SCENARIO_ADD_LOCK, static::SCENARIO_EDIT_LOCK]],
             ['loop_day', 'number', 'min'=>0, 'max'=>31,],
-            ['start_hour', 'number', 'min'=>$startHour, 'max'=>$endHour-1,],
-            ['start_hour', 'number', 'min'=>$startHour+1, 'max'=>$endHour,],
+            ['loop_type', 'in', 'range' => [Lock::LOOP_DAY, Lock::LOOP_WEEK, Lock::LOOP_MONTH, Lock::LOOP_INTERVAL,], 'message' => '房间锁类型异常'],
             [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
-            [['rooms'], 'jsonValidator'],
+            [['rooms','hours'], 'jsonValidator'],
         ];
     }
 
@@ -91,15 +89,11 @@ class LockForm extends Model {
                 return false;
             }
         }
-        if (strtotime($this->end_date) - strtotime($this->start_date) > 366*86400) {
-            $this->setErrorMessage('开始时间和结束时间不能超过一年');
+        if (strtotime($this->end_date) - strtotime($this->start_date) > 3*366*86400) {
+            $this->setErrorMessage('开始时间和结束时间不能超过三年');
             return false;
         }
-
-        $hours = [];
-        for ($hour = $this->start_hour; $hour < $this->end_hour ; $hour++) { 
-            $hours[] = (int)$hour;
-        }
+        $hours = array_intersect(json_decode($this->hours, TRUE), Yii::$app->params['order.hours']);
         $lock->hours = $hours;
         $lock->rooms = json_decode($this->rooms);
         $lock->start_date = $this->start_date;

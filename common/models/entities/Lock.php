@@ -46,6 +46,10 @@ class Lock extends ActiveRecord {
      * 循环类型 按月循环
      */
     const LOOP_MONTH    = 3;
+    /**
+     * 循环类型 间隔日期
+     */
+    const LOOP_INTERVAL    = 4;
 
     /**
      * 房间锁状态 启用
@@ -121,7 +125,13 @@ class Lock extends ActiveRecord {
                     $dateList[] = $iDate;
                 }
             }
+        } else if ($loop_type == static::LOOP_INTERVAL) {
+            for ($iTs=$startDateTs; $iTs <= $endDateTs; $iTs = strtotime($loop_day.' days', $iTs)) {        
+                $iDate = date('Y-m-d', $iTs);
+                $dateList[] = $iDate;
+            }
         }
+
         return $dateList;
     }
 }
