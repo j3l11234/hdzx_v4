@@ -51,7 +51,7 @@ class OrderQueryForm extends Model {
         return [
             [['room'], 'required'],
             [['date'], 'required', 'on' => 'getRoomUse'],
-            [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd'],
+            [['start_date', 'end_date', 'date'], 'date', 'format'=>'yyyy-MM-dd', 'message' => '{attribute}的格式无效'],
             [['rooms'], 'jsonValidator'],
         ];
     }
@@ -155,22 +155,17 @@ class OrderQueryForm extends Model {
         $used_ids = RoomTable::getTable($roomTable['used']);
         $locked_ids = RoomTable::getTable($roomTable['locked']);
 
-        $roomUse = [
-            'roomTable' => $roomTable,
-            'orders' => [],
-            'locks' => [],
-        ];
-
         $orders = OrderService::getOrders(array_merge($ordered_ids, $used_ids));
         foreach ($orders as $order_id => &$order) {
             unset($order['opList']);
-            $roomUse['orders'][$order_id] = $order;
         }
         $locks = LockService::getLocks($locked_ids);
-        foreach ($locks as $lock_id => &$lock) {
-            $roomUse['locks'][$lock_id] = $lock;
-        }
-        
+        $roomUse = [
+            'roomTable' => $roomTable,
+            'orders' => $orders,
+            'locks' => $locks,
+        ];
+
         return $roomUse;
     }
 
