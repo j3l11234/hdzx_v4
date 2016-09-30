@@ -291,14 +291,9 @@ class OrderService extends Component {
         $orders = Order::find()->select(['id'])->where($where)->all();
         $order_ids = array_column($orders, 'id');
         $orders = static::getOrders($order_ids);
-        $orderList = [];
-
-        foreach ($orders as $order_id => $order) {
-            $orderList[] = $order_id; 
-        }
 
         $data = [
-            'orderList' => $orderList,
+            'orderList' => $order_ids,
             'orders' => $orders,
         ];
 
