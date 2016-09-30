@@ -3,7 +3,6 @@
 namespace common\models\entities;
 
 use Yii;
-
 /**
  * This is the model class for table "hdzx_setting".
  *
@@ -16,6 +15,7 @@ class Setting extends \yii\db\ActiveRecord
 {
     
     const ORDER_PAGE_TOOLTIP = 'order_page_tooltip';
+    const LOCK_PAGE_TOOLTIP = 'lock_page_tooltip';
 
     /**
      * @inheritdoc

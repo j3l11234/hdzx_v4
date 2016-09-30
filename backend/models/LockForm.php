@@ -59,7 +59,7 @@ class LockForm extends Model {
         $endHour = Yii::$app->params['order.endHour'];
 
         return [
-            [['lock_id', 'rooms', 'loop_type', 'status', 'title', 'comment'], 'required'],
+            [['lock_id', 'rooms', 'hours', 'loop_type', 'status', 'title'], 'required'],
             [['start_date', 'end_date'], 'required', 'on'=>[static::SCENARIO_ADD_LOCK, static::SCENARIO_EDIT_LOCK]],
             ['loop_day', 'number', 'min'=>0, 'max'=>31,],
             ['loop_type', 'in', 'range' => [Lock::LOOP_DAY, Lock::LOOP_WEEK, Lock::LOOP_MONTH, Lock::LOOP_INTERVAL,], 'message' => '房间锁类型异常'],

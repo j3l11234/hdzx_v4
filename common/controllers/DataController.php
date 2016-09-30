@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\controllers;
+namespace common\controllers;
 
 use Yii;
 use yii\filters\AccessControl;
@@ -55,18 +55,18 @@ class DataController extends Controller
     public function actionGetdepts() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        ;
-        return array_merge($deptList, [
+        $data = OrderService::queryDeptList();
+        return array_merge($data, [
             'error' => 0,
         ]);
     }
 
     /**
-     * 查询dept列表
+     * 查询页面数据
      *
      * @return mixed
      */
-    public function actionGetdata($page = NULL) {
+    public function actionGetdata($page = NULL, $type=NULL) {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $data = [];
@@ -74,6 +74,12 @@ class DataController extends Controller
             $data['room'] = RoomService::getRoomList();
             $data['dept'] = OrderService::queryDeptList();
             $data['tooltip'] = SettingService::getSetting(Setting::ORDER_PAGE_TOOLTIP)['value'];
+        } else if ($page == 'lock' && $type =='user') {
+            $data['room'] = RoomService::getRoomList();
+            $data['tooltip'] = SettingService::getSetting(Setting::LOCK_PAGE_TOOLTIP)['value'];
+        } else if ($page == 'lock' && $type =='admin') {
+            $data['room'] = RoomService::getRoomList();
+            $data['tooltip'] = '';
         } else {
             return [
                 'error' => 1,

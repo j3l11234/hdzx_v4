@@ -18,7 +18,18 @@ return [
             'class' => 'yii\web\AssetManager',
             'forceCopy' => YII_DEBUG,
         ],
+        'request' => [
+            'enableCsrfValidation' => false,
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
+        ],
     ],
+    'controllerMap' => [
+        // 用类名申明 "account" 控制器
+        'data' => 'common\controllers\DataController',
+    ],
+
     'name'=>'学活场地申请系统',
     'timeZone'=>'Asia/Chongqing',
     'language'=>'zh-CN',
