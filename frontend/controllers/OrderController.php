@@ -12,6 +12,7 @@ use yii\filters\Cors;
 use common\services\RoomService;
 use frontend\models\OrderQueryForm;
 use frontend\models\OrderSubmitForm;
+use frontend\actions\CreatePdfAction;
 
 /**
  * Order controller
@@ -73,6 +74,10 @@ class OrderController extends Controller
                 'fixedVerifyCode' => 'testme',
                 'height' => 36,
                 'padding' => 0,
+            ],
+            'getapply' => [
+                'class' => CreatePdfAction::className(),
+                //'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
             ],
         ];
     }
@@ -209,8 +214,7 @@ class OrderController extends Controller
     public function actionCancelorder() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $reqData = Yii::$app->request->post();
-            
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post()); 
         $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_CANCEL_ORDER]);
         $model->load($reqData, '');
         if ($model->validate() && $resData = $model->cancelOrder()) {
@@ -218,6 +222,39 @@ class OrderController extends Controller
                 'error' => 0,
                 'message' => $model->getMessage(),
             ];
+        } else {
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
+        }
+    }
+
+
+    /**
+     * 取消预约
+     *
+     * @return mixed
+     */
+    public function actionPaperorder() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post()); 
+        $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_PAPER_ORDER]);
+        $model->load($reqData, '');
+        if ($model->validate() && $orderData = $model->paperOrder()) {
+            $action = $this->createAction('getapply');
+            if ($url = $action->setPdfData($orderData)) {
+                return [
+                    'error' => 0,
+                    'url' => $url,
+                ];
+            } else {
+                return [
+                    'error' => 1,
+                    'message' => $action->getErrorMessage(),
+                ];
+            }
         } else {
             return [
                 'error' => 1,

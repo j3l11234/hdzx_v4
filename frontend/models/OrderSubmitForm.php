@@ -28,9 +28,17 @@ class OrderSubmitForm extends Model {
     public $number;
     public $secure;
 
-    const SCENARIO_SUBMIT_ORDER      = 'submitOrder';
-    const SCENARIO_CANCEL_ORDER      = 'cancelOrder';
+    public $prin_student;
+    public $prin_student_phone;
+    public $prin_teacher;
+    public $prin_teacher_phone;
+    public $activity_type;
+    public $need_media;
 
+    const SCENARIO_SUBMIT_ORDER      = 'submitOrder';
+    const SCENARIO_SUBMIT_ORDER_PAPER      = 'submitOrderPaper';
+    const SCENARIO_CANCEL_ORDER      = 'cancelOrder';
+    const SCENARIO_PAPER_ORDER       = 'paperOrder';
     /**
      * @inheritdoc
      */
@@ -43,11 +51,12 @@ class OrderSubmitForm extends Model {
     /**
      * @inheritdoc
      */
-    public function scenarios(){
-        $scenarios = parent::scenarios();
-        $scenarios[static::SCENARIO_SUBMIT_ORDER] = ['date', 'room_id', 'hours', 'dept_id', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'];
-        $scenarios[static::SCENARIO_CANCEL_ORDER] = ['order_id'];
-        return $scenarios;
+    public function scenarios() {
+        return array_merge(parent::scenarios(), [
+            static::SCENARIO_SUBMIT_ORDER => ['date', 'room_id', 'hours', 'dept_id', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure','prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'],
+            static::SCENARIO_CANCEL_ORDER => ['order_id'],
+            static::SCENARIO_PAPER_ORDER => ['order_id'],
+        ]);
     }
 
     /**
@@ -56,6 +65,7 @@ class OrderSubmitForm extends Model {
     public function rules() {
         return [
             [['order_id', 'date', 'room_id', 'hours', 'dept_id', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
+            [['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'], 'required', 'on' => static::SCENARIO_SUBMIT_ORDER_PAPER],
             [['student_no'], 'match', 'pattern' => '/^\d{8}$/'],
             [['date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['hours'], 'jsonValidator'],
@@ -87,6 +97,13 @@ class OrderSubmitForm extends Model {
             if ($room === null) {
                 $this->setErrorMessage('房间不存在');
             }
+            if ($room->data['need_paper'] == 1) {
+                $this->scenario = static::SCENARIO_SUBMIT_ORDER_PAPER;
+                if (!$this->validate(['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'])) {
+                    return false;
+                }   
+            }
+
             $orderType;
             switch ($room->type) {
                 case Room::TYPE_SIMPLE:
@@ -118,11 +135,6 @@ class OrderSubmitForm extends Model {
                 return false;
             }
             
-            if($user->isStudent()) {
-                $deptName = '';
-            } else {
-                $deptName = $user->alias;
-            }
             $order = new Order();
             $order->date = $this->date;
             $order->room_id = $this->room_id;
@@ -139,11 +151,22 @@ class OrderSubmitForm extends Model {
                 'content' => $this->content,
                 'number' => $this->number,
                 'secure' => $this->secure,
-                'dept_name' => $deptName,
+                'dept_name' => $dept->name,
                 'room_name' => $room->name.'('.$room->number.')',
+                'need_paper' => 0,
             ];
+            if ($this->scenario == static::SCENARIO_SUBMIT_ORDER_PAPER) {
+                $order->data = array_merge($order->data, [
+                    'need_paper' => 1,
+                    'prin_student' => $this->prin_student,
+                    'prin_student_phone' => $this->prin_student_phone,
+                    'prin_teacher' => $this->prin_teacher,
+                    'prin_teacher_phone' => $this->prin_teacher_phone,
+                    'activity_type' => $this->activity_type,
+                    'need_media' => $this->need_media,
+                ]);
+            }
 
-        
             OrderService::submitOrder($order, $user);
             $this->setMessage('提交申请成功');
             return true;
@@ -161,15 +184,13 @@ class OrderSubmitForm extends Model {
      */
     public function cancelOrder() {
         try {
-            $order = Order::findOne($this->order_id);
+            $user = Yii::$app->user->getIdentity()->getUser();
+            $order = Order::find()->where(['id' => $this->order_id, 'user_id' => $user->id])->one();
             if(empty($order)){
                 $this->setErrorMessage('申请不存在');
                 return false;
             }
 
-            $user = Yii::$app->user->getIdentity()->getUser();
-
-        
             OrderService::cancelOrder($order, $user);
             $this->setMessage('取消申请成功');
             return true;
@@ -178,4 +199,21 @@ class OrderSubmitForm extends Model {
             return false;
         }
     }
+
+    /**
+     * 获取纸质申请表.
+     *
+     * @return Order|false 是否成功
+     */
+    public function paperOrder() {
+        $user = Yii::$app->user->getIdentity()->getUser();
+        $order = Order::find()->where(['id' => $this->order_id, 'user_id' => $user->id])->one();
+        if(empty($order)){
+            $this->setErrorMessage('申请不存在');
+            return false;
+        }
+         
+        $data = OrderService::paperOrder($order, $user);
+        return $data;
+    }   
 }

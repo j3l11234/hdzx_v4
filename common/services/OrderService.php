@@ -10,7 +10,8 @@ namespace common\services;
 use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
-use common\exceptions\RoomTableException;
+use common\helpers\HdzxException;
+use common\helpers\Error;
 use common\models\entities\BaseUser;
 use common\models\entities\User;
 use common\models\entities\StudentUser;
@@ -155,6 +156,31 @@ class OrderService extends Component {
             throw $e;    
         }
     }
+
+
+    /**
+     * 获取纸质申请表
+     *
+     * @param Order $order 预约
+     * @param BaseUser $user 用户
+     * @return null
+     * @throws Exception 如果出现异常
+     */
+    public static function paperOrder($order, $user) {
+        if (!$user->checkPrivilege(User::PRIV_ADMIN) &&
+            $user->id != $order->user_id) {
+            throw new HdzxException('该账号无权打印申请表', Error::AUTH_FAILED);
+        }
+
+        if ($order->status != Order::STATUS_SCHOOL_APPROVED) {
+            throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
+        }
+        $data = $order->toArray(['title','student_no','room_name','number','activity_type','dept_name','date','hours','prin_student','prin_student_phone','prin_teacher','prin_teacher_phone','need_media','content','secure']);
+        $data['time'] = time();
+
+        return $data;
+    }
+
 
 
     /**
