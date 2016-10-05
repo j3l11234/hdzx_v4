@@ -212,7 +212,7 @@ class OrderSubmitForm extends Model {
             $this->setErrorMessage('申请不存在');
             return false;
         }
-         
+
         $data = OrderService::paperOrder($order, $user);
         return $data;
     }   

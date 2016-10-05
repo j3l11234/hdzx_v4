@@ -175,10 +175,29 @@ class OrderService extends Component {
         if ($order->status != Order::STATUS_SCHOOL_APPROVED) {
             throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
-        $data = $order->toArray(['title','student_no','room_name','number','activity_type','dept_name','date','hours','prin_student','prin_student_phone','prin_teacher','prin_teacher_phone','need_media','content','secure']);
-        $data['time'] = time();
 
-        return $data;
+        $data = static::getOrders([$order->id], $useCache = true)[$order->id];
+        $hourRange = Order::hours2Range($data['hours']);
+        $orderData = [
+            'title'                 => $data['title'],
+            'student_no'            => $data['student_no'],
+            'room_name'             => $data['room_name'],
+            'number'                => $data['number'],
+            'activity_type'         => $data['activity_type'],
+            'dept_name'             => $data['dept_name'],
+            'date'                  => $data['date'],
+            'start_hour'            => $hourRange['start_hour'],
+            'end_hour'              => $hourRange['end_hour'],
+            'prin_student'          => $data['prin_student'],
+            'prin_student_phone'    => $data['prin_student_phone'],
+            'prin_teacher'          => $data['prin_teacher'],
+            'prin_teacher_phone'    => $data['prin_teacher_phone'],
+            'need_media'            => $data['need_media'],
+            'content'               => $data['content'],
+            'secure'                => $data['secure'],
+            'apply_time'            => time(),
+        ];
+        return $orderData;
     }
 
 

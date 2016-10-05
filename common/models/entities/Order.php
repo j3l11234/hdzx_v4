@@ -159,7 +159,28 @@ class Order extends ActiveRecord {
         return $find->all();
     }
 
-
+    /**
+     * 根据hours取得时间范围
+     *
+     * @param array $hours housrs
+     * @return array {start_hour:8, end_hour: 21}
+     */
+    public static function hours2Range($hours) {
+        $start_hour = -1;
+        $end_hour = -1;
+        foreach ($hours as $hour) {
+            if ($start_hour === -1 || $start_hour > $hour) {
+                $start_hour = $hour;
+            }
+            if ($end_hour === -1 || $end_hour < $hour) {
+                $end_hour = $hour;
+            }
+        }
+        return [
+            'start_hour'    => $start_hour,
+            'end_hour'      => $end_hour+1,
+        ];
+    }
     /**
      * 得到房间表状态
      *

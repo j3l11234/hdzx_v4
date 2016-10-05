@@ -77,6 +77,7 @@ class OrderController extends Controller
             ],
             'getapply' => [
                 'class' => CreatePdfAction::className(),
+                'expire' => 300,
                 //'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
             ],
         ];
@@ -248,6 +249,7 @@ class OrderController extends Controller
                 return [
                     'error' => 0,
                     'url' => $url,
+                    'expire' => $action->expire,
                 ];
             } else {
                 return [
