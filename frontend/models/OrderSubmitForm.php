@@ -39,6 +39,8 @@ class OrderSubmitForm extends Model {
     const SCENARIO_SUBMIT_ORDER_PAPER      = 'submitOrderPaper';
     const SCENARIO_CANCEL_ORDER      = 'cancelOrder';
     const SCENARIO_PAPER_ORDER       = 'paperOrder';
+    const SCENARIO_UPDATE_ORDER_EXT       = 'updateOrderExt'; //旧数据兼容方案
+
     /**
      * @inheritdoc
      */
@@ -56,6 +58,8 @@ class OrderSubmitForm extends Model {
             static::SCENARIO_SUBMIT_ORDER => ['date', 'room_id', 'hours', 'dept_id', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure','prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'],
             static::SCENARIO_CANCEL_ORDER => ['order_id'],
             static::SCENARIO_PAPER_ORDER => ['order_id'],
+
+            static::SCENARIO_UPDATE_ORDER_EXT => ['order_id','prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'],
         ]);
     }
 
@@ -65,7 +69,7 @@ class OrderSubmitForm extends Model {
     public function rules() {
         return [
             [['order_id', 'date', 'room_id', 'hours', 'dept_id', 'name', 'student_no', 'phone', 'title', 'content', 'number', 'secure'], 'required'],
-            [['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'], 'required', 'on' => static::SCENARIO_SUBMIT_ORDER_PAPER],
+            [['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type'], 'required', 'on' => static::SCENARIO_SUBMIT_ORDER_PAPER],
             [['student_no'], 'match', 'pattern' => '/^\d{8}$/'],
             [['date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['hours'], 'jsonValidator'],
@@ -163,7 +167,7 @@ class OrderSubmitForm extends Model {
                     'prin_teacher' => $this->prin_teacher,
                     'prin_teacher_phone' => $this->prin_teacher_phone,
                     'activity_type' => $this->activity_type,
-                    'need_media' => $this->need_media,
+                    'need_media' => $this->need_media ? 1 : 0,
                 ]);
             }
 
@@ -213,7 +217,49 @@ class OrderSubmitForm extends Model {
             return false;
         }
 
+        //TBD need_paper检测
+        if ($order->data['need_paper'] != 1) {
+            $this->setErrorMessage('该申请无需打印申请表');
+            return false;
+        }
+
         $data = OrderService::paperOrder($order, $user);
         return $data;
-    }   
+    }
+
+    /**
+     * 更新申请额外信息
+     * (旧数据兼容方案)
+     *
+     * @return Order|false 是否成功
+     */
+    public function updateOrderExt() {
+        $user = Yii::$app->user->getIdentity()->getUser();
+        $order = Order::find()->where(['id' => $this->order_id, 'user_id' => $user->id])->one();
+        if(empty($order)){
+            $this->setErrorMessage('申请不存在');
+            return false;
+        }
+
+        $this->scenario = static::SCENARIO_SUBMIT_ORDER_PAPER;
+        if (!$this->validate(['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'])) {
+            return false;
+        }   
+        
+        try {
+            OrderService::updateOrderExt($order, $user, [
+                'prin_student' => $this->prin_student,
+                'prin_student_phone' => $this->prin_student_phone,
+                'prin_teacher' => $this->prin_teacher,
+                'prin_teacher_phone' => $this->prin_teacher_phone,
+                'activity_type' => $this->activity_type,
+                'need_media' => $this->need_media ? 1 : 0,
+            ]);
+            $this->setMessage('更新申请信息成功');
+            return true;
+        } catch (HdzxException $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+    }
 }

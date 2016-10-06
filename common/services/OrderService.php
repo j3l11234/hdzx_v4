@@ -161,7 +161,7 @@ class OrderService extends Component {
     /**
      * 获取纸质申请表
      *
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @param BaseUser $user 用户
      * @return null
      * @throws Exception 如果出现异常
@@ -205,7 +205,7 @@ class OrderService extends Component {
     /**
      * 发放开门条
      *
-     * @param Order $order 预约
+     * @param Order $order 申请
      * @param BaseUser $user 用户
      * @param String $comment 备注
      * @return null
@@ -220,7 +220,6 @@ class OrderService extends Component {
         $connection = Yii::$app->db;
         $transaction = $connection->beginTransaction();
         
-
         try {
             $operation = new IssueOperation($order, $user, $roomTable, $extra);
             $operation->doOperation();
@@ -236,6 +235,48 @@ class OrderService extends Component {
         }
     }
 
+
+    /**
+     * 更新申请额外信息
+     * (旧数据兼容方案)
+     * @param Order $order 申请
+     * @param BaseUser $user 用户
+     * @param mined $extInfo 扩展数据
+     *
+     */
+    public static function updateOrderExt($order, $user, $extInfo) {
+        if (!$user->checkPrivilege(User::PRIV_ADMIN) &&
+            $user->id != $order->user_id) {
+            throw new HdzxException('该账号无权打印申请表', Error::AUTH_FAILED);
+        }
+
+        if ($order->status != Order::STATUS_SCHOOL_APPROVED) {
+            throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
+        }
+
+        $orderData = $order->data;
+        if ($orderData['need_paper'] != 1) {
+            throw new HdzxException('该申请不需要填写额外信息', Error::INVALID_ORDER_STATUS);
+        }
+        $orderData = array_merge($orderData, $extInfo);
+        $order->data = $orderData;
+
+        $connection = Yii::$app->db;
+        $transaction = $connection->beginTransaction();
+        
+        try {
+            $order->save();
+            $transaction->commit();
+
+            //清除缓存
+            TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
+
+            Yii::info('更新申请扩展信息, id='.$order->id, '申请操作');
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;    
+        }
+    }
 
 
     /**

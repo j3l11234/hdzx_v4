@@ -288,4 +288,30 @@ class OrderController extends Controller
             ];
         }
     }
+
+
+    /**
+     * 更新申请额外信息
+     * (旧数据兼容方案)
+     *
+     * @return mixed
+     */
+    public function actionUpdateorderext() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post()); 
+        $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_UPDATE_ORDER_EXT]);
+        $model->load($reqData, '');
+        if ($model->validate() && $orderData = $model->updateOrderExt()) {
+            return [
+                'error' => 0,
+                'message' => $model->getMessage(),
+            ];
+        } else {
+            return [
+                'error' => 1,
+                'message' => $model->getErrorMessage(),
+            ];
+        }
+    }
 }
