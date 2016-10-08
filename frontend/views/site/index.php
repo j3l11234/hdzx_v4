@@ -11,7 +11,7 @@ $this->title = '学活场地申请系统';
     foreach ($carousels as $carousel) {
         $items[] = [
             'content' => '<img src="images/carousels/'.$carousel->picture.'"/>',
-            'caption' => '<h4>'.$carousel->title.'</h4><p>'.$carousel->content.'</p>',
+            'caption' => '<h2>'.$carousel->title.'</h2>'.$carousel->content,
             'options' => [],
         ];
     }
