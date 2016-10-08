@@ -126,10 +126,7 @@ class ApproveController extends Controller
     public function actionApproveorder() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $getData = Yii::$app->request->get();
-        $reqData = Yii::$app->request->post();
-        $reqData['type'] = $getData['type'];
-        
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         $model = new ApproveForm(['scenario' => 'approveOrder']);
         if ($model->load($reqData, '') && $model->validate() && $model->approveOrder()) {
             return [
@@ -152,10 +149,7 @@ class ApproveController extends Controller
     public function actionRejectorder() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $getData = Yii::$app->request->get();
-        $reqData = Yii::$app->request->post();
-        $reqData['type'] = $getData['type'];
-        
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         $model = new ApproveForm(['scenario' => 'rejectOrder']);
         if ($model->load($reqData, '') && $model->validate() && $model->rejectOrder()) {
             return [
@@ -178,10 +172,7 @@ class ApproveController extends Controller
     public function actionRevokeorder() {
         Yii::$app->response->format = Response::FORMAT_JSON;
         
-        $getData = Yii::$app->request->get();
-        $reqData = Yii::$app->request->post();
-        $reqData['type'] = $getData['type'];
-        
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         $model = new ApproveForm(['scenario' => 'revokeOrder']);
         if ($model->load($reqData, '') && $model->validate() && $model->revokeOrder()) {
             return [
