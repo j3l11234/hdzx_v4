@@ -28,27 +28,9 @@ class LoginForm extends Model
             [['username', 'password'], 'required'],
             // rememberMe must be a boolean value
             ['rememberMe', 'boolean'],
-            // password is validated by validatePassword()
-            ['password', 'validatePassword'],
         ];
     }
 
-    /**
-     * Validates the password.
-     * This method serves as the inline validation for password.
-     *
-     * @param string $attribute the attribute currently being validated
-     * @param array $params the additional name-value pairs given in the rule
-     */
-    public function validatePassword($attribute, $params)
-    {
-        if (!$this->hasErrors()) {
-            $user = $this->getUser();
-            if (!$user || !$user->validatePassword($this->password)) {
-                $this->addError($attribute, '用户名或密码错误');
-            }
-        }
-    }
 
     /**
      * Logs in a user using the provided username and password.
@@ -57,17 +39,35 @@ class LoginForm extends Model
      */
     public function login()
     {
-        if ($this->validate()) {
-            $user = $this->getUser();
-            if (!$user->checkPrivilege(User::PRIV_BACKEND)) {
-                $this->addError('username', '该用户无后台登陆权限');
-                return false;
-            }
-            $userService = new UserService($user);
-            return Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0);
-        } else {
+        $user = $this->getUser();
+        if (!$user) {
+            $this->addError('password', '用户名或密码错误');
             return false;
         }
+        if (!empty($user->password_hash)) {
+            if (!$user->validatePassword($this->password)) {
+                $this->addError('password', '用户名或密码错误');
+                return false;
+            }
+        } else { //旧格式密码兼容
+            if (md5($this->password) !== $user->old_passwd) {
+                $this->addError('password', '用户名或密码错误');
+                return false;
+            } else {
+                Yii::info('用户旧密码更新, username='.$user->username.', id='.$user->id, '用户操作');
+                $user->setPassword($this->password);
+                $user->generateAuthKey();
+                $user->old_passwd = NULL;
+                $user->save();
+            }
+        }
+ 
+        if (!$user->checkPrivilege(User::PRIV_BACKEND)) {
+            $this->addError('username', '该用户无后台登陆权限');
+            return false;
+        }
+        $userService = new UserService($user);
+        return Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0);
     }
 
     /**

@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'class' => DataColumn::className(),
                 'attribute' => 'status',
                 'content' => function ($model, $key, $index, $column) use ( $statusTexts ) {
-                    return $statusTexts[$model->status];   
+                    return isset($statusTexts[$model->status]) ? $statusTexts[$model->status] : '未知状态';   
                 },
             ],
 

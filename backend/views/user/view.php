@@ -60,7 +60,7 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             [
                 'attribute' => 'status',
-                'value' => $statusTexts[$model->status],
+                'value' => isset($statusTexts[$model->status]) ? $statusTexts[$model->status] : '未知状态',
             ],
             [
                 'attribute' => 'usage_limit',
