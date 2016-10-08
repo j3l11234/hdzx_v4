@@ -77,7 +77,7 @@ class PasswordResetForm extends Model {
             if ($user->save()) {
                 if(Yii::$app->mailer
                     ->compose(['html' => 'passwordResetToken-html', 'text' => 'passwordResetToken-text'], ['user' => $user])
-                    ->setFrom([\Yii::$app->params['supportEmail'] => \Yii::$app->name . ' robot'])
+                    ->setFrom([\Yii::$app->params['adminEmail'] => \Yii::$app->name . ' robot'])
                     ->setTo($user->email)
                     ->setSubject('密码重设 - ' . \Yii::$app->name)
                     ->send()){
