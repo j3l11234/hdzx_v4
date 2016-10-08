@@ -92,7 +92,7 @@ class UserActiveForm extends Model {
         if ($user->save()) {
             if(Yii::$app->mailer
                 ->compose(['html' => 'userAvtiveToken-html', 'text' => 'userAvtiveToken-text'], ['user' => $user, 'type' => 'student'])
-                ->setFrom([\Yii::$app->params['supportEmail'] => \Yii::$app->name . ' robot'])
+                ->setFrom([\Yii::$app->params['adminEmail'] => \Yii::$app->name . ' robot'])
                 ->setTo($user->email)
                 ->setSubject('账号验证 - ' . \Yii::$app->name)
                 ->send()){
@@ -136,7 +136,7 @@ class UserActiveForm extends Model {
         if ($user->save()) {
             if(Yii::$app->mailer
                 ->compose(['html' => 'userAvtiveToken-html', 'text' => 'userAvtiveToken-text'], ['user' => $user, 'type' => 'dept'])
-                ->setFrom([\Yii::$app->params['supportEmail'] => \Yii::$app->name . ' robot'])
+                ->setFrom([\Yii::$app->params['adminEmail'] => \Yii::$app->name . ' robot'])
                 ->setTo($user->email)
                 ->setSubject('账号验证 - ' . \Yii::$app->name)
                 ->send()){
