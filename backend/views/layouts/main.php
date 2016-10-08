@@ -40,7 +40,7 @@ AppAsset::register($this);
         ],
     ]);
     $menuItems = [
-        ['label' => '首页', 'url' => ['/site/index']],
+        ['label' => '前台系统', 'url' => [Yii::$app->params['frontendUrl']]],
     ];
     
     if (Yii::$app->user->isGuest) {
