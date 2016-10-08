@@ -82,7 +82,7 @@ class BaseUser extends ActiveRecord {
     /**
      * 开门条发放权限
      */
-    const PRIV_ISSUE           = 0b0100000000;
+    const PRIV_ISSUE                = 0b0100000000;
 
 
 

@@ -204,8 +204,16 @@ class ApproveController extends Controller
     public function actionAutoapprove1() {
         Yii::$app->response->format = Response::FORMAT_JSON;
         
+        if (Yii::$app->request->getQueryParam('token') != Yii::$app->params['cronKey']) {
+            return [
+                'error' => 1,
+                'message' => 'token不正确',
+            ];
+        }
+
         $data = ApproveService::autoApprove1();
         return $data;
+        
     }
     
     /**
@@ -216,6 +224,13 @@ class ApproveController extends Controller
     public function actionAutoapprove2() {
         Yii::$app->response->format = Response::FORMAT_JSON;
         
+        if (Yii::$app->request->getQueryParam('token') != Yii::$app->params['cronKey']) {
+            return [
+                'error' => 1,
+                'message' => 'token不正确',
+            ];
+        }
+
         $data = ApproveService::autoApprove2();
         return $data;
     }
@@ -228,6 +243,13 @@ class ApproveController extends Controller
     public function actionAutoapprove3() {
         Yii::$app->response->format = Response::FORMAT_JSON;
         
+        if (Yii::$app->request->getQueryParam('token') != Yii::$app->params['cronKey']) {
+            return [
+                'error' => 1,
+                'message' => 'token不正确',
+            ];
+        }
+
         $data = ApproveService::autoApprove3();
         return $data;
     }

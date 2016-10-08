@@ -2,6 +2,9 @@
 return [
     'adminEmail' => 'admin@example.com',
     'supportEmail' => 'support@example.com',
+    'backendUrl' => '../../backend/web',
+    'frontendUrl' => '../../frontend/web',
+    'cronKey' => '123456',
     'user.passwordResetTokenExpire' => 3600,
     'order.startHour' => 8,
     'order.endHour' => 21,

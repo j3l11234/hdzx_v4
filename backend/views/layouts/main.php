@@ -83,6 +83,7 @@ AppAsset::register($this);
             'items'=>[
                 ['label' => '注销', 'url' => ['/user/logout'], 'linkOptions' => ['data-method' => 'post']],
                 ['label' => '修改密码', 'url' => ['/user/reset-password']],
+                ['label' => '进入前台', 'url' => [Yii::$app->params['frontendUrl']]],
             ],
         ];
     }
