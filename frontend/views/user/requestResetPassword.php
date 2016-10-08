@@ -23,7 +23,7 @@ $this->title = '申请重设密码';
 				    ],
 				    'body' => '    请输入您的学号和验证码，我们将会向您的邮箱发送一封验证邮件，请按照提示修改您的密码。',
 				]) ?>
-            	<?= $form->field($model, 'username')->label('用户名/学号')->textInput() ?>
+            	<?= $form->field($model, 'username')->label('学号')->textInput() ?>
 				<?= $form->field($model, 'captcha', [
 					'enableClientValidation' => false,
 				])

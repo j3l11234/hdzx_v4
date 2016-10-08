@@ -80,6 +80,8 @@ class DataController extends Controller
         } else if ($page == 'lock' && $type =='admin') {
             $data['room'] = RoomService::getRoomList();
             $data['tooltip'] = '';
+        } else if ($page == 'login') {
+            $data['tooltip'] = '<br/><div class="alert alert-info" role="alert">如果要进行后台操作，如 审批预约/发放开门条/系统管理，请进入<a href="'.Yii::$app->params['backendUrl'].'"><b>后台系统</b></a>登录</div>';
         } else {
             return [
                 'error' => 1,
