@@ -84,9 +84,8 @@ class UserActiveForm extends Model {
         $user->setPassword($this->password);
         $user->email = $this->username.'@bjtu.edu.cn';
         $user->alias = $this->alias;
-        $user->managers = [1];
         $user->status = BaseUser::STATUS_UNVERIFY;
-        $user->privilege = BaseUser::PRIV_ORDER_SIMPLE;
+        $user->privilege = BaseUser::PRIV_ORDER_SIMPLE | BaseUser::PRIV_ORDER_ACTIVITY;
         
         $user->generateAuthKey();
         $user->generatePasswordResetToken();
