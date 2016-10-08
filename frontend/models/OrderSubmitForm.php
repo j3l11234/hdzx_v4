@@ -101,7 +101,7 @@ class OrderSubmitForm extends Model {
             if ($room === null) {
                 $this->setErrorMessage('房间不存在');
             }
-            if ($room->data['need_paper'] == 1) {
+            if (isset($room->data['need_paper']) && $room->data['need_paper'] == 1) {
                 $this->scenario = static::SCENARIO_SUBMIT_ORDER_PAPER;
                 if (!$this->validate(['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'])) {
                     return false;
