@@ -26,7 +26,6 @@ return [
         ],
     ],
     'controllerMap' => [
-        // 用类名申明 "account" 控制器
         'data' => 'common\controllers\DataController',
     ],
 
