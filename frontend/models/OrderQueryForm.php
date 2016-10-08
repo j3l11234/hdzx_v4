@@ -99,7 +99,7 @@ class OrderQueryForm extends Model {
                 $dateRoom = $date.'_'.$room_id;
                 $dateRange = $dateRanges[$room_id];
                 $dateRooms[] = $dateRoom;
-                $avails[$dateRoom] = $time >= $dateRange['start'] && $time <= $dateRange['end'];;
+                $avails[$dateRoom] = $time >= $dateRange['start'] && $time <= $dateRange['end'];
             }  
         }
 
