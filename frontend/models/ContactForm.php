@@ -58,7 +58,7 @@ class ContactForm extends Model
             ->setFrom([Yii::$app->params['adminEmail'] => '学生活动中心'])
             ->setReplyTo([$this->email => $this->name])
             ->setSubject($this->subject)
-            ->setTextBody($this->body)
+            ->setTextBody($this->body.','.$this->name.','.$this->email)
             ->send();
     }
 }
