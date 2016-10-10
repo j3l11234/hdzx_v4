@@ -210,9 +210,9 @@ class ApproveService extends Component {
             TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
             TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
             TagDependency::invalidate(Yii::$app->cache, 'User_'.$order->user_id);
-        } catch (Exception $e) {
+        } catch (HdzxException $e) {
             $transaction->rollBack();
-            Yii::error(static::$type_string[$type].'审批异常, id='.$order->id.', error='.$e->getMessage(), '审批申请');
+            Yii::error('审批异常, id='.$order->id.', error='.$e->getMessage(), '审批申请');
             throw $e;
         }
     }
@@ -383,7 +383,20 @@ class ApproveService extends Component {
                 $approves[] = $order->id;
                 $rejects_ = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SIMPLE);
                 $rejects = array_merge ($rejects, $rejectList_1);  
-            } catch (Exception $e) {
+            } catch (HdzxException $e) {
+                if ($e->getCode() == Error::ROOMTABLE_USED) {
+                    $comment = '该申请的时段被占用，自动驳回';
+                } else if($e->getCode() == Error::ROOMTABLE_LOCKED) {
+                    $comment = '该申请的时段被锁定，自动驳回';
+                } else {
+                    continue;
+                }
+                try {
+                    Yii::info(static::$type_string[static::TYPE_SIMPLE].'审批驳回, id='.$order->id.', reason=琴房审批,'.$comment, '自动审批');
+                    static::rejectOrder($order, $user, static::TYPE_SIMPLE, $comment);
+                    $rejects[] = $order->id;
+                } catch (HdzxException $e) {
+                } 
             }   
         }
         return [
@@ -421,7 +434,7 @@ class ApproveService extends Component {
                 Yii::info(static::$type_string[static::TYPE_MANAGER].'审批驳回, id='.$order->id.', reason=负责人超时未审批', '自动审批');
                 $rejectList[] = $order->id;
                 static::rejectOrder($order, $user, static::TYPE_MANAGER, '负责人超时未审批，自动驳回');
-            } catch (Exception $e) {
+            } catch (HdzxException $e) {
             }  
         }
 
@@ -466,12 +479,25 @@ class ApproveService extends Component {
             }
             try {
                 Yii::info(static::$type_string[static::TYPE_SCHOOL].'审批通过, id='.$order->id.', reason=校级审批自动通过', '自动审批');
-                static::approveOrder($order, $user, static::TYPE_SCHOOL, '该申请提交时间最早，自动通过');
+                static::approveOrder($order, $user, static::TYPE_SCHOOL, '该申请提交时间最早，自动通过');  
                 $approveList[] = $order->id;
                 $rejectList_1 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SCHOOL);
                 $rejectList_2 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_MANAGER);
                 $rejectList = array_merge ($rejectList, $rejectList_1, $rejectList_2);  
-            } catch (Exception $e) {
+            } catch (HdzxException $e) {
+                if ($e->getCode() == Error::ROOMTABLE_USED) {
+                    $comment = '该申请的时段被占用，自动驳回';
+                } else if($e->getCode() == Error::ROOMTABLE_LOCKED) {
+                    $comment = '该申请的时段被锁定，自动驳回';
+                } else {
+                    continue;
+                }
+                try {
+                    Yii::info(static::$type_string[static::TYPE_SCHOOL].'审批驳回, id='.$order->id.', reason=校级审批,'.$comment, '自动审批');
+                    static::rejectOrder($order, $user, static::TYPE_SCHOOL, $comment);
+                    $rejectList[] = $order->id;
+                } catch (HdzxException $e) {
+                } 
             }   
         }
 
