@@ -30,3 +30,5 @@ phpunit.phar
 /phpunit.xml
 
 /tests/codeception/config/runtime
+
+composer.lock
