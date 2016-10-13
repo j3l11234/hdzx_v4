@@ -401,6 +401,8 @@ class OrderService extends Component {
         if (!$user->checkPrivilege(BaseUser::PRIV_ISSUE)) {
             throw new HdzxException('该账号无开门条发放权限', Error::AUTH_FAILED);
         }
+        
+        $user_ids = [];
         $user_id = User::findByUsername($username, NULL, true);
         if(!is_null($user_id)){
             $user_ids[] = $user_id;
