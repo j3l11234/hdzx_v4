@@ -382,7 +382,7 @@ class ApproveService extends Component {
                 static::approveOrder($order, $user, static::TYPE_SIMPLE, '琴房自动通过');
                 $approves[] = $order->id;
                 $rejects_ = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SIMPLE);
-                $rejects = array_merge ($rejects, $rejectList_1);  
+                $rejects = array_merge ($rejects, $rejects_);  
             } catch (HdzxException $e) {
                 if ($e->getCode() == Error::ROOMTABLE_USED) {
                     $comment = '该申请的时段被占用，自动驳回';
