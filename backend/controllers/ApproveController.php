@@ -195,7 +195,8 @@ class ApproveController extends Controller
     public function actionAutoapprove1() {
         Yii::$app->response->format = Response::FORMAT_JSON;
         
-        if (Yii::$app->request->getQueryParam('token') != Yii::$app->params['cronKey']) {
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
+        if (!isset($reqData['token']) || $reqData['token'] != Yii::$app->params['cronKey']) {
             return [
                 'error' => 1,
                 'message' => 'token不正确',
@@ -215,7 +216,8 @@ class ApproveController extends Controller
     public function actionAutoapprove2() {
         Yii::$app->response->format = Response::FORMAT_JSON;
         
-        if (Yii::$app->request->getQueryParam('token') != Yii::$app->params['cronKey']) {
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
+        if (!isset($reqData['token']) || $reqData['token'] != Yii::$app->params['cronKey']) {
             return [
                 'error' => 1,
                 'message' => 'token不正确',
@@ -234,7 +236,8 @@ class ApproveController extends Controller
     public function actionAutoapprove3() {
         Yii::$app->response->format = Response::FORMAT_JSON;
         
-        if (Yii::$app->request->getQueryParam('token') != Yii::$app->params['cronKey']) {
+        $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
+        if (!isset($reqData['token']) || $reqData['token'] != Yii::$app->params['cronKey']) {
             return [
                 'error' => 1,
                 'message' => 'token不正确',
