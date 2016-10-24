@@ -25,12 +25,16 @@ return [
             ],
         ],
         'log' => [
+            //'flushInterval' => 1,
             'targets' => [
                 [
-                    'class' => 'yii\log\FileTarget',
-                    'categories' => ['yii\db\*'],
-                    'logFile' => '@common/logs/app.log',
+                    'class' => 'common\helpers\FileTarget',
+                    //'exportInterval' => 1,
+                    'logFile' => '@common/runtime/logs/app.log',
                     'logVars' => [],
+                    //'levels' => ['error', 'trace','warning'],
+                    'levels' => ['profile'],
+
                 ],
             ],
         ],
