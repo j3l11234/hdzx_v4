@@ -29,6 +29,7 @@ return [
             'targets' => [
                 [
                     'class' => 'common\helpers\FileTarget',
+                    'enabled' => YII_DEBUG ? TRUE : FALSE,
                     //'exportInterval' => 1,
                     'logFile' => '@common/runtime/logs/app.log',
                     'logVars' => [],

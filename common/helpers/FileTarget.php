@@ -10,6 +10,7 @@ namespace common\helpers;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\log\Target;
+use yii\log\Logger;
 use yii\helpers\FileHelper;
 use yii\helpers\VarDumper;
 
@@ -195,7 +196,7 @@ class FileTarget extends Target
                 //     'duration' => $timestamp - $last[3],
                 // ];
                 $duration = $timestamp - $last[3];
-                $level = $timestamp - $last[3];
+                $level = count($this->timingStack);
                 $this->timings[$last[5]] = [
                     "info=$last[0], level={$level}, duration={$duration}", //text
                     Logger::LEVEL_PROFILE, //level
