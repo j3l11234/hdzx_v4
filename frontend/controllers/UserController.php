@@ -96,12 +96,12 @@ class UserController extends Controller {
     public function actionLogin() {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        if (!\Yii::$app->user->isGuest) {
-            return [
-                'error' => 1,
-                'message' => '您已经登录',
-            ];
-        }
+        // if (!\Yii::$app->user->isGuest) {
+        //     return [
+        //         'error' => 1,
+        //         'message' => '您已经登录',
+        //     ];
+        // }
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post(),'') && $model->login()) {
