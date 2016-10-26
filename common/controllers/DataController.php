@@ -4,6 +4,7 @@ namespace common\controllers;
 
 use Yii;
 use yii\filters\AccessControl;
+use yii\helpers\Url;
 use yii\web\Controller;
 use yii\web\Response;
 use common\models\entities\Setting;
@@ -61,6 +62,36 @@ class DataController extends Controller
         ]);
     }
 
+     /**
+     * 查询页面数据
+     *
+     * @return mixed
+     */
+    public function actionGetmetadata($page = NULL, $type=NULL) {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $reqData = Yii::$app->request->post();
+        if (isset($reqData['room'])) {
+            $data['room'] = RoomService::getRoomList();
+        }
+        if (isset($reqData['dept'])) {
+            $data['dept'] = OrderService::queryDeptList();
+        }
+        if (isset($reqData['tooltip'])) {
+            if ($reqData['tooltip'] == 'order') {
+                $data['tooltip'] = SettingService::getSetting(Setting::ORDER_PAGE_TOOLTIP)['value'];
+            } else if($reqData['tooltip'] == 'lock') {
+                $data['tooltip'] = SettingService::getSetting(Setting::LOCK_PAGE_TOOLTIP)['value'];
+            } else if($reqData['tooltip'] == 'login') {
+                $data['tooltip'] = '<br/><div class="alert alert-info" role="alert">如果要进行后台操作，如 审批预约/发放开门条/系统管理，请进入<a href="'.Url::to([Yii::$app->params['backendUrl']]).'"><b>后台系统</b></a>登录</div>';
+            }
+        }
+
+        return array_merge($data, [
+            'error' => 0,
+        ]);   
+    }
+
     /**
      * 查询页面数据
      *
@@ -81,7 +112,7 @@ class DataController extends Controller
             $data['room'] = RoomService::getRoomList();
             $data['tooltip'] = '';
         } else if ($page == 'login') {
-            $data['tooltip'] = '<br/><div class="alert alert-info" role="alert">如果要进行后台操作，如 审批预约/发放开门条/系统管理，请进入<a href="'.Yii::$app->params['backendUrl'].'"><b>后台系统</b></a>登录</div>';
+            $data['tooltip'] = '<br/><div class="alert alert-info" role="alert">如果要进行后台操作，如 审批预约/发放开门条/系统管理，请进入<a href="'.Url::to([Yii::$app->params['backendUrl']]).'"><b>后台系统</b></a>登录</div>';
         } else {
             return [
                 'error' => 1,
