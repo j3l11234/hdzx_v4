@@ -6,13 +6,20 @@
 
 use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
+use yii\bootstrap\Alert;
 
 $this->title = '登录';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="site-login">
     <h1><?= Html::encode($this->title) ?></h1>
-
+    
+    <?= Alert::widget([
+        'options' => [
+            'class' => 'alert-info',
+        ],
+        'body' => '    请注意：这是后台系统登录页，如果您需要申请房间，请移步前台系统。',
+    ]) ?>
     <p>请填写您的账号和密码:</p>
 
     <div class="row">
