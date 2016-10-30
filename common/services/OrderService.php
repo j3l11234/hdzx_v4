@@ -58,16 +58,19 @@ class OrderService extends Component {
         }
 
         if($cacheMiss) {
-            $deptMap = [];
+            $deptMap = ['0' => []];
             $depts = [];
             foreach (Department::find()
                 ->where(['status' => Department::STATUS_ENABLE])
                 ->select(['id', 'name', 'parent_id', 'choose', 'usage_limit'])
                 ->orderBy('align')
-                ->asArray('align')
+                ->asArray()
                 ->each(100) as $dept) {
                 $dept['usage_limit'] = json_decode('usage_limit');
                 $parent_id = $dept['parent_id'];
+                if (empty($parent_id)) {
+                    $parent_id = '0';
+                }
                 if(!isset($deptMap[$parent_id])){
                     $deptMap[$parent_id] = [];
                 }

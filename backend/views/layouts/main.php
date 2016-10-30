@@ -75,6 +75,7 @@ AppAsset::register($this);
                     ['label' => '普通用户管理', 'url' => ['/user/index']],
                     ['label' => '学生用户管理', 'url' => ['/user/student']],
                     ['label' => '轮播管理','url' => ['/carousel']],
+                    ['label' => '导航条管理','url' => ['/nav']],
                     ['label' => '房间管理','url' => ['/room']],
                     ['label' => '社团单位管理','url' => ['/dept']],
                 ],
