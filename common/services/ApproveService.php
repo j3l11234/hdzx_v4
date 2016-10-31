@@ -10,6 +10,8 @@ namespace common\services;
 use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
+use yii\base\UserException;
+
 use common\helpers\HdzxException;
 use common\helpers\Error;
 use common\models\entities\Department;
@@ -58,6 +60,7 @@ class ApproveService extends Component {
      * @return json
      */
     public static function getApproveOrders($user, $type, $start_date, $end_date) {
+        //throw new UserException('没有查询权限', Error::AUTH_FAILED);
         $where = ['and'];
         $menagerFilter = false; //负责人审批筛选
         switch ($type) {

@@ -24,6 +24,19 @@ return [
                 'application/json' => 'yii\web\JsonParser',
             ],
         ],
+        'response' => [
+            'class' => 'yii\web\Response',
+            'on beforeSend' => function ($event) {
+                $response = $event->sender;
+                if ($response->format == \yii\web\Response::FORMAT_JSON && $response->data !== null) {
+                    $response->data = [
+                        'success' => $response->isSuccessful,
+                        'data' => $response->data,
+                    ];
+                    $response->statusCode = 200;
+                }
+            },
+        ],
         'log' => [
             //'flushInterval' => 1,
             'targets' => [
