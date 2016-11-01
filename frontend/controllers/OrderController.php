@@ -4,11 +4,13 @@ namespace frontend\controllers;
 use Yii;
 use yii\base\InvalidParamException;
 use yii\web\BadRequestHttpException;
+use yii\base\UserException;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\filters\Cors;
+
 use common\services\RoomService;
 use frontend\models\OrderQueryForm;
 use frontend\models\OrderSubmitForm;
@@ -119,10 +121,7 @@ class OrderController extends Controller
                 'error' => 0,
             ]);
         } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
+            new UserException($model->getErrorMessage());
         }
     }
 
