@@ -10,7 +10,8 @@ namespace common\operations;
 use Yii;
 use yii\base\Component;
 use yii\db\StaleObjectException;
-use common\helpers\HdzxException;
+use yii\base\UserException;
+
 use common\helpers\Error;
 use common\models\entities\OrderOperation;
 use common\models\entities\RoomTable;
@@ -73,12 +74,12 @@ class BaseOrderOperation extends Component {
 
         $locked = $this->roomTable->getLocked($hours);
         if (!empty($locked)) {
-            throw new HdzxException('该时段已被锁定', Error::ROOMTABLE_LOCKED);
+            throw new UserException('该时段已被锁定', Error::ROOMTABLE_LOCKED);
         }
 
         $used = $this->roomTable->getUsed($hours);
         if (!empty($used)) {
-            throw new HdzxException('该时段已被占用', Error::ROOMTABLE_USED);
+            throw new UserException('该时段已被占用', Error::ROOMTABLE_USED);
         }
     }
 
@@ -123,7 +124,7 @@ class BaseOrderOperation extends Component {
             $this->order->save();
             $orderOp->save();
         } catch (StaleObjectException $e) {
-            throw new HdzxException('并发访问冲突', Error::COMPET, $e);
+            throw new UserException('并发访问冲突', Error::COMPET, $e);
         }
     }
 

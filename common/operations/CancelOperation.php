@@ -8,7 +8,8 @@
 namespace common\operations;
 
 use Yii;
-use common\helpers\HdzxException;
+use yii\base\UserException;
+
 use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -30,7 +31,7 @@ class CancelOperation extends BaseOrderOperation {
     protected function checkAuth() {
         if (!$this->user->checkPrivilege(User::PRIV_ADMIN) &&
             $this->user->id != $this->order->user_id) {
-            throw new HdzxException('该账号无权取消此申请', Error::AUTH_FAILED);
+            throw new UserException('该账号无权取消此申请', Error::AUTH_FAILED);
         }
     }
 

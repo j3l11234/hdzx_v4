@@ -9,7 +9,8 @@ namespace common\operations;
 
 use Yii;
 use yii\base\Component;
-use common\helpers\HdzxException;
+use yii\base\UserException;
+
 use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -31,7 +32,7 @@ class SimpleApproveOperation extends BaseOrderOperation {
      */
     protected function checkAuth() {
         if (!$this->user->checkPrivilege(User::PRIV_APPROVE_SIMPLE)) {
-            throw new HdzxException('该账号无琴房审批权限', Error::AUTH_FAILED);
+            throw new UserException('该账号无琴房审批权限', Error::AUTH_FAILED);
         }
     }
 
@@ -40,7 +41,7 @@ class SimpleApproveOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_SIMPLE_PENDING){
-            throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
+            throw new UserException('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 

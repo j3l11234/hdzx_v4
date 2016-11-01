@@ -10,7 +10,8 @@ namespace common\services;
 use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
-use common\helpers\HdzxException;
+use yii\base\UserException;
+
 use common\helpers\Error;
 use common\models\entities\Lock;
 use common\models\entities\Room;
@@ -194,7 +195,7 @@ class LockService extends Component {
         $result = $lock->save();
         if (!$result) {
             Yii::error($lock->getErrors(), __METHOD__);
-            throw new HdzxException('房间锁保存失败', Error::SAVE_LOCK);
+            throw new UserException('房间锁保存失败', Error::SAVE_LOCK);
         }
     }
 
@@ -208,7 +209,7 @@ class LockService extends Component {
         $result = $lock->save();
         if (!$result) {
             Yii::error($lock->getErrors(), __METHOD__);
-            throw new HdzxException('房间锁保存失败', Error::SAVE_LOCK);
+            throw new UserException('房间锁保存失败', Error::SAVE_LOCK);
         }
         TagDependency::invalidate(Yii::$app->cache, 'Lock_'.$lock->id); 
     }
@@ -222,7 +223,7 @@ class LockService extends Component {
         $result = $lock->delete();
         if (!$result) {
             Yii::error($lock->getErrors(), __METHOD__);
-            throw new HdzxException('房间锁删除失败', Error::SAVE_LOCK);
+            throw new UserException('房间锁删除失败', Error::SAVE_LOCK);
         }
         TagDependency::invalidate(Yii::$app->cache, 'Lock_'.$lock->id);
     }

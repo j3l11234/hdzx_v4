@@ -9,7 +9,8 @@ namespace common\operations;
 
 use Yii;
 use yii\base\Component;
-use common\helpers\HdzxException;
+use yii\base\UserException;
+
 use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\OrderOperation;
@@ -33,10 +34,10 @@ class ManagerRejectOperation extends BaseOrderOperation {
     protected function checkAuth() {
         if (!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
             if(!$this->user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
-                throw new HdzxException('该账号无负责人审批权限', Error::AUTH_FAILED);
+                throw new UserException('该账号无负责人审批权限', Error::AUTH_FAILED);
             }else{
                 if(!in_array($this->order->dept_id, ApproveService::queryUserDepts($this->user))) {
-                    throw new HdzxException('该账号对该申请无负责人审批权限', Error::AUTH_FAILED);
+                    throw new UserException('该账号对该申请无负责人审批权限', Error::AUTH_FAILED);
                 }
             }
         }
@@ -47,7 +48,7 @@ class ManagerRejectOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_MANAGER_PENDING){
-            throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
+            throw new UserException('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 

@@ -10,7 +10,8 @@ namespace common\services;
 use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
-use common\helpers\HdzxException;
+use yii\base\UserException;
+
 use common\helpers\Error;
 use common\models\entities\BaseUser;
 use common\models\entities\User;
@@ -172,11 +173,11 @@ class OrderService extends Component {
     public static function paperOrder($order, $user) {
         if (!$user->checkPrivilege(User::PRIV_ADMIN) &&
             $user->id != $order->user_id) {
-            throw new HdzxException('该账号无权打印申请表', Error::AUTH_FAILED);
+            throw new UserException('该账号无权打印申请表', Error::AUTH_FAILED);
         }
 
         if ($order->status != Order::STATUS_SCHOOL_APPROVED) {
-            throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
+            throw new UserException('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
 
         $data = static::getOrders([$order->id], $useCache = true)[$order->id];
@@ -250,16 +251,16 @@ class OrderService extends Component {
     public static function updateOrderExt($order, $user, $extInfo) {
         if (!$user->checkPrivilege(User::PRIV_ADMIN) &&
             $user->id != $order->user_id) {
-            throw new HdzxException('该账号无权打印申请表', Error::AUTH_FAILED);
+            throw new UserException('该账号无权打印申请表', Error::AUTH_FAILED);
         }
 
         if ($order->status != Order::STATUS_SCHOOL_APPROVED) {
-            throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
+            throw new UserException('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
 
         $orderData = $order->data;
         if ($orderData['need_paper'] != 1) {
-            throw new HdzxException('该申请不需要填写额外信息', Error::INVALID_ORDER_STATUS);
+            throw new UserException('该申请不需要填写额外信息', Error::INVALID_ORDER_STATUS);
         }
         $orderData = array_merge($orderData, $extInfo);
         $order->data = $orderData;
@@ -402,7 +403,7 @@ class OrderService extends Component {
      */
     public static function getIssueOrders($user, $username, $start_date, $end_date) {
         if (!$user->checkPrivilege(BaseUser::PRIV_ISSUE)) {
-            throw new HdzxException('该账号无开门条发放权限', Error::AUTH_FAILED);
+            throw new UserException('该账号无开门条发放权限', Error::AUTH_FAILED);
         }
         
         $user_ids = [];

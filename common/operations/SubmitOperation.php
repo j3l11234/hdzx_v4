@@ -9,7 +9,8 @@ namespace common\operations;
 
 use Yii;
 use yii\base\Component;
-use common\helpers\HdzxException;
+use yii\base\UserException;
+
 use common\helpers\Error;
 use common\models\entities\Order;
 use common\models\entities\BaseUser;
@@ -48,14 +49,14 @@ class SubmitOperation extends BaseOrderOperation {
     protected function checkAuth() {
         if ($this->room->type == Room::TYPE_SIMPLE) { //琴房申请
             if (!$this->user->checkPrivilege(BaseUser::PRIV_ORDER_SIMPLE)) {
-                throw new HdzxException('该账号无琴房申请权限', Error::AUTH_FAILED);
+                throw new UserException('该账号无琴房申请权限', Error::AUTH_FAILED);
             }
         } else if($this->room->type == Room::TYPE_ACTIVITY) { //活动室申请
             if (!$this->user->checkPrivilege(BaseUser::PRIV_ORDER_ACTIVITY)) {
-                throw new HdzxException('该账号无活动室申请权限', Error::AUTH_FAILED);
+                throw new UserException('该账号无活动室申请权限', Error::AUTH_FAILED);
             }
         } else {
-            throw new HdzxException('房间类型异常', static::INVALID_ROOM_TYPE);
+            throw new UserException('房间类型异常', static::INVALID_ROOM_TYPE);
         }
     }
 
@@ -64,7 +65,7 @@ class SubmitOperation extends BaseOrderOperation {
      */
     protected function checkPreStatus() {
         if ($this->order->status != Order::STATUS_INIT){
-            throw new HdzxException('申请状态异常', Error::INVALID_ORDER_STATUS);
+            throw new UserException('申请状态异常', Error::INVALID_ORDER_STATUS);
         }
     }
 
@@ -88,7 +89,7 @@ class SubmitOperation extends BaseOrderOperation {
         } else if($this->order->type == Order::TYPE_TWICE) { //二级审批
             $this->order->status = Order::STATUS_MANAGER_PENDING;
         } else {
-            throw new HdzxException('申请类型异常', static::ERROR_INVALID_TYPE);
+            throw new UserException('申请类型异常', static::ERROR_INVALID_TYPE);
         }
     }
 
