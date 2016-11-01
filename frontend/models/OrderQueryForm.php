@@ -3,6 +3,8 @@ namespace frontend\models;
 
 use Yii;
 use yii\base\Model;
+use yii\base\UserException;
+
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\Order;
@@ -69,23 +71,24 @@ class OrderQueryForm extends Model {
      * @return User|null the saved model or null if saving fails
      */
     public function getRoomTables() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+
         $defaultDateRange = RoomService::getSumDateRange();
         $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
         $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
         $room_ids = !empty($this->rooms) ? array_intersect(json_decode($this->rooms, TRUE), RoomService::getRoomList(TRUE)) : RoomService::getRoomList(TRUE);
 
         if ($endDateTs - $startDateTs > 31 * 86400) {
-            $this->setErrorMessage('查询日期间隔不能大于1个月');
-            return FALSE;
+            throw new UserException('查询日期间隔不能大于1个月');
         }
         $now = time();
         if ($now - $startDateTs > 10 * 366 * 86400) {
-            $this->setErrorMessage('您查询了太久远的历史');
-            return FALSE;
+            throw new UserException('查询了太久远的历史');
         }
         if ($endDateTs - $now > 10 * 366 * 86400) {
-            $this->setErrorMessage('您查询了太遥远的将来');
-            return FALSE;
+            throw new UserException('您查询了太遥远的将来');
         }
 
         $dateRooms = [];
@@ -129,21 +132,22 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getRoomUse() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+
         $room_ids = RoomService::getRoomList(TRUE);
         if (!in_array($this->room, $room_ids)) {
-            $this->setErrorMessage('room错误，不存在此房间');
-            return FALSE;
+            throw new UserException('room错误，不存在此房间');
         }
 
         $dateTs = strtotime($this->date);
         $now = time();
         if ($now - $dateTs > 10 * 366 * 86400) {
-            $this->setErrorMessage('您查询了太久远的历史');
-            return FALSE;
+            throw new UserException('您查询了太久远的历史');
         }
         if ($dateTs - $now > 10 * 366 * 86400) {
-            $this->setErrorMessage('您查询了太遥远的将来');
-            return FALSE;
+            throw new UserException('您查询了太遥远的将来');
         }
 
         $dateRoom = $this->date.'_'.$this->room;
@@ -175,13 +179,16 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getMyOrders() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+
         $defaultDateRange = RoomService::getSumDateRange();
         $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
         $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
 
         if ($endDateTs - $startDateTs > 31*6 * 86400) {
-            $this->setErrorMessage('查询日期间隔不能大于6个月');
-            return false;
+            throw new UserException('查询日期间隔不能大于6个月');
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();
@@ -199,6 +206,9 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getUsage() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
 
         if(empty($this->date)){
             $time = time();

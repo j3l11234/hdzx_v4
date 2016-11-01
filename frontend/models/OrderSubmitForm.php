@@ -3,7 +3,8 @@ namespace frontend\models;
 
 use Yii;
 use yii\base\Model;
-use common\helpers\HdzxException;
+use yii\base\UserException;
+
 use common\behaviors\ErrorBehavior;
 use common\models\entities\Department;
 use common\models\entities\Order;
@@ -89,95 +90,90 @@ class OrderSubmitForm extends Model {
      * @return Order|false 是否成功
      */
     public function submitOrder() {
-        try {
-            $user = Yii::$app->user->getIdentity()->getUser();
-            $hours = array_intersect(json_decode($this->hours, TRUE), Yii::$app->params['order.hours']);
-
-            $dept = Department::findOne($this->dept_id);
-            if ($dept === null) {
-                $this->setErrorMessage('社团单位不存在');
-            }
-            $room = Room::findOne($this->room_id);
-            if ($room === null) {
-                $this->setErrorMessage('房间不存在');
-            }
-            if (isset($room->data['need_paper']) && $room->data['need_paper'] == 1) {
-                $this->scenario = static::SCENARIO_SUBMIT_ORDER_PAPER;
-                if (!$this->validate(['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'])) {
-                    return false;
-                }   
-            }
-
-            $orderType;
-            switch ($room->type) {
-                case Room::TYPE_SIMPLE:
-                    $orderType = Order::TYPE_SIMPLE;
-                    break;
-                case Room::TYPE_ACTIVITY:
-                    $orderType = Order::TYPE_TWICE;
-                    break;
-                default:
-                    $orderType = Order::TYPE_TWICE;
-                    break;
-            }
-
-            //验证日期
-            $roomData = $room->data;
-            if(!Room::checkOpen($this->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'])){
-                $this->setErrorMessage('该日期下的房间不可用');
-                return false;
-            }
-
-            //验证额度
-            $usage = OrderService::queryUsage($user, strtotime($this->date), false);
-            if($usage['month'][$this->room_id]['avl'] < count($hours)){
-                $this->setErrorMessage('本月房间使用时长额度不足');
-                return false;
-            }
-            if($usage['week'][$this->room_id]['avl'] < count($hours)){
-                $this->setErrorMessage('本周房间使用时长额度不足');
-                return false;
-            }
-            
-            $order = new Order();
-            $order->date = $this->date;
-            $order->room_id = $this->room_id;
-            $order->user_id = $user->id;
-            $order->dept_id = $this->dept_id;
-            $order->type = $orderType;
-            $order->status = Order::STATUS_INIT;
-            $order->hours = $hours;
-            $order->data = [
-                'name' => $this->name,
-                'student_no' => $user->isStudent() ? substr($user->id,1) : $this->student_no,
-                'phone' => $this->phone,
-                'title' => $this->title,
-                'content' => $this->content,
-                'number' => $this->number,
-                'secure' => $this->secure,
-                'dept_name' => $dept->name,
-                'room_name' => $room->name.'('.$room->number.')',
-                'need_paper' => 0,
-            ];
-            if ($this->scenario == static::SCENARIO_SUBMIT_ORDER_PAPER) {
-                $order->data = array_merge($order->data, [
-                    'need_paper' => 1,
-                    'prin_student' => $this->prin_student,
-                    'prin_student_phone' => $this->prin_student_phone,
-                    'prin_teacher' => $this->prin_teacher,
-                    'prin_teacher_phone' => $this->prin_teacher_phone,
-                    'activity_type' => $this->activity_type,
-                    'need_media' => $this->need_media ? 1 : 0,
-                ]);
-            }
-
-            OrderService::submitOrder($order, $user);
-            $this->setMessage('提交申请成功');
-            return true;
-        } catch (HdzxException $e) {
-            $this->setErrorMessage($e->getMessage());
-            return false;
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
         }
+
+        $user = Yii::$app->user->getIdentity()->getUser();
+        $hours = array_intersect(json_decode($this->hours, TRUE), Yii::$app->params['order.hours']);
+
+        $dept = Department::findOne($this->dept_id);
+        if ($dept === null) {
+            throw new UserException('社团单位不存在');
+        }
+        $room = Room::findOne($this->room_id);
+        if ($room === null) {
+            throw new UserException('房间不存在');
+        }
+        if (isset($room->data['need_paper']) && $room->data['need_paper'] == 1) {
+            $this->scenario = static::SCENARIO_SUBMIT_ORDER_PAPER;
+            if (!$this->validate(['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'])) {
+                throw new UserException($this->getErrorMessage());
+            }   
+        }
+
+        $orderType;
+        switch ($room->type) {
+            case Room::TYPE_SIMPLE:
+                $orderType = Order::TYPE_SIMPLE;
+                break;
+            case Room::TYPE_ACTIVITY:
+                $orderType = Order::TYPE_TWICE;
+                break;
+            default:
+                $orderType = Order::TYPE_TWICE;
+                break;
+        }
+
+        //验证日期
+        $roomData = $room->data;
+        if(!Room::checkOpen($this->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'])){
+            throw new UserException('该日期下的房间不可用');
+        }
+
+        //验证额度
+        $usage = OrderService::queryUsage($user, strtotime($this->date), false);
+        if($usage['month'][$this->room_id]['avl'] < count($hours)){
+            throw new UserException('本月房间使用时长额度不足');
+        }
+        if($usage['week'][$this->room_id]['avl'] < count($hours)){
+            throw new UserException('本周房间使用时长额度不足');
+        }
+        
+        $order = new Order();
+        $order->date = $this->date;
+        $order->room_id = $this->room_id;
+        $order->user_id = $user->id;
+        $order->dept_id = $this->dept_id;
+        $order->type = $orderType;
+        $order->status = Order::STATUS_INIT;
+        $order->hours = $hours;
+        $order->data = [
+            'name' => $this->name,
+            'student_no' => $user->isStudent() ? substr($user->id,1) : $this->student_no,
+            'phone' => $this->phone,
+            'title' => $this->title,
+            'content' => $this->content,
+            'number' => $this->number,
+            'secure' => $this->secure,
+            'dept_name' => $dept->name,
+            'room_name' => $room->name.'('.$room->number.')',
+            'need_paper' => 0,
+        ];
+        if ($this->scenario == static::SCENARIO_SUBMIT_ORDER_PAPER) {
+            $order->data = array_merge($order->data, [
+                'need_paper' => 1,
+                'prin_student' => $this->prin_student,
+                'prin_student_phone' => $this->prin_student_phone,
+                'prin_teacher' => $this->prin_teacher,
+                'prin_teacher_phone' => $this->prin_teacher_phone,
+                'activity_type' => $this->activity_type,
+                'need_media' => $this->need_media ? 1 : 0,
+            ]);
+        }
+
+        OrderService::submitOrder($order, $user);
+        return '提交申请成功';
     }
 
 
@@ -187,21 +183,18 @@ class OrderSubmitForm extends Model {
      * @return Order|false 是否成功
      */
     public function cancelOrder() {
-        try {
-            $user = Yii::$app->user->getIdentity()->getUser();
-            $order = Order::find()->where(['id' => $this->order_id, 'user_id' => $user->id])->one();
-            if(empty($order)){
-                $this->setErrorMessage('申请不存在');
-                return false;
-            }
-
-            OrderService::cancelOrder($order, $user);
-            $this->setMessage('取消申请成功');
-            return true;
-        } catch (HdzxException $e) {
-            $this->setErrorMessage($e->getMessage());
-            return false;
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
         }
+
+        $user = Yii::$app->user->getIdentity()->getUser();
+        $order = Order::find()->where(['id' => $this->order_id, 'user_id' => $user->id])->one();
+        if(empty($order)){
+            throw new UserException('申请不存在');
+        }
+
+        OrderService::cancelOrder($order, $user);
+        return '取消申请成功';
     }
 
     /**
@@ -210,17 +203,19 @@ class OrderSubmitForm extends Model {
      * @return Order|false 是否成功
      */
     public function paperOrder() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+
         $user = Yii::$app->user->getIdentity()->getUser();
         $order = Order::find()->where(['id' => $this->order_id, 'user_id' => $user->id])->one();
         if(empty($order)){
-            $this->setErrorMessage('申请不存在');
-            return false;
+            throw new UserException('申请不存在');
         }
 
         //TBD need_paper检测
         if ($order->data['need_paper'] != 1) {
-            $this->setErrorMessage('该申请无需打印申请表');
-            return false;
+            throw new UserException('该申请无需打印申请表');
         }
 
         $data = OrderService::paperOrder($order, $user);
@@ -234,32 +229,25 @@ class OrderSubmitForm extends Model {
      * @return Order|false 是否成功
      */
     public function updateOrderExt() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+
         $user = Yii::$app->user->getIdentity()->getUser();
         $order = Order::find()->where(['id' => $this->order_id, 'user_id' => $user->id])->one();
         if(empty($order)){
-            $this->setErrorMessage('申请不存在');
-            return false;
+            throw new UserException('申请不存在');
         }
 
-        $this->scenario = static::SCENARIO_SUBMIT_ORDER_PAPER;
-        if (!$this->validate(['prin_student', 'prin_student_phone', 'prin_teacher', 'prin_teacher_phone', 'activity_type', 'need_media'])) {
-            return false;
-        }   
+        OrderService::updateOrderExt($order, $user, [
+            'prin_student' => $this->prin_student,
+            'prin_student_phone' => $this->prin_student_phone,
+            'prin_teacher' => $this->prin_teacher,
+            'prin_teacher_phone' => $this->prin_teacher_phone,
+            'activity_type' => $this->activity_type,
+            'need_media' => $this->need_media ? 1 : 0,
+        ]);
         
-        try {
-            OrderService::updateOrderExt($order, $user, [
-                'prin_student' => $this->prin_student,
-                'prin_student_phone' => $this->prin_student_phone,
-                'prin_teacher' => $this->prin_teacher,
-                'prin_teacher_phone' => $this->prin_teacher_phone,
-                'activity_type' => $this->activity_type,
-                'need_media' => $this->need_media ? 1 : 0,
-            ]);
-            $this->setMessage('更新申请信息成功');
-            return true;
-        } catch (HdzxException $e) {
-            $this->setErrorMessage($e->getMessage());
-            return false;
-        }
+        return '更新申请信息成功';
     }
 }

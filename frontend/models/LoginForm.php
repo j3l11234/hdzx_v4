@@ -3,6 +3,7 @@ namespace frontend\models;
 
 use Yii;
 use yii\base\Model;
+use yii\base\UserException;
 use common\behaviors\ErrorBehavior;
 use common\models\entities\BaseUser;
 use common\models\entities\User;
@@ -44,29 +45,34 @@ class LoginForm extends Model {
      * @return boolean 是否登录成功
      */
     public function login() {
-        if ($this->validate()) {
-            //根据用户名取得学生用户(优先)和正常用户
-            $user = StudentUser::findByUsername($this->username, [BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
-            if ($user === null) {
-                $user = User::findByUsername($this->username, [BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
-            }
-
-            if ($user === null) {
-                $this->setErrorMessage('用户不存在');
-            } else {
-                if ($user->validatePassword($this->password)) {
-                    if ($user->status != BaseUser::STATUS_ACTIVE) {
-                        $this->setErrorMessage('该用户当前不可登陆');
-                        return false;
-                    }
-                    $userService = new UserService($user);
-                    return Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0);
-                }else{
-                    $this->setErrorMessage('密码不正确');
-                }
-            }
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
         }
-        return false;
+
+        //根据用户名取得学生用户(优先)和正常用户
+        $user = StudentUser::findByUsername($this->username, [BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
+        if ($user === null) {
+            $user = User::findByUsername($this->username, [BaseUser::STATUS_ACTIVE, BaseUser::STATUS_BLOCKED, BaseUser::STATUS_UNACTIVE, BaseUser::STATUS_UNVERIFY]);
+        }
+
+        if ($user === null) {
+            throw new UserException('用户不存在');
+        }
+
+        if (!$user->validatePassword($this->password)) {
+            throw new UserException('密码不正确');
+        }
+
+        if ($user->status != BaseUser::STATUS_ACTIVE) {
+            throw new UserException('该用户当前不可登陆');
+        }
+
+        $userService = new UserService($user);
+        if(!Yii::$app->user->login($userService, $this->rememberMe ? 3600 * 24 * 30 : 0)) {
+            throw new UserException('登录失败');
+        }
+        
+        return '登录成功';
     }
 
 }

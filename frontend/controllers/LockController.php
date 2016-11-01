@@ -73,17 +73,7 @@ class LockController extends Controller
         $reqData = Yii::$app->request->get();
         $model = new LockQueryForm(['scenario' => 'getLocks']);
         $model->load($reqData, '');
-        if ($model->validate()) {
-            $resData = $model->getLocks();
-            return array_merge($resData, [
-                'error' => 0,
-            ]);
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->getLocks();
         return $resData;
     }
 }

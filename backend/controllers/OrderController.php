@@ -85,16 +85,8 @@ class OrderController extends Controller
         $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => OrderQueryForm::SCENARIO_GET_ISSUE]);
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->getIssueOrders()) {
-            return array_merge($resData, [
-                'error' => 0,
-            ]);
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->getIssueOrders();
+        return $resData;
     }
 
     /**
@@ -109,19 +101,9 @@ class OrderController extends Controller
             
         $model = new OrderForm(['scenario' => OrderForm::SCENARIO_ISSUE]);
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->issueOrder()) {
-            return [
-                'error' => 0,
-                'message' => $model->getMessage(),
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->issueOrder();
+        return [
+            'message' => $resData,
+        ];
     }
-
-
-
 }

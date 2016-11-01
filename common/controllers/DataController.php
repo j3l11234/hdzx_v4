@@ -7,6 +7,8 @@ use yii\filters\AccessControl;
 use yii\helpers\Url;
 use yii\web\Controller;
 use yii\web\Response;
+use yii\base\UserException;
+
 use common\models\entities\Setting;
 use common\services\OrderService;
 use common\services\RoomService;
@@ -43,9 +45,7 @@ class DataController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $data = RoomService::getRoomList();
-        return array_merge($data, [
-            'error' => 0,
-        ]);
+        return $data;
     }
 
     /**
@@ -57,9 +57,7 @@ class DataController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $data = OrderService::queryDeptList();
-        return array_merge($data, [
-            'error' => 0,
-        ]);
+        return $data;
     }
 
      /**
@@ -87,9 +85,7 @@ class DataController extends Controller
             }
         }
 
-        return array_merge($data, [
-            'error' => 0,
-        ]);   
+        return $data;   
     }
 
     /**
@@ -114,14 +110,9 @@ class DataController extends Controller
         } else if ($page == 'login') {
             $data['tooltip'] = '<br/><div class="alert alert-info" role="alert">如果要进行后台操作，如 审批预约/发放开门条/系统管理，请进入<a href="'.Url::to([Yii::$app->params['backendUrl']]).'"><b>后台系统</b></a>登录</div>';
         } else {
-            return [
-                'error' => 1,
-                'message' => '页面不存在',
-            ];
+            throw new UserException('页面不存在');
         }
 
-        return array_merge($data, [
-            'error' => 0,
-        ]);   
+        return $data;   
     }
 }

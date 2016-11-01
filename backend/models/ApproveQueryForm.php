@@ -3,6 +3,8 @@ namespace backend\models;
 
 use Yii;
 use yii\base\Model;
+use yii\base\UserException;
+
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\Order;
@@ -68,13 +70,16 @@ class ApproveQueryForm extends Model {
      * @return null
      */
     public function getApproveOrder() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+        
         $defaultDateRange = RoomService::getSumDateRange();
         $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
         $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
 
         if ($endDateTs - $startDateTs > 3 * 31 * 86400) {
-            $this->setErrorMessage('查询日期间隔不能大于3个月');
-            return FALSE;
+            throw new UserException('查询日期间隔不能大于3个月');
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();

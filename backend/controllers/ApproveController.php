@@ -5,6 +5,7 @@ use Yii;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\AccessControl;
+use yii\base\UserException;
 
 use common\services\ApproveService;
 use common\services\OrderService;
@@ -106,16 +107,9 @@ class ApproveController extends Controller
 
         $reqData = Yii::$app->request->get();
         $model = new ApproveQueryForm(['scenario' => 'getApproveOrder']);
-        if ($model->load($reqData, '') && $model->validate() && $resData = $model->getApproveOrder()) {
-            return array_merge($resData, [
-                'error' => 0,
-            ]);
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $model->load($reqData, '');
+        $resData = $model->getApproveOrder();
+        return $resData;
     }
 
     /**
@@ -128,17 +122,11 @@ class ApproveController extends Controller
 
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         $model = new ApproveForm(['scenario' => 'approveOrder']);
-        if ($model->load($reqData, '') && $model->validate() && $model->approveOrder()) {
-            return [
-                'error' => 0,
-                'message' => '审批通过成功',
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $model->load($reqData, '');
+        $resData = $model->approveOrder();
+        return [
+            'message' => $resData,
+        ];
     }
 
     /**
@@ -151,17 +139,11 @@ class ApproveController extends Controller
 
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         $model = new ApproveForm(['scenario' => 'rejectOrder']);
-        if ($model->load($reqData, '') && $model->validate() && $model->rejectOrder()) {
-            return [
-                'error' => 0,
-                'message' => '审批驳回成功',
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $model->load($reqData, '');
+        $resData = $model->rejectOrder();
+        return [
+            'message' => $resData,
+        ];
     }
 
     /**
@@ -174,17 +156,11 @@ class ApproveController extends Controller
         
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         $model = new ApproveForm(['scenario' => 'revokeOrder']);
-        if ($model->load($reqData, '') && $model->validate() && $model->revokeOrder()) {
-            return [
-                'error' => 0,
-                'message' => '审批撤回成功',
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+         $model->load($reqData, '');
+        $resData = $model->revokeOrder();
+        return [
+            'message' => $resData,
+        ];
     }
 
     /**
@@ -197,10 +173,7 @@ class ApproveController extends Controller
         
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         if (!isset($reqData['token']) || $reqData['token'] != Yii::$app->params['cronKey']) {
-            return [
-                'error' => 1,
-                'message' => 'token不正确',
-            ];
+            throw new UserException('token不正确');
         }
 
         $data = ApproveService::autoApprove1();
@@ -218,10 +191,7 @@ class ApproveController extends Controller
         
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         if (!isset($reqData['token']) || $reqData['token'] != Yii::$app->params['cronKey']) {
-            return [
-                'error' => 1,
-                'message' => 'token不正确',
-            ];
+            throw new UserException('token不正确');
         }
 
         $data = ApproveService::autoApprove2();
@@ -238,10 +208,7 @@ class ApproveController extends Controller
         
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
         if (!isset($reqData['token']) || $reqData['token'] != Yii::$app->params['cronKey']) {
-            return [
-                'error' => 1,
-                'message' => 'token不正确',
-            ];
+            throw new UserException('token不正确');
         }
 
         $data = ApproveService::autoApprove3();

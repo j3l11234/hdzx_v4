@@ -3,6 +3,8 @@ namespace backend\models;
 
 use Yii;
 use yii\base\Model;
+use yii\base\UserException;
+
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
 use common\models\entities\Order;
@@ -71,13 +73,16 @@ class OrderQueryForm extends Model {
      * @return Mixed|null 返回数据
      */
     public function getIssueOrders() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+
         $dateRange = static::getDefaultDateRange();
         $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d',$dateRange['start']);
         $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
 
         if (strtotime($endDate) -strtotime($startDate) > 31*3 * 86400) {
-            $this->setErrorMessage('查询日期间隔不能大于3个月');
-            //return false;
+            throw new UserException('查询日期间隔不能大于3个月');
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();

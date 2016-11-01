@@ -3,7 +3,7 @@ namespace backend\models;
 
 use Yii;
 use yii\base\Model;
-use common\helpers\HdzxException;
+use yii\base\UserException;
 
 use common\behaviors\ErrorBehavior;
 use common\models\entities\Lock;
@@ -80,18 +80,20 @@ class LockForm extends Model {
      * @return Order|false 是否提交成功
      */
     public function submitLock() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+
         if ($this->scenario == static::SCENARIO_ADD_LOCK) {
             $lock = new Lock();
         } else {
             $lock = Lock::findOne($this->lock_id);
             if(empty($lock)){
-                $this->setErrorMessage('房间锁不存在');
-                return false;
+                throw new UserException('房间锁不存在');
             }
         }
         if (strtotime($this->end_date) - strtotime($this->start_date) > 3*366*86400) {
-            $this->setErrorMessage('开始时间和结束时间不能超过三年');
-            return false;
+            throw new UserException('开始时间和结束时间不能超过三年');
         }
         $hours = array_intersect(json_decode($this->hours, TRUE), Yii::$app->params['order.hours']);
         $lock->hours = $hours;
@@ -106,18 +108,12 @@ class LockForm extends Model {
             'comment' => $this->comment,
         ];
 
-        try {
-            if ($this->scenario == static::SCENARIO_ADD_LOCK) {
-                LockService::addLock($lock);
-                $this->setMessage('添加房间锁成功');
-            } else if ($this->scenario == static::SCENARIO_EDIT_LOCK){
-                LockService::editLock($lock);
-                $this->setMessage('修改房间锁成功');
-            }
-            return true;
-        } catch (HdzxException $e) {
-            $this->setErrorMessage($e->getMessage());
-            return false;
+        if ($this->scenario == static::SCENARIO_ADD_LOCK) {
+            LockService::addLock($lock);
+            return '添加房间锁成功';
+        } else if ($this->scenario == static::SCENARIO_EDIT_LOCK){
+            LockService::editLock($lock);
+            return '修改房间锁成功';
         }
     }
 
@@ -127,20 +123,17 @@ class LockForm extends Model {
      * @return Order|false 是否删除成功
      */
     public function deleteLock() {
-        $lock = Lock::findOne($this->lock_id);
-        if(empty($lock)){
-            $this->setErrorMessage('房间锁不存在');
-            return false;
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
         }
 
-        try {
-            LockService::deleteLock($lock);
-            $this->setMessage('删除房间锁成功');
-            return true;
-        } catch (HdzxException $e) {
-            $this->setErrorMessage($e->getMessage());
-            return false;
+        $lock = Lock::findOne($this->lock_id);
+        if(empty($lock)){
+            throw new UserException('房间锁不存在');
         }
+
+        LockService::deleteLock($lock);
+        return '删除房间锁成功';
     }
 
     /**
@@ -149,22 +142,19 @@ class LockForm extends Model {
      * @return Order|false 是否删除成功
      */
     public function applyLock() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+
         if (strtotime($this->end_date) - strtotime($this->start_date) > 366*86400) {
-            $this->setErrorMessage('开始时间和结束时间不能超过一年');
-            return false;
+            throw new UserException('开始时间和结束时间不能超过一年');
         }
 
         $dateRange = RoomService::getSumDateRange(FALSE);
         $startDate = !empty($this->start_date) ? $this->start_date : date('Y-m-d', $dateRange['start']);
         $endDate = !empty($this->end_date) ? $this->end_date : date('Y-m-d', $dateRange['end']);
         
-        try {
-            RoomService::applyLock($startDate, $endDate);
-            $this->setMessage('应用房间锁成功');
-            return true;
-        } catch (HdzxException $e) {
-            $this->setErrorMessage($e->getMessage());
-            return false;
-        }
+        RoomService::applyLock($startDate, $endDate);
+        return '应用房间锁成功';
     }
 }

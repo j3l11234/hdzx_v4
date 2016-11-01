@@ -116,13 +116,8 @@ class OrderController extends Controller
         $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomTables']);
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->getRoomTables()) {
-            return array_merge($resData, [
-                'error' => 0,
-            ]);
-        } else {
-            new UserException($model->getErrorMessage());
-        }
+        $resData = $model->getRoomTables();
+        return $resData;
     }
 
     /**
@@ -136,16 +131,8 @@ class OrderController extends Controller
         $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getRoomUse']);
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->getRoomUse()) {
-            return array_merge($resData, [
-                'error' => 0,
-            ]);
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->getRoomUse();
+        return $resData;
     }
 
     /**
@@ -159,16 +146,8 @@ class OrderController extends Controller
         $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getUsage']);
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->getUsage()) {
-            return array_merge($resData, [
-                'error' => 0,
-            ]);
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->getUsage();
+        return $resData;
     }
 
 
@@ -184,25 +163,15 @@ class OrderController extends Controller
 
         $captchaAction = $this->createAction('captcha');
         if (empty($reqData['captcha']) || !$captchaAction->validate($reqData['captcha'], false)) {
-            return [
-                'error' => 1,
-                'message' => '验证码错误',
-            ];
+            throw new UserException('验证码错误');
         }
             
         $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_SUBMIT_ORDER]);
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->submitOrder()) {
-            return [
-                'error' => 0,
-                'message' => $model->getMessage(),
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->submitOrder();
+        return [
+            'message' => $resData,
+        ];
     }
 
 
@@ -217,17 +186,10 @@ class OrderController extends Controller
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post()); 
         $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_CANCEL_ORDER]);
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->cancelOrder()) {
-            return [
-                'error' => 0,
-                'message' => $model->getMessage(),
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->cancelOrder();
+        return [
+            'message' => $resData,
+        ];
     }
 
 
@@ -242,26 +204,14 @@ class OrderController extends Controller
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post()); 
         $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_PAPER_ORDER]);
         $model->load($reqData, '');
-        if ($model->validate() && $orderData = $model->paperOrder()) {
-            $action = $this->createAction('getapply');
-            if ($url = $action->setPdfData($orderData)) {
-                return [
-                    'error' => 0,
-                    'url' => $url,
-                    'expire' => $action->expire,
-                ];
-            } else {
-                return [
-                    'error' => 1,
-                    'message' => $action->getErrorMessage(),
-                ];
-            }
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+
+        $orderData = $model->paperOrder();
+        $action = $this->createAction('getapply');
+        $url = $action->setPdfData($orderData);
+        return [
+            'url' => $url,
+            'expire' => $action->expire,
+        ];
     }
 
 
@@ -276,16 +226,8 @@ class OrderController extends Controller
         $reqData = Yii::$app->request->get();
         $model = new OrderQueryForm(['scenario' => 'getMyOrders']);
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->getMyOrders()) {
-            return array_merge($resData, [
-                'error' => 0,
-            ]);
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->getMyOrders();
+        return $resData;
     }
 
 
@@ -301,16 +243,7 @@ class OrderController extends Controller
         $reqData = array_merge(Yii::$app->request->get(), Yii::$app->request->post()); 
         $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_UPDATE_ORDER_EXT]);
         $model->load($reqData, '');
-        if ($model->validate() && $orderData = $model->updateOrderExt()) {
-            return [
-                'error' => 0,
-                'message' => $model->getMessage(),
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->updateOrderExt();
+        return $resData;
     }
 }

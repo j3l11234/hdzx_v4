@@ -4,6 +4,7 @@ namespace frontend\controllers;
 use Yii;
 use yii\base\InvalidParamException;
 use yii\helpers\Url;
+use yii\base\UserException;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\Response;
@@ -104,18 +105,12 @@ class UserController extends Controller {
         // }
 
         $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post(),'') && $model->login()) {
-            return [
-                'error' => 0,
-                'message' => '您已经登录成功',
-                'url' => Yii::$app->user->getReturnUrl(),
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $model->load(Yii::$app->request->post(),'');
+        $resData = $model->login();
+        return [
+            'message' => $resData,
+            'url' => Yii::$app->user->getReturnUrl(),
+        ];  
     }
 
     /**
@@ -140,12 +135,11 @@ class UserController extends Controller {
 
         if (\Yii::$app->user->isGuest) {
             $user = null;
-        }else {
+        } else {
             $user = Yii::$app->user->getIdentity()->getUser()->toArray(['email', 'alias', 'privilege', 'username']);
         }
 
         return [
-            'error' => 0,
             'user' => $user,
         ];
     }

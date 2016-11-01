@@ -79,18 +79,8 @@ class LockController extends Controller
         $data = Yii::$app->request->get();
         $model = new LockQueryForm(['scenario' => 'getLocks']);
         $model->load($data, '');
-        if ($model->validate()) {
-            $data = $model->getLocks();
-            return array_merge($data, [
-                'error' => 0,
-            ]);
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
-        return $data;
+        $resdata = $model->getLocks();
+        return $resdata;
     }
 
     /**
@@ -109,17 +99,10 @@ class LockController extends Controller
              $model->scenario =  LockForm::SCENARIO_EDIT_LOCK;
         }
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->submitLock()) {
-            return [
-                'error' => 0,
-                'message' => $model->getMessage(),
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->submitLock();
+        return [
+            'message' => $resData,
+        ];
     }
 
     /**
@@ -135,17 +118,10 @@ class LockController extends Controller
         $model->scenario =  LockForm::SCENARIO_DELETE_LOCK;
 
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->deleteLock()) {
-            return [
-                'error' => 0,
-                'message' => $model->getMessage(),
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->deleteLock();
+        return [
+            'message' => $resData,
+        ];
     }
 
     /**
@@ -161,16 +137,9 @@ class LockController extends Controller
         $model->scenario =  LockForm::SCENARIO_APPLY_LOCK;
 
         $model->load($reqData, '');
-        if ($model->validate() && $resData = $model->applyLock()) {
-            return [
-                'error' => 0,
-                'message' => $model->getMessage(),
-            ];
-        } else {
-            return [
-                'error' => 1,
-                'message' => $model->getErrorMessage(),
-            ];
-        }
+        $resData = $model->applyLock();
+        return [
+            'message' => $resData,
+        ];
     }
 }
