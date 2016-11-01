@@ -40,7 +40,7 @@ $this->params['dynamic'] = [];
     <?php  ?>
     <?php
         if (Yii::$app->user->isGuest) {
-            $this->params['dynamic']['user'] = false;
+            $this->params['dynamic']['user'] = 'false';
         } else {
             $user = Yii::$app->user->identity->getUser();
             $this->params['dynamic']['user'] = '\''.$user->username.' ('. $user->alias.')\'';
@@ -75,7 +75,7 @@ $this->params['dynamic'] = [];
                     <a class="dropdown-toggle" href="#" data-toggle="dropdown">未登录 <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li><a href="<?=Url::to(["/login"])?>" tabindex="-1">登录</a></li>
-                        <li><a href="Url::to(["/user/request-student-user"])?>" tabindex="-1">激活学生账户</a></li>
+                        <li><a href="<?=Url::to(["/user/request-student-user"])?>" tabindex="-1">激活学生账户</a></li>
                         <li><a href="<?=Url::to([Yii::$app->params['backendUrl']])?>" tabindex="-1">进入后台系统</a></li>
                     </ul>
                 </li>
