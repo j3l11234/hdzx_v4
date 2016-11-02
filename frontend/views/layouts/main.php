@@ -72,7 +72,7 @@ $this->params['dynamic'] = [];
                 ?>
 
                 <li id="navbar-user-nologin" class="dropdown">
-                    <a class="dropdown-toggle" href="#" data-toggle="dropdown">未登录 <b class="caret"></b></a>
+                    <a class="dropdown-toggle" href="<?=Url::to(["/login"])?>" data-toggle="dropdown">未登录 <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li><a href="<?=Url::to(["/login"])?>" tabindex="-1">登录</a></li>
                         <li><a href="<?=Url::to(["/user/request-student-user"])?>" tabindex="-1">激活学生账户</a></li>
