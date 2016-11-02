@@ -21,6 +21,7 @@ return [
                 '/order' => 'order/order-page',
                 '/myorder' => 'order/myorder-page',
                 '/lock' => 'lock/lock-page',
+                'page/<id:.+>' => 'site/page',
             ]
         ],
         'user' => [

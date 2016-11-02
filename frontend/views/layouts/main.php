@@ -64,10 +64,27 @@ $this->params['dynamic'] = [];
                 <?php
                     $navList = SettingService::getNavList();
                     foreach ($navList['navMap']['0'] as $nav_id) {
-                        $nav = $navList['navs'][$nav_id];
-                        echo Html::beginTag('li', ['id' => 'nav-item-'.$nav['html_id'], 'class' => 'nav-item']);
-                        echo Html::tag('a',$nav['name'],['href' => Url::to([$nav['url']])]);
-                        echo Html::endTag('li');
+                        $nav = $navList['navs'][$nav_id];      
+                        if (isset($navList['navMap'][$nav_id])) {
+                            echo Html::beginTag('li', ['id' => 'nav-item-'.$nav['html_id'], 'class' => 'dropdown nav-item']);
+                            echo Html::beginTag('a',['href' => empty($nav['url']) ? '#': Url::to([$nav['url']]), 'class' => 'dropdown-toggle', 'data-toggle' => 'dropdown']);
+                            echo $nav['name'];
+                            echo Html::tag('b', '' ,[ 'class' => 'caret']);
+                            echo Html::endTag('a');
+                            echo Html::beginTag('ul', ['class' => 'dropdown-menu']);
+                            foreach ($navList['navMap'][$nav_id] as $nav_id_2) {
+                                $nav_2 = $navList['navs'][$nav_id_2];
+                                echo Html::beginTag('li', ['id' => 'nav-item-'.$nav_2['html_id'], 'class' => 'nav-item']);
+                                echo Html::tag('a', $nav_2['name'], ['href' => empty($nav_2['url']) ? '#': Url::to([$nav_2['url']])]);
+                                echo Html::endTag('li');
+                            }
+                            echo Html::endTag('ul');
+                            echo Html::endTag('li');
+                        } else {
+                            echo Html::beginTag('li', ['id' => 'nav-item-'.$nav['html_id'], 'class' => 'nav-item']);
+                            echo Html::tag('a',$nav['name'],['href' => Url::to([$nav['url']])]);
+                            echo Html::endTag('li');
+                        }   
                     }
                 ?>
 

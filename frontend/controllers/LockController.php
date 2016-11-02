@@ -57,7 +57,7 @@ class LockController extends Controller
      */
     public function actionLockPage()
     {
-        return $this->render('/page/lock', [
+        return $this->render('/react_page/lock', [
             'type' => 'user',
         ]);
     }
