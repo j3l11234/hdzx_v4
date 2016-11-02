@@ -86,7 +86,7 @@ class UserController extends Controller {
             return $this->goHome();
         }
 
-        return $this->render('/page/login');
+        return $this->render('/react_page/login');
     }
 
     /**

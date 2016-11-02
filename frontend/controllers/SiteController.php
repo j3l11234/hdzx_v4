@@ -6,6 +6,7 @@ use Yii;
 use frontend\models\ContactForm;
 use yii\base\InvalidParamException;
 use yii\web\BadRequestHttpException;
+use yii\web\NotFoundHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
@@ -103,6 +104,20 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
+    }
+
+    /**
+     * Displays about page.
+     *
+     * @return mixed
+     */
+    public function actionPage($id)
+    {
+        if (!file_exists(Yii::getAlias('@app/views/page/'.$id.'.php'))) {
+            throw new NotFoundHttpException('页面不存在');
+        } else {
+            return $this->render('/page/'.$id);
+        }
     }
 
     /**

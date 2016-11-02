@@ -92,7 +92,7 @@ class OrderController extends Controller
      */
     public function actionOrderPage()
     {
-        return $this->render('/page/order');
+        return $this->render('/react_page/order');
     }
 
     /**
@@ -102,7 +102,7 @@ class OrderController extends Controller
      */
     public function actionMyorderPage()
     {
-        return $this->render('/page/myorder');
+        return $this->render('/react_page/myorder');
     }
 
     /**
