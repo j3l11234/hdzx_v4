@@ -25,8 +25,6 @@ class ReactAsset extends AssetBundle{
     ];
 
     public $depends = [
-        'yii\web\JqueryAsset',
-        'yii\bootstrap\BootstrapPluginAsset',
     ];
 
     public function registerAssetFiles($view)
