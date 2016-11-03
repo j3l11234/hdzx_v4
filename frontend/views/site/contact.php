@@ -7,6 +7,7 @@
 use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
 use yii\captcha\Captcha;
+use common\helpers\Helper;
 
 $this->title = '意见反馈';
 $this->params['breadcrumbs'][] = $this->title;
@@ -21,7 +22,8 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="row">
         <div class="col-lg-5">
             <?php $form = ActiveForm::begin(['id' => 'contact-form']); ?>
-
+                <?= Helper::renderFlash() ?>
+                <br />
                 <?= $form->field($model, 'name') ?>
 
                 <?= $form->field($model, 'email') ?>

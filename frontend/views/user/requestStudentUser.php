@@ -8,6 +8,7 @@ use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Alert;
 use yii\captcha\Captcha;
+use common\helpers\Helper;
 
 $this->title = '激活学生账户';
 ?>
@@ -16,6 +17,8 @@ $this->title = '激活学生账户';
     <div class="row">
         <div class="col-lg-5">
             <?php $form = ActiveForm::begin(['id' => 'form-signup']); ?>
+                <?= Helper::renderFlash() ?>
+                <br />
                 <?= Alert::widget([
                     'options' => [
                         'class' => 'alert-info',
@@ -29,6 +32,7 @@ $this->title = '激活学生账户';
                     <p>&nbsp;&nbsp;&nbsp;&nbsp;在填写完成以下内容后，我们将会向您的邮箱发送一封验证邮件，请点击邮件里的验证链接以完成您的注册流程。</p>
                     <p>&nbsp;&nbsp;&nbsp;&nbsp;如果您看不到验证码，请移步意见反馈反映这个问题并告知您的操作系统和浏览器版本。</p>',
                 ]) ?>
+                <br />
                 <?= $form->field($model, 'username')->label('学号') ?>
                 <?= $form->field($model, 'alias') ?>
                 <?= $form->field($model, 'password')->passwordInput() ?>

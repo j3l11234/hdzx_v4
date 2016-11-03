@@ -5,14 +5,15 @@
 /* @var $model \frontend\models\ResetPasswordForm */
 
 use yii\helpers\Html;
-use common\widgets\Alert;
+use common\helpers\Helper;
+
 $this->context->layout = 'main';
 $this->title = '操作结果';
 
 ?>
 <div class="">
     <div class="row">
-         <?= Alert::widget() ?>
+         <?= Helper::renderFlash() ?>
     </div>
 </div>
 <script>

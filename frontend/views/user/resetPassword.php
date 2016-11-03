@@ -6,6 +6,7 @@
 
 use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
+use common\helpers\Helper;
 
 $this->title = '重设密码';
 ?>
@@ -17,7 +18,9 @@ $this->title = '重设密码';
     <div class="row">
         <div class="col-lg-5">
             <?php $form = ActiveForm::begin(['id' => 'reset-password-form']); ?>
-
+                <?= Helper::renderFlash() ?>
+                <br />
+                
                 <?= $form->field($model, 'password')->label('新密码')->passwordInput() ?>
 
                 <div class="form-group">
