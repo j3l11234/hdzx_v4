@@ -29,10 +29,7 @@ return [
             'on beforeSend' => function ($event) {
                 $response = $event->sender;
                 if ($response->format == \yii\web\Response::FORMAT_JSON && $response->data !== null) {
-                    $response->data = [
-                        'success' => $response->isSuccessful,
-                        'data' => $response->data,
-                    ];
+                    $response->data = array_merge($response->data, ['_success' => $response->isSuccessful]);
                     $response->statusCode = 200;
                 }
             },
