@@ -17,10 +17,15 @@ use common\services\ApproveService;
  * ApproveQuery form
  */
 class ApproveQueryForm extends Model {
+    public $type;
     public $start_date;
     public $end_date;
     public $status;
-    public $type;
+    public $room_id;
+    public $dept_id;
+    public $per_page;
+    public $cur_page;
+    
 
     /**
      * @inheritdoc
@@ -36,7 +41,7 @@ class ApproveQueryForm extends Model {
      */
     public function scenarios() {
         $scenarios = parent::scenarios();
-        $scenarios['getApproveOrder'] = ['start_date', 'end_date', 'status', 'type'];
+        $scenarios['getApproveOrder'] = ['type', 'start_date', 'end_date', 'status', 'room_id', 'dept_id', 'per_page', 'cur_page'];
         return $scenarios;
     }
 
@@ -46,8 +51,9 @@ class ApproveQueryForm extends Model {
     public function rules() {
         return [
             [['type'], 'required'],
-            [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['type'], 'in', 'range' => ['auto', 'manager', 'school',]],
+            [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
+            [['per_page', 'cur_page'], 'number'],
         ];
     }
 

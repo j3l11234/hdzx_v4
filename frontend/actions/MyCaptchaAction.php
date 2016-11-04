@@ -22,7 +22,6 @@ class MyCaptchaAction extends CaptchaAction {
             return [
                 // we add a random 'v' parameter so that FireFox can refresh the image
                 // when src attribute of image tag is changed
-                'error' => 0,
                 'url' => Url::to([$this->id, 'v' => uniqid()]),
             ];
         } else {

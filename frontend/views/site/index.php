@@ -10,7 +10,7 @@ $this->title = '学活场地申请系统';
     $items = [];
     foreach ($carousels as $carousel) {
         $items[] = [
-            'content' => '<img src="images/carousels/'.$carousel->picture.'"/>',
+            'content' => '<img src="'.Yii::getAlias('@web').'/images/carousels/'.$carousel->picture.'"/>',
             'caption' => '<h2>'.$carousel->title.'</h2>'.$carousel->content,
             'options' => [],
         ];
