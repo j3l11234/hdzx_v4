@@ -111,10 +111,12 @@ class ApproveQueryForm extends Model {
         $orderList = $data['orderList'];
 
         //解析roomTable，用于分析冲突
-        $conflictOrders = ApproveService::getConflictOrders($orderList, static::getType($this->type));
+        Yii::beginProfile('分析冲突');
+        $conflictOrders = ApproveService::getConflictOrders_batch($orderList, $user, static::getType($this->type));
         foreach ($orders as $order_id => &$order) {
             $order['conflict'] = $conflictOrders[$order_id];
         }
+        Yii::endProfile('分析冲突');
 
         //只显示冲突申请
         if (!empty($this->conflict_id)) {

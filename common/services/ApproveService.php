@@ -12,7 +12,6 @@ use yii\base\Component;
 use yii\caching\TagDependency;
 use yii\base\UserException;
 
-use common\helpers\HdzxException;
 use common\helpers\Error;
 use common\models\entities\Department;
 use common\models\entities\Order;
@@ -254,7 +253,7 @@ class ApproveService extends Component {
             TagDependency::invalidate(Yii::$app->cache, 'RoomTable'.'_'.$order->date.'_'.$order->room_id);
             TagDependency::invalidate(Yii::$app->cache, 'Order'.'_'.$order->id);
             TagDependency::invalidate(Yii::$app->cache, 'User_'.$order->user_id);
-        } catch (HdzxException $e) {
+        } catch (UserException $e) {
             $transaction->rollBack();
             Yii::error('审批异常, id='.$order->id.', error='.$e->getMessage(), '审批申请');
             throw $e;
@@ -272,17 +271,15 @@ class ApproveService extends Component {
     public static function rejectConflictOrder($order, $user, $type, $comment = '冲突自动驳回') {
         $rejectList = [];
 
-        $orderList = static::getConflictOrder($order, $type, false);
-        foreach ($orderList as $conflictOrder) {
-            //跳过自身
-            if ($conflictOrder->id == $order->id) {
-                continue;
-            }
-
+        $conflictOrder_ids = static::getConflictOrder($order['id'], $user, $type, false);
+        foreach ($conflictOrder_ids as $conflictOrder_id) {
             try {
-                Yii::info(static::$type_string[$type].'审批驳回, id='.$conflictOrder->id.', 冲突id='.$order->id, '驳回冲突申请');
-                static::rejectOrder($conflictOrder, $user, $type, $comment);
-                $rejectList[] = $conflictOrder->id;
+                $conflictOrder = Order::findOne($conflictOrder_id);
+                if(!empty($conflictOrder)){
+                    Yii::info(static::$type_string[$type].'审批驳回, id='.$conflictOrder_id.', 冲突id='.$order->id, '驳回冲突申请');
+                    static::rejectOrder($conflictOrder, $user, $type, $comment);
+                    $rejectList[] = $conflictOrder_id;
+                }             
             } catch (Exception $e) {
             }  
         }
@@ -299,9 +296,9 @@ class ApproveService extends Component {
      * @param bool $onlyId 仅仅返回id
      * @return Array<Order>
      */
-    public static function getConflictOrders($order_ids, $type, $useCache = TRUE, $onlyId = TRUE) {
-        $conflictOrders = [];
-        $orders = OrderService::getOrders($order_ids);
+    public static function getConflictOrders_batch($order_ids, $user, $type, $useCache = TRUE, $onlyId = TRUE) {
+        $conflictOrders_batch = [];
+        $orders = OrderService::getOrders($order_ids, $useCache);
         $dateRooms = [];
         foreach ($orders as &$order) {
             $dateRooms[] = $order['date'].'_'.$order['room_id'];
@@ -314,8 +311,11 @@ class ApproveService extends Component {
                 return $order['type'] == Order::TYPE_SIMPLE && $order['status'] == Order::STATUS_SIMPLE_PENDING;
             };
         } else if ($type == static::TYPE_MANAGER) {
-            $filter_func = function ($order) {
-                return $order['type'] == Order::TYPE_TWICE && $order['status'] == Order::STATUS_MANAGER_PENDING;
+            $manage_depts = static::queryUserDepts($user);
+            $filter_func = function ($order) use ($manage_depts) {
+                return $order['type'] == Order::TYPE_TWICE &&
+                    $order['status'] == Order::STATUS_MANAGER_PENDING &&
+                    in_array($order['dept_id'], $manage_depts);
             };
         } else if ($type == static::TYPE_SCHOOL) {
             $filter_func = function ($order) {
@@ -325,21 +325,29 @@ class ApproveService extends Component {
             throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
         }
 
+        $allConflictOrder_ids = [];
+        $conflictOrder_ids_map = [];
         foreach ($orders as $order_id => &$order) {
             $roomTable = $roomTables[$order['date'].'_'.$order['room_id']];
-            $conflictOneOrder_ids = RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order_id]);
-            $conflictOneOrders = OrderService::getOrders($conflictOneOrder_ids, $useCache);
-            $conflictOneOrders_ = [];
-            foreach ($conflictOneOrders as $conflictOrder_id => &$conflictOrder) {
+            $conflictOrder_ids = RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order_id]);
+            $allConflictOrder_ids = array_merge($allConflictOrder_ids, $conflictOrder_ids);
+            $conflictOrder_ids_map[$order_id] = $conflictOrder_ids;
+        }
+        $allConflictOrders = OrderService::getOrders($allConflictOrder_ids, $useCache);
+
+        foreach ($orders as $order_id => &$order) {
+            $conflictOrder_ids = $conflictOrder_ids_map[$order_id];
+            $conflictOrders = [];
+            foreach ($conflictOrder_ids as $conflictOrder_id) {
+                $conflictOrder = $allConflictOrders[$conflictOrder_id];
                 if ($filter_func($conflictOrder)) {
-                    $conflictOneOrders_[$conflictOrder_id] = $conflictOrder;
+                    $conflictOrders[$conflictOrder_id] = $conflictOrder;
                 }
             }
-            $conflictOneOrders = $conflictOneOrders_;
-            $conflictOrders[$order_id] = $onlyId ? array_keys($conflictOneOrders) : $conflictOneOrders;
+            $conflictOrders_batch[$order_id] = $onlyId ? array_keys($conflictOrders) : $conflictOrders;
         }
 
-        return $conflictOrders;
+        return $conflictOrders_batch;
     }
 
 
@@ -351,8 +359,8 @@ class ApproveService extends Component {
      * @param bool $onlyId 仅仅返回id
      * @return Array<Order>
      */
-    public static function getConflictOrder($order, $type, $useCache = TRUE, $onlyId = TRUE) {
-        return static::getConflictOrders([$order],$type, $useCache,$onlyId)[$order];
+    public static function getConflictOrder($order_id, $user, $type, $useCache = TRUE, $onlyId = TRUE) {
+        return static::getConflictOrders_batch([$order_id], $user, $type, $useCache,$onlyId)[$order_id];
     }
 
 
@@ -440,7 +448,7 @@ class ApproveService extends Component {
                 $approves[] = $order->id;
                 $rejects_ = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SIMPLE);
                 $rejects = array_merge ($rejects, $rejects_);  
-            } catch (HdzxException $e) {
+            } catch (UserException $e) {
                 if ($e->getCode() == Error::ROOMTABLE_USED) {
                     $comment = '该申请的时段被占用，自动驳回';
                 } else if($e->getCode() == Error::ROOMTABLE_LOCKED) {
@@ -452,7 +460,7 @@ class ApproveService extends Component {
                     Yii::info(static::$type_string[static::TYPE_SIMPLE].'审批驳回, id='.$order->id.', reason=琴房审批,'.$comment, '自动审批');
                     static::rejectOrder($order, $user, static::TYPE_SIMPLE, $comment);
                     $rejects[] = $order->id;
-                } catch (HdzxException $e) {
+                } catch (UserException $e) {
                 } 
             }   
         }
@@ -491,7 +499,7 @@ class ApproveService extends Component {
                 Yii::info(static::$type_string[static::TYPE_MANAGER].'审批驳回, id='.$order->id.', reason=负责人超时未审批', '自动审批');
                 $rejectList[] = $order->id;
                 static::rejectOrder($order, $user, static::TYPE_MANAGER, '负责人超时未审批，自动驳回');
-            } catch (HdzxException $e) {
+            } catch (UserException $e) {
             }  
         }
 
@@ -541,7 +549,7 @@ class ApproveService extends Component {
                 $rejectList_1 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SCHOOL);
                 $rejectList_2 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_MANAGER);
                 $rejectList = array_merge ($rejectList, $rejectList_1, $rejectList_2);  
-            } catch (HdzxException $e) {
+            } catch (UserException $e) {
                 if ($e->getCode() == Error::ROOMTABLE_USED) {
                     $comment = '该申请的时段被占用，自动驳回';
                 } else if($e->getCode() == Error::ROOMTABLE_LOCKED) {
@@ -553,7 +561,7 @@ class ApproveService extends Component {
                     Yii::info(static::$type_string[static::TYPE_SCHOOL].'审批驳回, id='.$order->id.', reason=校级审批,'.$comment, '自动审批');
                     static::rejectOrder($order, $user, static::TYPE_SCHOOL, $comment);
                     $rejectList[] = $order->id;
-                } catch (HdzxException $e) {
+                } catch (UserException $e) {
                 } 
             }   
         }

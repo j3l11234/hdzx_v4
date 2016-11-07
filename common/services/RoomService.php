@@ -10,7 +10,6 @@ namespace common\services;
 use Yii;
 use yii\base\Component;
 use yii\caching\TagDependency;
-use common\helpers\HdzxException;
 use common\helpers\Error;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
