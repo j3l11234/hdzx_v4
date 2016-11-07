@@ -129,7 +129,7 @@ class ApproveService extends Component {
             }
             $where[] = ['=', 'type', Order::TYPE_TWICE];
             if ($abs_status == static::STATUS_ABS_PENDING) {
-                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING]];
+                $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING]];
             } else if ($abs_status == static::STATUS_ABS_APPROVED) {
                 $where[] = ['in', 'status', [Order::STATUS_SCHOOL_APPROVED]];
             } else if ($abs_status == static::STATUS_ABS_REJECTED) {
