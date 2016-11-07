@@ -106,7 +106,7 @@ class ApproveController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $reqData = Yii::$app->request->get();
-        $model = new ApproveQueryForm(['scenario' => 'getApproveOrder']);
+        $model = new ApproveQueryForm(['scenario' => ApproveQueryForm::SCENARIO_GET_APPROVE_ORDER]);
         $model->load($reqData, '');
         $resData = $model->getApproveOrder();
         return $resData;

@@ -18,6 +18,7 @@ use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\User;
 use common\models\entities\OrderOperation;
+use common\models\entities\RoomTable;
 use common\services\UserService;
 use common\services\OrderService;
 
@@ -42,6 +43,22 @@ class ApproveService extends Component {
      */
     const TYPE_SCHOOL       = 03;
 
+    /**
+     * 抽象状态_待审批
+     */
+    const STATUS_ABS_PENDING    = 01;
+
+     /**
+     * 抽象状态_通过
+     */
+    const STATUS_ABS_APPROVED   = 02;
+
+    /**
+     * 抽象状态_驳回
+     */
+    const STATUS_ABS_REJECTED   = 03;
+    
+
     public static $type_string = [
         01 => '琴房',
         02 => '负责人',
@@ -59,45 +76,69 @@ class ApproveService extends Component {
      * @param String $end_date 结束时间
      * @return json
      */
-    public static function getApproveOrders($user, $type, $start_date, $end_date) {
+    public static function getApproveOrders($user, $type, $start_date, $end_date,
+        $abs_status = NULL, $room_id = NULL, $dept_id = NULL, $onlyId = FALSE) {
         //throw new UserException('没有查询权限', Error::AUTH_FAILED);
         $where = ['and'];
-        $menagerFilter = false; //负责人审批筛选
-        switch ($type) {
-            case static::TYPE_SIMPLE:
-                $where[] = ['=', 'type', Order::TYPE_SIMPLE];
-                $where[] = ['in', 'status', [Order::STATUS_SIMPLE_PENDING, Order::STATUS_SIMPLE_APPROVED, Order::STATUS_SIMPLE_REJECTED]];
-                if (!$user->checkPrivilege(User::PRIV_APPROVE_SIMPLE)) {
-                    throw new UserException('没有查询权限', Error::AUTH_FAILED);
-                }
-                break;
-            case static::TYPE_MANAGER:
-                $where[] = ['=', 'type', Order::TYPE_TWICE];
-                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED, Order::STATUS_MANAGER_REJECTED, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
-                if ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
-                } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
-                    $where[] = ['in', 'dept_id', static::queryUserDepts($user)];
-                } else {
-                    throw new UserException('没有查询权限', Error::AUTH_FAILED);
-                }
-                break;
-            case static::TYPE_SCHOOL:
-                $where[] = ['=', 'type', Order::TYPE_TWICE];
-                $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
-                if (!$user->checkPrivilege(User::PRIV_APPROVE_SCHOOL)) {
-                    throw new UserException('没有查询权限', Error::AUTH_FAILED);
-                }
-                break;
-            default:
-                throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
-                break;
-        }
-
         if ($start_date !== null){
             $where[] = ['>=', 'date', $start_date];
         }
         if ($end_date !== null){
             $where[] = ['<=', 'date', $end_date];
+        }
+        if ($room_id !== NULL) {
+            $where[] = ['in', 'room_id', $room_id];
+        }
+        if ($dept_id !== NULL) {
+            $where[] = ['in', 'dept_id', $dept_id];
+        }
+        if ($type == static::TYPE_SIMPLE) {
+            if (!$user->checkPrivilege(User::PRIV_APPROVE_SIMPLE)) {
+                throw new UserException('没有查询权限', Error::AUTH_FAILED);
+            }
+            $where[] = ['=', 'type', Order::TYPE_SIMPLE];
+            if ($abs_status == static::STATUS_ABS_PENDING) {
+                $where[] = ['in', 'status', [Order::STATUS_SIMPLE_PENDING]];
+            } else if ($abs_status == static::STATUS_ABS_APPROVED) {
+                $where[] = ['in', 'status', [Order::STATUS_SIMPLE_APPROVED]];
+            } else if ($abs_status == static::STATUS_ABS_REJECTED) {
+                $where[] = ['in', 'status', [Order::STATUS_SIMPLE_REJECTED]];
+            } else {
+                $where[] = ['in', 'status', [Order::STATUS_SIMPLE_PENDING, Order::STATUS_SIMPLE_APPROVED, Order::STATUS_SIMPLE_REJECTED]];
+            }
+        } else if ($type == static::TYPE_MANAGER) {
+            if ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
+            } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
+                $where[] = ['in', 'dept_id', static::queryUserDepts($user)];
+            } else {
+                throw new UserException('没有查询权限', Error::AUTH_FAILED);
+            }
+            $where[] = ['=', 'type', Order::TYPE_TWICE];
+            if ($abs_status == static::STATUS_ABS_PENDING) {
+                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING]];
+            } else if ($abs_status == static::STATUS_ABS_APPROVED) {
+                $where[] = ['in', 'status', [Order::STATUS_MANAGER_APPROVED, Order::STATUS_SCHOOL_APPROVED]];
+            } else if ($abs_status == static::STATUS_ABS_REJECTED) {
+                $where[] = ['in', 'status', [Order::STATUS_MANAGER_REJECTED, Order::STATUS_SCHOOL_REJECTED]];
+            } else {
+                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING, Order::STATUS_MANAGER_APPROVED, Order::STATUS_MANAGER_REJECTED, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
+            }
+        } else if ($type == static::TYPE_SCHOOL) {
+            if (!$user->checkPrivilege(User::PRIV_APPROVE_SCHOOL)) {
+                throw new UserException('没有查询权限', Error::AUTH_FAILED);
+            }
+            $where[] = ['=', 'type', Order::TYPE_TWICE];
+            if ($abs_status == static::STATUS_ABS_PENDING) {
+                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING]];
+            } else if ($abs_status == static::STATUS_ABS_APPROVED) {
+                $where[] = ['in', 'status', [Order::STATUS_SCHOOL_APPROVED]];
+            } else if ($abs_status == static::STATUS_ABS_REJECTED) {
+                $where[] = ['in', 'status', [Order::STATUS_SCHOOL_REJECTED]];
+            } else {
+                $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING, Order::STATUS_SCHOOL_APPROVED, Order::STATUS_SCHOOL_REJECTED]];
+            }
+        } else {
+            throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
         }
 
         $orders = Order::find()->select(['id'])->where($where)->asArray()->all();
@@ -249,6 +290,59 @@ class ApproveService extends Component {
         return $rejectList;
     }
 
+
+    /**
+     * 批量查询冲突申请
+     *
+     * @param Order/Array $order 申请
+     * @param int $type 查询类型
+     * @param bool $onlyId 仅仅返回id
+     * @return Array<Order>
+     */
+    public static function getConflictOrders($order_ids, $type, $useCache = TRUE, $onlyId = TRUE) {
+        $conflictOrders = [];
+        $orders = OrderService::getOrders($order_ids);
+        $dateRooms = [];
+        foreach ($orders as &$order) {
+            $dateRooms[] = $order['date'].'_'.$order['room_id'];
+        }
+        $dateRooms = array_unique($dateRooms);
+        $roomTables = RoomService::getRoomTables($dateRooms, $useCache);
+
+        if ($type == static::TYPE_SIMPLE) {
+            $filter_func = function ($order) {
+                return $order['type'] == Order::TYPE_SIMPLE && $order['status'] == Order::STATUS_SIMPLE_PENDING;
+            };
+        } else if ($type == static::TYPE_MANAGER) {
+            $filter_func = function ($order) {
+                return $order['type'] == Order::TYPE_TWICE && $order['status'] == Order::STATUS_MANAGER_PENDING;
+            };
+        } else if ($type == static::TYPE_SCHOOL) {
+            $filter_func = function ($order) {
+                return $order['type'] == Order::TYPE_TWICE && $order['status'] == Order::STATUS_SCHOOL_PENDING;
+            };
+        } else {
+            throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
+        }
+
+        foreach ($orders as $order_id => &$order) {
+            $roomTable = $roomTables[$order['date'].'_'.$order['room_id']];
+            $conflictOneOrder_ids = RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order_id]);
+            $conflictOneOrders = OrderService::getOrders($conflictOneOrder_ids, $useCache);
+            $conflictOneOrders_ = [];
+            foreach ($conflictOneOrders as $conflictOrder_id => &$conflictOrder) {
+                if ($filter_func($conflictOrder)) {
+                    $conflictOneOrders_[$conflictOrder_id] = $conflictOrder;
+                }
+            }
+            $conflictOneOrders = $conflictOneOrders_;
+            $conflictOrders[$order_id] = $onlyId ? array_keys($conflictOneOrders) : $conflictOneOrders;
+        }
+
+        return $conflictOrders;
+    }
+
+
     /**
      * 查询冲突申请
      *
@@ -257,52 +351,12 @@ class ApproveService extends Component {
      * @param bool $onlyId 仅仅返回id
      * @return Array<Order>
      */
-    public static function getConflictOrder($order, $type, $onlyId = true) {
-        if(is_array($order)) {
-            $date = $order['date'];
-            $room_id = $order['room_id'];
-        } else {
-            $date = $order->date;
-            $room_id = $order->room_id;
-        }
-
-        $roomTable = RoomService::getRoomTable($date, $room_id);
-        $hours = $order->hours;
-        $orderIds = $roomTable->getOrdered($hours);
-    
-        $where = ['and'];
-        $where[] = ['in', 'id', $orderIds];
-        $where[] = ['=', 'date', $date];
-        $where[] = ['=', 'room_id', $room_id];
-        switch ($type) {
-            case static::TYPE_SIMPLE:
-                $where[] = ['=', 'type', Order::TYPE_SIMPLE];
-                $where[] = ['in', 'status', [Order::STATUS_SIMPLE_PENDING]];
-                break;
-            case static::TYPE_MANAGER:
-                $where[] = ['=', 'type', Order::TYPE_TWICE];
-                $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING]];
-                break;
-            case static::TYPE_SCHOOL:
-                $where[] = ['=', 'type', Order::TYPE_TWICE];
-                $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING]];
-                break;
-            default:
-                throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
-                break;
-        }
-        $find = Order::find()->where($where)->orderBy('submit_time ASC');
-        if ($onlyId) {
-            $result = $find->select(['id'])->asArray()->all();
-        } else {
-            $result = $find->all();
-        }
-
-        return $result;
+    public static function getConflictOrder($order, $type, $useCache = TRUE, $onlyId = TRUE) {
+        return static::getConflictOrders([$order],$type, $useCache,$onlyId)[$order];
     }
 
 
-     /**
+    /**
      * 查询一个用户所有可审批的dept
      * 优先从缓存中查询
      *

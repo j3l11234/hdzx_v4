@@ -359,6 +359,20 @@ class OrderService extends Component {
 
 
     /**
+     * 查询预约的详细信息(带缓存)
+     * 数据会包含操作记录
+     * 优先使用缓存
+     *
+     * @param Array $order_ids order_id列表
+     * @param boolean $useCache 是否使用缓存
+     * @return Array order的Map
+     */
+    public static function getOrder($order_id, $useCache = true) {
+        return static::getOrders([$order_id], $useCache)[$order_id];
+    }
+
+
+    /**
      * 查询单个用户的预约
      * 数据会包含操作记录
      *

@@ -23,9 +23,12 @@ class ApproveQueryForm extends Model {
     public $status;
     public $room_id;
     public $dept_id;
+    public $conflict_id;
     public $per_page;
     public $cur_page;
     
+
+    const SCENARIO_GET_APPROVE_ORDER    = 'getApproveOrders';
 
     /**
      * @inheritdoc
@@ -41,7 +44,7 @@ class ApproveQueryForm extends Model {
      */
     public function scenarios() {
         $scenarios = parent::scenarios();
-        $scenarios['getApproveOrder'] = ['type', 'start_date', 'end_date', 'status', 'room_id', 'dept_id', 'per_page', 'cur_page'];
+        $scenarios[static::SCENARIO_GET_APPROVE_ORDER] = ['type', 'start_date', 'end_date', 'status', 'room_id', 'dept_id', 'conflict_id', 'per_page', 'cur_page'];
         return $scenarios;
     }
 
@@ -52,12 +55,13 @@ class ApproveQueryForm extends Model {
         return [
             [['type'], 'required'],
             [['type'], 'in', 'range' => ['auto', 'manager', 'school',]],
+            [['status'], 'in', 'range' => ['pending', 'approved', 'rejected',]],
             [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['per_page', 'cur_page'], 'number'],
         ];
     }
 
-    function getType($type) {
+    public static function getType($type) {
         switch ($type) {
             case 'auto':
                 return ApproveService::TYPE_SIMPLE;
@@ -65,6 +69,19 @@ class ApproveQueryForm extends Model {
                 return ApproveService::TYPE_MANAGER;
             case 'school':
                 return ApproveService::TYPE_SCHOOL;
+            default:
+                break;
+        }
+    }
+
+    public static function getAbsStatus($status) {
+        switch ($status) {
+            case 'pending':
+                return ApproveService::STATUS_ABS_PENDING;
+            case 'approved':
+                return ApproveService::STATUS_ABS_APPROVED;
+            case 'rejected':
+                return ApproveService::STATUS_ABS_REJECTED;
             default:
                 break;
         }
@@ -89,29 +106,39 @@ class ApproveQueryForm extends Model {
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();
-        $numType = $this->getType($this->type);
-
-        $data = ApproveService::getApproveOrders($user, $numType, date('Y-m-d', $startDateTs), date('Y-m-d', $endDateTs));
+        $data = ApproveService::getApproveOrders($user, static::getType($this->type), date('Y-m-d', $startDateTs), date('Y-m-d', $endDateTs), static::getAbsStatus($this->status), $this->room_id, $this->dept_id);
         $orders = $data['orders'];
         $orderList = $data['orderList'];
 
         //解析roomTable，用于分析冲突
-        $dateRooms = [];
-        foreach ($orders as $order_id => $order) {
-            $dateRooms[] = $order['date'].'_'.$order['room_id'];
+        $conflictOrders = ApproveService::getConflictOrders($orderList, static::getType($this->type));
+        foreach ($orders as $order_id => &$order) {
+            $order['conflict'] = $conflictOrders[$order_id];
         }
-        $roomTables = RoomService::getRoomTables($dateRooms);
-        foreach ($roomTables as $dateRoom => &$roomTable) {
-            unset($roomTable['id']);
-            unset($roomTable['locked']);
-            unset($roomTable['hourTable']);
-            unset($roomTable['chksum']);
+
+        //只显示冲突申请
+        if (!empty($this->conflict_id)) {
+            $conflict_id = $this->conflict_id;
+            $orders_ = [];
+            $orderList_ = [];
+            if(isset($orders[$conflict_id])) {
+                $orders_[$conflict_id] = $orders[$conflict_id];
+                $orderList_[] = $conflict_id;
+                foreach ($conflictOrders[$conflict_id] as $order_id) {
+                    if(!isset($orders[$order_id])) {
+                        continue;
+                    }
+                    $orders_[$order_id] = $orders[$order_id];
+                    $orderList_[] = (string)$order_id;
+                }
+            }
+            $orders = $orders_;
+            $orderList = $orderList_;
         }
 
         $data = [
             'orders' => $orders,
             'orderList' => $orderList,
-            'roomTables' => $roomTables,
             'start_date' => date('Y-m-d', $startDateTs),
             'end_date' => date('Y-m-d', $endDateTs),
         ];
