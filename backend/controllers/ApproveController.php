@@ -29,14 +29,14 @@ class ApproveController extends Controller
                 'class' => AccessControl::className(),
                 'only' => [
                     'approve-auto-page', 'approve-manager-page', 'approve-school-page',
-                    'getorders', 'getdepts', 'approveorder', 'rejectorder', 'revokeorder',
+                    'getorders', 'getconflictorders', 'approveorder', 'rejectorder', 'revokeorder',
                 ],
                 'rules' => [
                     [
                         'class' => PrivilegeRule::className(),
                         'actions' => [
                             'approve-auto-page', 'approve-manager-page', 'approve-school-page',
-                            'getorders', 'getdepts', 'approveorder', 'rejectorder', 'revokeorder',
+                            'getorders', 'getconflictorders', 'approveorder', 'rejectorder', 'revokeorder',
                         ],
                         'roles' => ['@'],
                         'allow' => true,
@@ -98,7 +98,7 @@ class ApproveController extends Controller
     }
 
     /**
-     * 查询审批的预约
+     * 查询审批的申请
      *
      * @return mixed
      */
@@ -112,6 +112,23 @@ class ApproveController extends Controller
         return $resData;
     }
 
+
+    /**
+     * 查询与单个申请相冲突的申请
+     *
+     * @return mixed
+     */
+    public function actionGetconflictorders() {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $reqData = Yii::$app->request->get();
+        $model = new ApproveQueryForm(['scenario' => ApproveQueryForm::SCENARIO_GET_CONFLICT_ORDER]);
+        $model->load($reqData, '');
+        $resData = $model->getConflictOrder();
+        return $resData;
+    }
+
+    
     /**
      * 审批预约
      *

@@ -12,6 +12,7 @@ use common\models\entities\Room;
 use common\models\entities\RoomTable;
 use common\services\RoomService;
 use common\services\ApproveService;
+use common\services\OrderService;
 
 /**
  * ApproveQuery form
@@ -29,6 +30,7 @@ class ApproveQueryForm extends Model {
     
 
     const SCENARIO_GET_APPROVE_ORDER    = 'getApproveOrders';
+    const SCENARIO_GET_CONFLICT_ORDER   = 'getConflictOrders';
 
     /**
      * @inheritdoc
@@ -45,6 +47,7 @@ class ApproveQueryForm extends Model {
     public function scenarios() {
         $scenarios = parent::scenarios();
         $scenarios[static::SCENARIO_GET_APPROVE_ORDER] = ['type', 'start_date', 'end_date', 'status', 'room_id', 'dept_id', 'conflict_id', 'per_page', 'cur_page'];
+        $scenarios[static::SCENARIO_GET_CONFLICT_ORDER] = ['type', 'conflict_id', 'per_page', 'cur_page'];
         return $scenarios;
     }
 
@@ -57,6 +60,7 @@ class ApproveQueryForm extends Model {
             [['type'], 'in', 'range' => ['auto', 'manager', 'school',]],
             [['status'], 'in', 'range' => ['pending', 'approved', 'rejected',]],
             [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
+            [['conflict_id'], 'required', 'on' => [static::SCENARIO_GET_CONFLICT_ORDER]],
             [['per_page', 'cur_page'], 'number'],
         ];
     }
@@ -88,7 +92,7 @@ class ApproveQueryForm extends Model {
     }
 
     /**
-     * 查询可以审批的预约
+     * 查询可以审批的申请
      *
      * @return null
      */
@@ -106,43 +110,85 @@ class ApproveQueryForm extends Model {
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();
-        $data = ApproveService::getApproveOrders($user, static::getType($this->type), date('Y-m-d', $startDateTs), date('Y-m-d', $endDateTs), static::getAbsStatus($this->status), $this->room_id, $this->dept_id);
+        $term = [
+            'start_date' => date('Y-m-d', $startDateTs),
+            'end_date' => date('Y-m-d', $endDateTs),
+            'abs_status' => static::getAbsStatus($this->status),
+            'room_id' => $this->room_id,
+            'dept_id' => $this->dept_id,
+        ];
+        $data = ApproveService::getApproveOrders($user, static::getType($this->type), $term);
         $orders = $data['orders'];
         $orderList = $data['orderList'];
 
-        //解析roomTable，用于分析冲突
-        Yii::beginProfile('分析冲突');
-        $conflictOrders = ApproveService::getConflictOrders_batch($orderList, $user, static::getType($this->type));
+        //如果涉及了dept_id筛选，则需去掉此条件在搜索一次，用于分析冲突
+        if (!empty($this->dept_id)) {
+            unset($term['dept_id']);
+            $orderList_all = ApproveService::getApproveOrders($user, static::getType($this->type), $term, TRUE);
+        } else {
+            $orderList_all = $orderList;
+        }
+
+        //分析冲突
+        Yii::beginProfile('分析冲突');  
+        $conflictOrders = ApproveService::getConflictOrders_batch($orderList, $orderList_all  );
         foreach ($orders as $order_id => &$order) {
             $order['conflict'] = $conflictOrders[$order_id];
         }
         Yii::endProfile('分析冲突');
-
-        //只显示冲突申请
-        if (!empty($this->conflict_id)) {
-            $conflict_id = $this->conflict_id;
-            $orders_ = [];
-            $orderList_ = [];
-            if(isset($orders[$conflict_id])) {
-                $orders_[$conflict_id] = $orders[$conflict_id];
-                $orderList_[] = $conflict_id;
-                foreach ($conflictOrders[$conflict_id] as $order_id) {
-                    if(!isset($orders[$order_id])) {
-                        continue;
-                    }
-                    $orders_[$order_id] = $orders[$order_id];
-                    $orderList_[] = (string)$order_id;
-                }
-            }
-            $orders = $orders_;
-            $orderList = $orderList_;
-        }
 
         $data = [
             'orders' => $orders,
             'orderList' => $orderList,
             'start_date' => date('Y-m-d', $startDateTs),
             'end_date' => date('Y-m-d', $endDateTs),
+        ];
+        return $data;
+    }
+
+    /**
+     * 查询冲突申请
+     *
+     * @return null
+     */
+    public function getConflictOrder() {
+        if (!$this->validate()) {
+            throw new UserException($this->getErrorMessage());
+        }
+        
+        $order = OrderService::getOrder($this->conflict_id);
+        if(empty($order)){
+            throw new UserException('申请不存在');
+        }
+        
+        //查找所有相关申请，用于分析冲突
+        $user = Yii::$app->user->getIdentity()->getUser();
+        $term = [
+            'start_date' => $order['date'],
+            'end_date' => $order['date'],
+            'abs_status' => ApproveService::STATUS_ABS_PENDING,
+            'room_id' => $order['room_id'],
+        ];
+        $order_ids = ApproveService::getApproveOrders($user, static::getType($this->type), $term, TRUE);
+
+        //获取相关申请的详细信息
+        $orders = OrderService::getOrders($order_ids);
+        array_unshift($order_ids, $this->conflict_id);
+        $order_ids = array_unique($order_ids);
+        
+        //分析冲突
+        Yii::beginProfile('分析冲突');  
+        $conflictOrders = ApproveService::getConflictOrders_batch($order_ids, $order_ids);
+        foreach ($orders as $order_id => &$order) {
+            if (isset($conflictOrders[$order_id])){
+                $order['conflict'] = $conflictOrders[$order_id];
+            } 
+        }
+        Yii::endProfile('分析冲突');
+
+        $data = [
+            'orders' => $orders,
+            'orderList' => $order_ids,
         ];
         return $data;
     }

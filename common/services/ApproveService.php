@@ -71,31 +71,28 @@ class ApproveService extends Component {
      *
      * @param User $user 用户
      * @param int $type 审批类型
-     * @param String $start_date 开始时间
-     * @param String $end_date 结束时间
-     * @return json
+     * @param mixed $term 查询条件[]$start_date 开始时间
+     * @param bool $onlyId 仅返回id
+     * @return mixed
+     * ```php
+     * $term = [
+     *     'start_date' => [开始日期],
+     *     'end_date' => [结束日期],
+     *     'abs_status' => [抽象状态],
+     *     'room_id' => [房间id],
+     *     'dept_id' => [部门id],
+     * ]
+     * ```  
      */
-    public static function getApproveOrders($user, $type, $start_date, $end_date,
-        $abs_status = NULL, $room_id = NULL, $dept_id = NULL, $onlyId = FALSE) {
-        //throw new UserException('没有查询权限', Error::AUTH_FAILED);
+    public static function getApproveOrders($user, $type, $term, $onlyId = FALSE) {
         $where = ['and'];
-        if ($start_date !== null){
-            $where[] = ['>=', 'date', $start_date];
-        }
-        if ($end_date !== null){
-            $where[] = ['<=', 'date', $end_date];
-        }
-        if ($room_id !== NULL) {
-            $where[] = ['in', 'room_id', $room_id];
-        }
-        if ($dept_id !== NULL) {
-            $where[] = ['in', 'dept_id', $dept_id];
-        }
+
         if ($type == static::TYPE_SIMPLE) {
             if (!$user->checkPrivilege(User::PRIV_APPROVE_SIMPLE)) {
                 throw new UserException('没有查询权限', Error::AUTH_FAILED);
             }
             $where[] = ['=', 'type', Order::TYPE_SIMPLE];
+            $abs_status = !empty($term['abs_status']) ? $term['abs_status'] : NULL;
             if ($abs_status == static::STATUS_ABS_PENDING) {
                 $where[] = ['in', 'status', [Order::STATUS_SIMPLE_PENDING]];
             } else if ($abs_status == static::STATUS_ABS_APPROVED) {
@@ -113,6 +110,7 @@ class ApproveService extends Component {
                 throw new UserException('没有查询权限', Error::AUTH_FAILED);
             }
             $where[] = ['=', 'type', Order::TYPE_TWICE];
+            $abs_status = !empty($term['abs_status']) ? $term['abs_status'] : NULL;
             if ($abs_status == static::STATUS_ABS_PENDING) {
                 $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING]];
             } else if ($abs_status == static::STATUS_ABS_APPROVED) {
@@ -127,6 +125,7 @@ class ApproveService extends Component {
                 throw new UserException('没有查询权限', Error::AUTH_FAILED);
             }
             $where[] = ['=', 'type', Order::TYPE_TWICE];
+            $abs_status = !empty($term['abs_status']) ? $term['abs_status'] : NULL;
             if ($abs_status == static::STATUS_ABS_PENDING) {
                 $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING]];
             } else if ($abs_status == static::STATUS_ABS_APPROVED) {
@@ -140,8 +139,25 @@ class ApproveService extends Component {
             throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
         }
 
+        if (!empty($term['start_date'])){
+            $where[] = ['>=', 'date', $term['start_date']];
+        }
+        if (!empty($term['end_date'])){
+            $where[] = ['<=', 'date', $term['end_date']];
+        }
+        if (!empty($term['room_id'])){
+            $where[] = ['in', 'room_id', $term['room_id']];
+        }
+        if (!empty($term['dept_id'])){
+            $where[] = ['in', 'dept_id', $term['dept_id']];
+        }
+
         $orders = Order::find()->select(['id'])->where($where)->asArray()->all();
         $order_ids = array_column($orders, 'id');
+        if ($onlyId) {
+            return $order_ids;
+        }
+        
         $orders = OrderService::getOrders($order_ids);
 
         $data = [
@@ -287,68 +303,105 @@ class ApproveService extends Component {
         return $rejectList;
     }
 
-
     /**
      * 批量查询冲突申请
      *
-     * @param Order/Array $order 申请
-     * @param int $type 查询类型
-     * @param bool $onlyId 仅仅返回id
-     * @return Array<Order>
+     * @param array $order_ids order_id数组
+     * @param array $include_ids 限制范围，如不为空，则只会从include_ids里面查找冲突申请
+     * @param boolean $useCache 是否使用缓存
+     * @return array 冲突id数组的map
      */
-    public static function getConflictOrders_batch($order_ids, $user, $type, $useCache = TRUE, $onlyId = TRUE) {
-        $conflictOrders_batch = [];
+    public static function getConflictOrders_batch($order_ids, $include_ids, $useCache = TRUE) {
+        $conflictOrders_map = [];
         $orders = OrderService::getOrders($order_ids, $useCache);
         $dateRooms = [];
         foreach ($orders as &$order) {
             $dateRooms[] = $order['date'].'_'.$order['room_id'];
         }
-        $dateRooms = array_unique($dateRooms);
         $roomTables = RoomService::getRoomTables($dateRooms, $useCache);
 
-        if ($type == static::TYPE_SIMPLE) {
-            $filter_func = function ($order) {
-                return $order['type'] == Order::TYPE_SIMPLE && $order['status'] == Order::STATUS_SIMPLE_PENDING;
-            };
-        } else if ($type == static::TYPE_MANAGER) {
-            $manage_depts = static::queryUserDepts($user);
-            $filter_func = function ($order) use ($manage_depts) {
-                return $order['type'] == Order::TYPE_TWICE &&
-                    $order['status'] == Order::STATUS_MANAGER_PENDING &&
-                    in_array($order['dept_id'], $manage_depts);
-            };
-        } else if ($type == static::TYPE_SCHOOL) {
-            $filter_func = function ($order) {
-                return $order['type'] == Order::TYPE_TWICE && $order['status'] == Order::STATUS_SCHOOL_PENDING;
-            };
-        } else {
-            throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
-        }
-
-        $allConflictOrder_ids = [];
-        $conflictOrder_ids_map = [];
-        foreach ($orders as $order_id => &$order) {
+        foreach ($orders as $order_id => $order) {
             $roomTable = $roomTables[$order['date'].'_'.$order['room_id']];
             $conflictOrder_ids = RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order_id]);
-            $allConflictOrder_ids = array_merge($allConflictOrder_ids, $conflictOrder_ids);
-            $conflictOrder_ids_map[$order_id] = $conflictOrder_ids;
-        }
-        $allConflictOrders = OrderService::getOrders($allConflictOrder_ids, $useCache);
-
-        foreach ($orders as $order_id => &$order) {
-            $conflictOrder_ids = $conflictOrder_ids_map[$order_id];
-            $conflictOrders = [];
-            foreach ($conflictOrder_ids as $conflictOrder_id) {
-                $conflictOrder = $allConflictOrders[$conflictOrder_id];
-                if ($filter_func($conflictOrder)) {
-                    $conflictOrders[$conflictOrder_id] = $conflictOrder;
-                }
+            if ($include_ids !== NULL) {
+                $conflictOrder_ids = array_values(array_intersect($conflictOrder_ids, $include_ids));
             }
-            $conflictOrders_batch[$order_id] = $onlyId ? array_keys($conflictOrders) : $conflictOrders;
+            $conflictOrders_map[$order_id] = $conflictOrder_ids;
         }
-
-        return $conflictOrders_batch;
+        return $conflictOrders_map;
     }
+
+    // /**
+    //  * 批量查询冲突申请
+    //  *
+    //  * @param Order/Array $order 申请
+    //  * @param int $type 查询类型
+    //  * @param bool $onlyId 仅返回id
+    //  * @return Array<Order>
+    //  */
+    // public static function getConflictOrders_batch($order_ids, $user, $type, $useCache = TRUE, $onlyId = TRUE) {
+    //     $conflictOrders_batch = [];
+    //     $orders = OrderService::getOrders($order_ids, $useCache);
+    //     $dateRooms = [];
+    //     foreach ($orders as &$order) {
+    //         $dateRooms[] = $order['date'].'_'.$order['room_id'];
+    //     }
+    //     $dateRooms = array_unique($dateRooms);
+    //     $roomTables = RoomService::getRoomTables($dateRooms, $useCache);
+
+    //     if ($type == static::TYPE_SIMPLE) {
+    //         $filter_func = function ($order) {
+    //             return $order['type'] == Order::TYPE_SIMPLE && $order['status'] == Order::STATUS_SIMPLE_PENDING;
+    //         };
+    //     } else if ($type == static::TYPE_MANAGER) {
+    //         $manage_depts = static::queryUserDepts($user);
+    //         $filter_func = function ($order) use ($manage_depts) {
+    //             return $order['type'] == Order::TYPE_TWICE &&
+    //                 $order['status'] == Order::STATUS_MANAGER_PENDING &&
+
+
+    //                 if ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
+    //         } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
+    //             $where[] = ['in', 'dept_id', static::queryUserDepts($user)];
+    //         } else {
+    //             throw new UserException('没有查询权限', Error::AUTH_FAILED);
+    //         }
+
+
+    //                 in_array($order['dept_id'], $manage_depts);
+    //         };
+    //     } else if ($type == static::TYPE_SCHOOL) {
+    //         $filter_func = function ($order) {
+    //             return $order['type'] == Order::TYPE_TWICE && $order['status'] == Order::STATUS_SCHOOL_PENDING;
+    //         };
+    //     } else {
+    //         throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
+    //     }
+
+    //     $allConflictOrder_ids = [];
+    //     $conflictOrder_ids_map = [];
+    //     foreach ($orders as $order_id => &$order) {
+    //         $roomTable = $roomTables[$order['date'].'_'.$order['room_id']];
+    //         $conflictOrder_ids = RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order_id]);
+    //         $allConflictOrder_ids = array_merge($allConflictOrder_ids, $conflictOrder_ids);
+    //         $conflictOrder_ids_map[$order_id] = $conflictOrder_ids;
+    //     }
+    //     $allConflictOrders = OrderService::getOrders($allConflictOrder_ids, $useCache);
+
+    //     foreach ($orders as $order_id => &$order) {
+    //         $conflictOrder_ids = $conflictOrder_ids_map[$order_id];
+    //         $conflictOrders = [];
+    //         foreach ($conflictOrder_ids as $conflictOrder_id) {
+    //             $conflictOrder = $allConflictOrders[$conflictOrder_id];
+    //             if ($filter_func($conflictOrder)) {
+    //                 $conflictOrders[$conflictOrder_id] = $conflictOrder;
+    //             }
+    //         }
+    //         $conflictOrders_batch[$order_id] = $onlyId ? array_keys($conflictOrders) : $conflictOrders;
+    //     }
+
+    //     return $conflictOrders_batch;
+    // }
 
 
     /**
@@ -378,22 +431,8 @@ class ApproveService extends Component {
         if ($data == null) {
             Yii::trace($cacheKey.':缓存失效', '数据缓存'); 
             $data = [];
-            $result = Department::find()
-                ->where(['status' => Department::STATUS_ENABLE])
-                ->select(['id', 'name', 'parent_id',])
-                ->asArray()
-                ->all();
-
-            $deptMap = [];
-            $depts = [];
-            foreach ($result as $key => $dept) {
-                if(!isset($deptMap[$dept['parent_id']])){
-                    $deptMap[$dept['parent_id']] = [];
-                }
-                $deptMap[$dept['parent_id']][] = $dept['id'];
-                $depts[$dept['id']] = $dept;
-            }
-
+            $deptMap = OrderService::queryDeptList()['deptMap'];
+ 
             $cascadeDepts = array_merge($user->manage_depts);
             for ($i=0; $i < count($cascadeDepts); $i++) { 
                 if (!isset($deptMap[$cascadeDepts[$i]])){

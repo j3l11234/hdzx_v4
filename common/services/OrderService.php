@@ -368,7 +368,9 @@ class OrderService extends Component {
      * @return Array order的Map
      */
     public static function getOrder($order_id, $useCache = true) {
-        return static::getOrders([$order_id], $useCache)[$order_id];
+        $orders = static::getOrders([$order_id], $useCache);
+
+        return isset($orders[$order_id]) ? $orders[$order_id] : NULL;
     }
 
 
