@@ -306,28 +306,39 @@ class ApproveService extends Component {
     /**
      * 批量查询冲突申请
      *
-     * @param array $order_ids order_id数组
+     * @param array $order_ids order的Map或List
      * @param array $include_ids 限制范围，如不为空，则只会从include_ids里面查找冲突申请
      * @param boolean $useCache 是否使用缓存
      * @return array 冲突id数组的map
      */
-    public static function getConflictOrders_batch($order_ids, $include_ids, $useCache = TRUE) {
+    public static function getConflictOrders_batch($orders, $include_ids, $useCache = TRUE) {
         $conflictOrders_map = [];
-        $orders = OrderService::getOrders($order_ids, $useCache);
-        $dateRooms = [];
-        foreach ($orders as &$order) {
-            $dateRooms[] = $order['date'].'_'.$order['room_id'];
+        $dateRoom_map = [];
+        
+        if (current($orders) instanceof Order) {
+            $orders_ = [];
+            foreach ($orders as $order_id => $order) {
+                $order_ = $order->toArray();
+                $orders_[$order_id] = $order_;
+                $dateRoom_map[$order_id] = $order->date.'_'.$order->room_id;
+            }
+            $orders = $orders_;
+        } else {
+            foreach ($orders as $order_id => $order) {
+                $dateRoom_map[$order_id] = $order['date'].'_'.$order['room_id'];
+            }
         }
-        $roomTables = RoomService::getRoomTables($dateRooms, $useCache);
+        $roomTables = RoomService::getRoomTables($dateRoom_map, $useCache);
 
         foreach ($orders as $order_id => $order) {
-            $roomTable = $roomTables[$order['date'].'_'.$order['room_id']];
+            $roomTable = $roomTables[$dateRoom_map[$order_id]];
             $conflictOrder_ids = RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order_id]);
             if ($include_ids !== NULL) {
                 $conflictOrder_ids = array_values(array_intersect($conflictOrder_ids, $include_ids));
             }
             $conflictOrders_map[$order_id] = $conflictOrder_ids;
         }
+        
         return $conflictOrders_map;
     }
 
@@ -412,7 +423,7 @@ class ApproveService extends Component {
      * @param bool $onlyId 仅仅返回id
      * @return Array<Order>
      */
-    public static function getConflictOrder($order_id, $user, $type, $useCache = TRUE, $onlyId = TRUE) {
+    public static function getConflictOrder($order, $user, $type, $useCache = TRUE, $onlyId = TRUE) {
         return static::getConflictOrders_batch([$order_id], $user, $type, $useCache,$onlyId)[$order_id];
     }
 

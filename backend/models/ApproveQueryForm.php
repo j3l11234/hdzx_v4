@@ -96,23 +96,24 @@ class ApproveQueryForm extends Model {
      *
      * @return null
      */
-    public function getApproveOrder() {
+    public function getApproveOrders() {
         if (!$this->validate()) {
             throw new UserException($this->getErrorMessage());
         }
         
-        $defaultDateRange = RoomService::getSumDateRange();
-        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
-        $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
+        if (empty($this->start_date)) {
+            $this->start_date = date('Y-m-d');
+        }
 
-        if ($endDateTs - $startDateTs > 3 * 31 * 86400) {
+        if (!empty($this->end_date)
+            && strtotime($this->end_date) - strtotime($this->start_date) > 3 * 31 * 86400) {
             throw new UserException('查询日期间隔不能大于3个月');
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();
         $term = [
-            'start_date' => date('Y-m-d', $startDateTs),
-            'end_date' => date('Y-m-d', $endDateTs),
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
             'abs_status' => static::getAbsStatus($this->status),
             'room_id' => $this->room_id,
             'dept_id' => $this->dept_id,
@@ -131,17 +132,16 @@ class ApproveQueryForm extends Model {
 
         //分析冲突
         Yii::beginProfile('分析冲突');  
-        $conflictOrders = ApproveService::getConflictOrders_batch($orderList, $orderList_all  );
+        $conflictOrders = ApproveService::getConflictOrders_batch($orders, $orderList_all  );
         foreach ($orders as $order_id => &$order) {
             $order['conflict'] = $conflictOrders[$order_id];
         }
+        unset($order);
         Yii::endProfile('分析冲突');
 
         $data = [
             'orders' => $orders,
             'orderList' => $orderList,
-            'start_date' => date('Y-m-d', $startDateTs),
-            'end_date' => date('Y-m-d', $endDateTs),
         ];
         return $data;
     }
@@ -151,7 +151,7 @@ class ApproveQueryForm extends Model {
      *
      * @return null
      */
-    public function getConflictOrder() {
+    public function getConflictOrders() {
         if (!$this->validate()) {
             throw new UserException($this->getErrorMessage());
         }
@@ -173,12 +173,14 @@ class ApproveQueryForm extends Model {
 
         //获取相关申请的详细信息
         $orders = OrderService::getOrders($order_ids);
-        array_unshift($order_ids, $this->conflict_id);
-        $order_ids = array_unique($order_ids);
-        
+        if (in_array($this->conflict_id, $order_ids) && $order_ids[0] != $this->conflict_id){
+            array_unshift($order_ids, $this->conflict_id);
+            $order_ids = array_values(array_unique($order_ids));
+        }     
+
         //分析冲突
         Yii::beginProfile('分析冲突');  
-        $conflictOrders = ApproveService::getConflictOrders_batch($order_ids, $order_ids);
+        $conflictOrders = ApproveService::getConflictOrders_batch($orders, $order_ids);
         foreach ($orders as $order_id => &$order) {
             if (isset($conflictOrders[$order_id])){
                 $order['conflict'] = $conflictOrders[$order_id];

@@ -108,7 +108,7 @@ class ApproveController extends Controller
         $reqData = Yii::$app->request->get();
         $model = new ApproveQueryForm(['scenario' => ApproveQueryForm::SCENARIO_GET_APPROVE_ORDER]);
         $model->load($reqData, '');
-        $resData = $model->getApproveOrder();
+        $resData = $model->getApproveOrders();
         return $resData;
     }
 
@@ -124,7 +124,7 @@ class ApproveController extends Controller
         $reqData = Yii::$app->request->get();
         $model = new ApproveQueryForm(['scenario' => ApproveQueryForm::SCENARIO_GET_CONFLICT_ORDER]);
         $model->load($reqData, '');
-        $resData = $model->getConflictOrder();
+        $resData = $model->getConflictOrders();
         return $resData;
     }
 
