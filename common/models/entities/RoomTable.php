@@ -64,7 +64,7 @@ class RoomTable extends ActiveRecord {
                 'updatedAtAttribute' => 'updated_at',
             ],[
                 'class' => JsonBehavior::className(),
-                'attributes' => ['ordered', 'used', 'locked'],
+                'attributes' => ['ordered', 'used', 'rejected', 'locked'],
             ],
         ];
     }
@@ -75,7 +75,7 @@ class RoomTable extends ActiveRecord {
     public function rules()
     {
         return [
-            [['id', 'date', 'room_id', 'ordered', 'used', 'locked'], 'safe'],
+            [['id', 'date', 'room_id', 'ordered', 'used', 'rejected', 'locked'], 'safe'],
         ];
     }
 
@@ -238,6 +238,38 @@ class RoomTable extends ActiveRecord {
      */
     public function getUsed($hours = null) {
         return self::getTable($this->used, $hours);
+    }
+
+    /**
+     * 增加一个id到rejected表
+     *
+     * @param integer $id 插入的id
+     * @param array $hours 插入的小时数组
+     * @return null
+     */
+    public function addRejected($id, $hours) {
+        $this->rejected = self::addTable($this->rejected, $id, $hours);
+    }
+
+    /**
+     * 从rejected表移除一个id
+     *
+     * @param integer $id 插入的id
+     * @return null
+     */
+    public function removeRejected($id) {
+        $this->rejected = self::removeTable($this->rejected, $id);
+    }
+
+    /**
+     * 从rejected读取一个时段数据
+     * @param array $hours 查找的小时数组 为null则为全部
+     * [1,2,3]
+     * 
+     * @return array
+     */
+    public function getRejected($hours = null) {
+        return self::getTable($this->rejected, $hours);
     }
 
     /**

@@ -98,6 +98,10 @@ class Order extends ActiveRecord {
      */
     const ROOMTABLE_USED = 02;
     /**
+     * 房间锁状态 拒绝
+     */
+    const ROOMTABLE_REJECTED = 03;
+    /**
      * 房间锁状态 失效
      */
     const ROOMTABLE_NONE = 00;
@@ -189,14 +193,7 @@ class Order extends ActiveRecord {
      */
     public static function getRoomTableStatus($status) {
         $roomTableStatus = self::ROOMTABLE_NONE;
-        if ($status == self::STATUS_INIT ||
-            $status == self::STATUS_CANCELED ||
-            $status == self::STATUS_MANAGER_REJECTED ||
-            $status == self::STATUS_SCHOOL_REJECTED ||
-            $status == self::STATUS_SIMPLE_REJECTED ) {
-
-            $roomTableStatus = self::ROOMTABLE_NONE;
-        } else if ($status == self::STATUS_MANAGER_PENDING ||
+        if ($status == self::STATUS_MANAGER_PENDING ||
             $status == self::STATUS_MANAGER_APPROVED ||
             $status == self::STATUS_SCHOOL_PENDING ||
             $status == self::STATUS_SIMPLE_PENDING ) {
@@ -207,7 +204,12 @@ class Order extends ActiveRecord {
             $status == self::STATUS_SIMPLE_APPROVED) {
 
             $roomTableStatus = self::ROOMTABLE_USED;
+        } else if ($status == self::STATUS_MANAGER_REJECTED ||
+            $status == self::STATUS_SCHOOL_REJECTED ||
+            $status == self::STATUS_SIMPLE_REJECTED) {
+            $roomTableStatus = self::ROOMTABLE_REJECTED;
         }
+        
         return $roomTableStatus;
     }
 }

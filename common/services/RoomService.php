@@ -243,10 +243,11 @@ class RoomService extends Component {
             //从数据库获取剩余数据
             foreach (RoomTable::find()
                 ->where(['in', 'id', $cacheMisses])
-                ->select(['id', 'ordered', 'used', 'locked'])
+                ->select(['id', 'ordered', 'used', 'rejected', 'locked'])
                 ->asArray()->each(100) as $roomTable) {
                 $roomTable['ordered'] = json_decode($roomTable['ordered'], true);
                 $roomTable['used'] = json_decode($roomTable['used'], true);
+                $roomTable['rejected'] = json_decode($roomTable['rejected'], true);
                 $roomTable['locked'] = json_decode($roomTable['locked'], true);
                 $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked']);
                 $roomTable['chksum'] = substr(md5(json_encode($roomTable)), 0, 6);
@@ -331,6 +332,7 @@ class RoomService extends Component {
                 //应用申请
                 $roomTable['ordered'] = $orderTables[$dateRoom]['ordered'];
                 $roomTable['used'] = $orderTables[$dateRoom]['used'];
+                $roomTable['rejected'] = $orderTables[$dateRoom]['rejected'];
             };
 
             
@@ -343,6 +345,7 @@ class RoomService extends Component {
                 'id'        => $dateRoom,
                 'ordered'   => $roomTable['ordered'],
                 'used'      => $roomTable['used'],
+                'rejected'    => $roomTable['rejected'],
                 'locked'    => $roomTable['locked'],
             ];
 
@@ -352,6 +355,7 @@ class RoomService extends Component {
                 $roomTable['room_id'],
                 json_encode($roomTable['ordered']),
                 json_encode($roomTable['used']),
+                json_encode($roomTable['rejected']),
                 json_encode($roomTable['locked']),
                 time(), //created_at
                 time(), //updated_at
@@ -362,10 +366,10 @@ class RoomService extends Component {
         $rows_chunks = array_chunk($roomTableRows, 100);
         foreach ($rows_chunks as $rows_chunk) {
             $sql = Yii::$app->db->getQueryBuilder()->batchInsert(RoomTable::tableName(), 
-                ['id', 'date', 'room_id', 'ordered', 'used', 'locked', 'created_at','updated_at'],
+                ['id', 'date', 'room_id', 'ordered', 'used', 'rejected', 'locked', 'created_at','updated_at'],
                 $rows_chunk);
             //如果存在重复值，会进行更新
-            Yii::$app->db->createCommand($sql.' ON DUPLICATE KEY UPDATE `ordered`=VALUES(`ordered`), `used`=VALUES(`used`), `locked`=VALUES(`locked`), `updated_at`=VALUES(`updated_at`)')->execute();
+            Yii::$app->db->createCommand($sql.' ON DUPLICATE KEY UPDATE `ordered`=VALUES(`ordered`), `used`=VALUES(`used`), `rejected`=VALUES(`rejected`), `locked`=VALUES(`locked`), `updated_at`=VALUES(`updated_at`)')->execute();
         }
         return $roomTables;
     }

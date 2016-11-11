@@ -287,7 +287,8 @@ class ApproveService extends Component {
     public static function rejectConflictOrder($order, $user, $type, $comment = '冲突自动驳回') {
         $rejectList = [];
 
-        $conflictOrder_ids = static::getConflictOrder($order['id'], $user, $type, false);
+        $order_ = $order->toArray();
+        $conflictOrder_ids = static::getConflictOrders($order_, NULL, FALSE);
         foreach ($conflictOrder_ids as $conflictOrder_id) {
             try {
                 $conflictOrder = Order::findOne($conflictOrder_id);
@@ -315,104 +316,25 @@ class ApproveService extends Component {
         $conflictOrders_map = [];
         $dateRoom_map = [];
         
-        if (current($orders) instanceof Order) {
-            $orders_ = [];
-            foreach ($orders as $order_id => $order) {
-                $order_ = $order->toArray();
-                $orders_[$order_id] = $order_;
-                $dateRoom_map[$order_id] = $order->date.'_'.$order->room_id;
-            }
-            $orders = $orders_;
-        } else {
-            foreach ($orders as $order_id => $order) {
-                $dateRoom_map[$order_id] = $order['date'].'_'.$order['room_id'];
-            }
+      
+        foreach ($orders as $index => $order) {
+            $dateRoom_map[$index] = $order['date'].'_'.$order['room_id'];
         }
         $roomTables = RoomService::getRoomTables($dateRoom_map, $useCache);
 
-        foreach ($orders as $order_id => $order) {
-            $roomTable = $roomTables[$dateRoom_map[$order_id]];
-            $conflictOrder_ids = RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order_id]);
+        foreach ($orders as $index => $order) {
+            $roomTable = $roomTables[$dateRoom_map[$index]];
+            $conflictOrder_ids = array_merge(
+                RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order['id']]),
+                RoomTable::getTable($roomTable['used'], $order['hours'], [$order['id']]),
+                RoomTable::getTable($roomTable['rejected'], $order['hours'], [$order['id']]));
             if ($include_ids !== NULL) {
                 $conflictOrder_ids = array_values(array_intersect($conflictOrder_ids, $include_ids));
             }
-            $conflictOrders_map[$order_id] = $conflictOrder_ids;
+            $conflictOrders_map[$index] = $conflictOrder_ids;
         }
-        
         return $conflictOrders_map;
     }
-
-    // /**
-    //  * 批量查询冲突申请
-    //  *
-    //  * @param Order/Array $order 申请
-    //  * @param int $type 查询类型
-    //  * @param bool $onlyId 仅返回id
-    //  * @return Array<Order>
-    //  */
-    // public static function getConflictOrders_batch($order_ids, $user, $type, $useCache = TRUE, $onlyId = TRUE) {
-    //     $conflictOrders_batch = [];
-    //     $orders = OrderService::getOrders($order_ids, $useCache);
-    //     $dateRooms = [];
-    //     foreach ($orders as &$order) {
-    //         $dateRooms[] = $order['date'].'_'.$order['room_id'];
-    //     }
-    //     $dateRooms = array_unique($dateRooms);
-    //     $roomTables = RoomService::getRoomTables($dateRooms, $useCache);
-
-    //     if ($type == static::TYPE_SIMPLE) {
-    //         $filter_func = function ($order) {
-    //             return $order['type'] == Order::TYPE_SIMPLE && $order['status'] == Order::STATUS_SIMPLE_PENDING;
-    //         };
-    //     } else if ($type == static::TYPE_MANAGER) {
-    //         $manage_depts = static::queryUserDepts($user);
-    //         $filter_func = function ($order) use ($manage_depts) {
-    //             return $order['type'] == Order::TYPE_TWICE &&
-    //                 $order['status'] == Order::STATUS_MANAGER_PENDING &&
-
-
-    //                 if ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_ALL)) {
-    //         } elseif ($user->checkPrivilege(User::PRIV_APPROVE_MANAGER_DEPT)){
-    //             $where[] = ['in', 'dept_id', static::queryUserDepts($user)];
-    //         } else {
-    //             throw new UserException('没有查询权限', Error::AUTH_FAILED);
-    //         }
-
-
-    //                 in_array($order['dept_id'], $manage_depts);
-    //         };
-    //     } else if ($type == static::TYPE_SCHOOL) {
-    //         $filter_func = function ($order) {
-    //             return $order['type'] == Order::TYPE_TWICE && $order['status'] == Order::STATUS_SCHOOL_PENDING;
-    //         };
-    //     } else {
-    //         throw new UserException('无效审批类型', Error::INVALID_APPROVE_TYPE);
-    //     }
-
-    //     $allConflictOrder_ids = [];
-    //     $conflictOrder_ids_map = [];
-    //     foreach ($orders as $order_id => &$order) {
-    //         $roomTable = $roomTables[$order['date'].'_'.$order['room_id']];
-    //         $conflictOrder_ids = RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order_id]);
-    //         $allConflictOrder_ids = array_merge($allConflictOrder_ids, $conflictOrder_ids);
-    //         $conflictOrder_ids_map[$order_id] = $conflictOrder_ids;
-    //     }
-    //     $allConflictOrders = OrderService::getOrders($allConflictOrder_ids, $useCache);
-
-    //     foreach ($orders as $order_id => &$order) {
-    //         $conflictOrder_ids = $conflictOrder_ids_map[$order_id];
-    //         $conflictOrders = [];
-    //         foreach ($conflictOrder_ids as $conflictOrder_id) {
-    //             $conflictOrder = $allConflictOrders[$conflictOrder_id];
-    //             if ($filter_func($conflictOrder)) {
-    //                 $conflictOrders[$conflictOrder_id] = $conflictOrder;
-    //             }
-    //         }
-    //         $conflictOrders_batch[$order_id] = $onlyId ? array_keys($conflictOrders) : $conflictOrders;
-    //     }
-
-    //     return $conflictOrders_batch;
-    // }
 
 
     /**
@@ -423,8 +345,9 @@ class ApproveService extends Component {
      * @param bool $onlyId 仅仅返回id
      * @return Array<Order>
      */
-    public static function getConflictOrder($order, $user, $type, $useCache = TRUE, $onlyId = TRUE) {
-        return static::getConflictOrders_batch([$order_id], $user, $type, $useCache,$onlyId)[$order_id];
+    public static function getConflictOrders($order, $include_ids, $useCache = TRUE) {
+        $conflictOrders = static::getConflictOrders_batch([$order], $include_ids, $useCache);
+        return isset($conflictOrders[0]) ? $conflictOrders[0] : [];
     }
 
 

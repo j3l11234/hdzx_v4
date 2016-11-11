@@ -122,8 +122,8 @@ class ApproveQueryForm extends Model {
         $orders = $data['orders'];
         $orderList = $data['orderList'];
 
-        //如果涉及了dept_id筛选，则需去掉此条件在搜索一次，用于分析冲突
-        if (!empty($this->dept_id)) {
+        //如果涉及了dept_id和status筛选，则需去掉此条件在搜索一次，用于分析冲突
+        if (!empty($this->dept_id) || !empty($this->status)) {
             unset($term['dept_id']);
             $orderList_all = ApproveService::getApproveOrders($user, static::getType($this->type), $term, TRUE);
         } else {
@@ -166,7 +166,6 @@ class ApproveQueryForm extends Model {
         $term = [
             'start_date' => $order['date'],
             'end_date' => $order['date'],
-            'abs_status' => ApproveService::STATUS_ABS_PENDING,
             'room_id' => $order['room_id'],
         ];
         $order_ids = ApproveService::getApproveOrders($user, static::getType($this->type), $term, TRUE);

@@ -58,6 +58,7 @@ class SimpleRejectOperation extends BaseOrderOperation {
         $hours = $this->order->hours;
         $order_id = $this->order->id;
         $this->roomTable->removeOrdered($order_id);
+        $this->roomTable->addRejected($order_id, $hours);
     }
 
     /**

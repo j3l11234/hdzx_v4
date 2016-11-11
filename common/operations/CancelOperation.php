@@ -39,7 +39,9 @@ class CancelOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function checkPreStatus() {
-
+        if ($this->order->status == Order::STATUS_CANCELED){
+            throw new UserException('当前申请已经被取消', Error::INVALID_ORDER_STATUS);
+        }
     }
 
     /**
@@ -49,6 +51,7 @@ class CancelOperation extends BaseOrderOperation {
         $order_id = $this->order->id;
         $this->roomTable->removeOrdered($order_id);
         $this->roomTable->removeUsed($order_id);
+        $this->roomTable->removeRejected($order_id);
     }
 
     /**

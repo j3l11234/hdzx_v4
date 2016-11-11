@@ -369,7 +369,6 @@ class OrderService extends Component {
      */
     public static function getOrder($order_id, $useCache = true) {
         $orders = static::getOrders([$order_id], $useCache);
-
         return isset($orders[$order_id]) ? $orders[$order_id] : NULL;
     }
 
@@ -481,6 +480,7 @@ class OrderService extends Component {
             $orderTables[$dateRoom] = [
                 'ordered' => [],
                 'used' => [],
+                'rejected' => [],
             ];
         }
 
@@ -500,6 +500,8 @@ class OrderService extends Component {
                  $orderTables[$dateRoom]['ordered'] = RoomTable::addTable($orderTables[$dateRoom]['ordered'], $order['id'], $order['hours']);
             } else if ($rtStatus == Order::ROOMTABLE_USED) {
                 $orderTables[$dateRoom]['used'] = RoomTable::addTable($orderTables[$dateRoom]['used'], $order['id'], $order['hours']);
+            } else if ($rtStatus == Order::ROOMTABLE_REJECTED) {
+                $orderTables[$dateRoom]['rejected'] = RoomTable::addTable($orderTables[$dateRoom]['rejected'], $order['id'], $order['hours']);
             } 
         }
         return $orderTables;
