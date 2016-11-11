@@ -66,10 +66,10 @@ class ApproveController extends Controller
      *
      * @return mixed
      */
-    public function actionApproveAutoPage()
+    public function actionApproveSimplePage()
     {
         return $this->render('/page/approve', [
-            'apprveType' => 'auto',
+            'apprveType' => 'simple',
         ]);
     }
 

@@ -55,7 +55,7 @@ AppAsset::register($this);
         $menuItems[] = [
             'label' => '审批预约',
             'items'=>[
-                ['label' => '自动审批', 'url' => ['/approve/auto']],
+                ['label' => '自动审批', 'url' => ['/approve/simple']],
                 ['label' => '负责人审批', 'url' => ['/approve/manager']],
                 ['label' => '校级审批', 'url' => ['/approve/school']],
             ],

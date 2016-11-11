@@ -18,7 +18,7 @@ return [
             'showScriptName' => false,
             'rules' => [
                 '' => 'site/index',
-                '/approve/auto' => 'approve/approve-auto-page',
+                '/approve/simple' => 'approve/approve-simple-page',
                 '/approve/manager' => 'approve/approve-manager-page',
                 '/approve/school' => 'approve/approve-school-page',
                 '/lock' => 'lock/lock-page',
