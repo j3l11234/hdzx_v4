@@ -130,7 +130,11 @@ class ApproveQueryForm extends Model {
         $conflictOrders_map = ApproveService::getConflictOrders_batch($ordersInfos, $order_ids_all);
         foreach ($orders as &$order) {
             $conflictOrders = $conflictOrders_map[$order['id']];
-            $order['conflict'] = !empty($conflictOrders['ordered']) || !empty($conflictOrders['used']) || !empty($conflictOrders['rejected']);
+            $order['conflict'] = [
+                'ordered' => !empty($conflictOrders['ordered']),
+                'used' => !empty($conflictOrders['used']),
+                'rejected' => !empty($conflictOrders['rejected'])
+            ];
         }
         unset($order);
         Yii::endProfile('分析冲突');
@@ -193,10 +197,11 @@ class ApproveQueryForm extends Model {
         $order_ids = array_slice($order_ids, $pagination->getOffset(), $pagination->getLimit());
         $orders = OrderService::getOrders($order_ids);
 
-        foreach ($orders as &$order) {
-            $order['conflict'] = true;
-        }
-        unset($order);
+        $orders[$this->conflict_id]['conflict'] = [
+            'ordered' => !empty($conflictOrders['ordered']),
+            'used' => !empty($conflictOrders['used']),
+            'rejected' => !empty($conflictOrders['rejected'])
+        ];
 
         $data = [
             'orders' => $orders,
