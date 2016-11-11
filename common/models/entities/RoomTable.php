@@ -152,27 +152,32 @@ class RoomTable extends ActiveRecord {
      *
      * @param minxed $table 数据表
      * @param array $hours 查找的小时数组 为null则为全部
+     * @param array $exclude 包含列表
      * @param array $exclude 排除列表
      * @return array idList
      */
-    public static function getTable($table, $hours = null, $exclude = null) {
+    public static function getTable($table, $hours = null, $include = null, $exclude = null) {
         if (!is_array($table)) {
             $table = [];
         }
-        $idList = [];
+        $ids = [];
         foreach ($table as $hour=>$hourTable) {
             if ($hours != null && !in_array($hour, $hours)) {
                 continue;
             }
             foreach ($hourTable as $id) {
-                if ($exclude != null && in_array($id, $exclude)) {
-                    continue;
-                }
-                $idList[$id] = true;
+                $ids[$id] = true;
             }
         }
-        $idList = array_keys($idList);
-        return $idList;
+        $ids = array_keys($ids);
+
+        if (!empty($include)) {
+            $ids = array_intersect($ids, $include);
+        }
+        if (!empty($exclude)) {
+            $ids = array_diff($ids, $exclude);
+        }
+        return $ids;
     }
 
 

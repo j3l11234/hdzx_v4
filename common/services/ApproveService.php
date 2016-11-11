@@ -30,38 +30,38 @@ class ApproveService extends Component {
     /**
      * 类型_自动审批
      */
-    const TYPE_SIMPLE         = 01;
+    const TYPE_SIMPLE       = 'simple';
 
     /**
      * 类型_负责人审批
      */
-    const TYPE_MANAGER      = 02;
+    const TYPE_MANAGER      = 'manager';
 
     /**
      * 类型_校级审批
      */
-    const TYPE_SCHOOL       = 03;
+    const TYPE_SCHOOL       = 'school';
 
     /**
      * 抽象状态_待审批
      */
-    const STATUS_ABS_PENDING    = 01;
+    const STATUS_ABS_PENDING    = 'pending';
 
      /**
      * 抽象状态_通过
      */
-    const STATUS_ABS_APPROVED   = 02;
+    const STATUS_ABS_APPROVED   = 'approved';
 
     /**
      * 抽象状态_驳回
      */
-    const STATUS_ABS_REJECTED   = 03;
+    const STATUS_ABS_REJECTED   = 'rejected';
     
 
     public static $type_string = [
-        01 => '琴房',
-        02 => '负责人',
-        03 => '校级',
+        'simple' => '琴房',
+        'manager' => '负责人',
+        'school' => '校级',
     ];
 
 
@@ -73,7 +73,7 @@ class ApproveService extends Component {
      * @param int $type 审批类型
      * @param mixed $term 查询条件[]$start_date 开始时间
      * @param bool $onlyId 仅返回id
-     * @return mixed
+     * @return array 符合条件的order_id列表
      * ```php
      * $term = [
      *     'start_date' => [开始日期],
@@ -84,7 +84,7 @@ class ApproveService extends Component {
      * ]
      * ```  
      */
-    public static function getApproveOrders($user, $type, $term, $onlyId = FALSE) {
+    public static function getApproveOrders($user, $type, $term) {
         $where = ['and'];
 
         if ($type == static::TYPE_SIMPLE) {
@@ -152,20 +152,10 @@ class ApproveService extends Component {
             $where[] = ['in', 'dept_id', $term['dept_id']];
         }
 
-        $orders = Order::find()->select(['id'])->where($where)->asArray()->all();
-        $order_ids = array_column($orders, 'id');
-        if ($onlyId) {
-            return $order_ids;
-        }
-        
-        $orders = OrderService::getOrders($order_ids);
+        $result = Order::find()->select(['id'])->where($where)->asArray()->all();
+        $order_ids = array_column($result, 'id');
 
-        $data = [
-            'orderList' => $order_ids,
-            'orders' => $orders,
-        ];
-
-        return $data;
+        return $order_ids;
     }
 
     /**
@@ -277,26 +267,40 @@ class ApproveService extends Component {
     }
 
 
-    /**
+     /**
      * 自动驳回冲突的申请
      *
      * @param Order $order 申请
      * @return null
      * @throws Exception 如果出现异常
      */
-    public static function rejectConflictOrder($order, $user, $type, $comment = '冲突自动驳回') {
+    public static function rejectConflictOrders($order, $user, $type, $comment = '冲突自动驳回') {
         $rejectList = [];
 
-        $order_ = $order->toArray();
-        $conflictOrder_ids = static::getConflictOrders($order_, NULL, FALSE);
-        foreach ($conflictOrder_ids as $conflictOrder_id) {
+        $ordersInfo = [
+            'id' => $order->id,
+            'date' => $order->date,
+            'room_id' => $order->room_id,
+            'hours' => $order->hours,
+        ];
+        $conflictOrder_ids = static::getConflictOrders($ordersInfo, NULL, FALSE);
+
+        $where = ['and'];
+        $where[] = ['in', 'id', $conflictOrder_ids['ordered']];
+        if ($type == ApproveService::TYPE_SIMPLE) {
+            $where[] = ['in', 'status', [Order::STATUS_SIMPLE_PENDING]];
+        } else if ($type == ApproveService::TYPE_MANAGER) {
+            $where[] = ['in', 'status', [Order::STATUS_MANAGER_PENDING]];
+        } else if ($type == ApproveService::TYPE_SCHOOL) {
+            $where[] = ['in', 'status', [Order::STATUS_SCHOOL_PENDING]];
+        }
+
+        foreach (Order::find()->where($where)->each(100) as $conflictOrder) {
             try {
-                $conflictOrder = Order::findOne($conflictOrder_id);
-                if(!empty($conflictOrder)){
-                    Yii::info(static::$type_string[$type].'审批驳回, id='.$conflictOrder_id.', 冲突id='.$order->id, '驳回冲突申请');
-                    static::rejectOrder($conflictOrder, $user, $type, $comment);
-                    $rejectList[] = $conflictOrder_id;
-                }             
+                Yii::info(static::$type_string[$type].'审批驳回, id='.$conflictOrder['id'].', 冲突id='.$order->id, '驳回冲突申请');
+                static::rejectOrder($conflictOrder, $user, $type, $comment);
+                $rejectList[] = $conflictOrder['id'];
+                         
             } catch (Exception $e) {
             }  
         }
@@ -304,49 +308,69 @@ class ApproveService extends Component {
         return $rejectList;
     }
 
+
     /**
      * 批量查询冲突申请
      *
-     * @param array $order_ids order的Map或List
+     * @param array $orderInfos orderinfo的数组
      * @param array $include_ids 限制范围，如不为空，则只会从include_ids里面查找冲突申请
      * @param boolean $useCache 是否使用缓存
-     * @return array 冲突id数组的map
+     * @return array 冲突id的map的map
+     * ```php
+     * $orderInfos = [
+     *     [
+     *         'id' => 1,
+     *         'date' => '2016-11-11',
+     *         'room_id' => 404,
+     *         'hours' => [8, 9, 10],
+     *     ]
+     * ];
+     * ``` 
      */
-    public static function getConflictOrders_batch($orders, $include_ids, $useCache = TRUE) {
+    public static function getConflictOrders_batch($orderInfos, $include_ids, $useCache = TRUE) {
         $conflictOrders_map = [];
         $dateRoom_map = [];
         
-      
-        foreach ($orders as $index => $order) {
-            $dateRoom_map[$index] = $order['date'].'_'.$order['room_id'];
+        //批量获取所需的RoomTable
+        foreach ($orderInfos as $index => $orderInfo) {
+            $dateRoom_map[$index] = $orderInfo['date'].'_'.$orderInfo['room_id'];
         }
         $roomTables = RoomService::getRoomTables($dateRoom_map, $useCache);
 
-        foreach ($orders as $index => $order) {
+        //批量解析冲突
+        foreach ($orderInfos as $index => $orderInfo) {
             $roomTable = $roomTables[$dateRoom_map[$index]];
-            $conflictOrder_ids = array_merge(
-                RoomTable::getTable($roomTable['ordered'], $order['hours'], [$order['id']]),
-                RoomTable::getTable($roomTable['used'], $order['hours'], [$order['id']]),
-                RoomTable::getTable($roomTable['rejected'], $order['hours'], [$order['id']]));
-            if ($include_ids !== NULL) {
-                $conflictOrder_ids = array_values(array_intersect($conflictOrder_ids, $include_ids));
-            }
-            $conflictOrders_map[$index] = $conflictOrder_ids;
+            $hous = $orderInfo['hours'];
+            $order_id = $orderInfo['id'];
+            $conflictOrders = [
+                'ordered' => RoomTable::getTable($roomTable['ordered'], $hous, $include_ids, [$order_id]),
+                'used' => RoomTable::getTable($roomTable['used'], $hous, $include_ids, [$order_id]),
+                'rejected' => RoomTable::getTable($roomTable['rejected'], $hous, $include_ids, [$order_id])
+            ];
+
+            $conflictOrders_map[$index] = $conflictOrders;
         }
         return $conflictOrders_map;
     }
 
-
     /**
      * 查询冲突申请
      *
-     * @param Order/Array $order 申请
-     * @param int $type 查询类型
-     * @param bool $onlyId 仅仅返回id
-     * @return Array<Order>
+     * @param array $orderInfo orderinfo的
+     * @param array $include_ids 限制范围，如不为空，则只会从include_ids里面查找冲突申请
+     * @param boolean $useCache 是否使用缓存
+     * @return array 冲突id的map
+     * ```php
+     * $orderInfo = [
+     *     'id' => 1,
+     *     'date' => '2016-11-11',
+     *     'room_id' => 404,
+     *     'hours' => [8, 9, 10],
+     * ];
+     * ``` 
      */
-    public static function getConflictOrders($order, $include_ids, $useCache = TRUE) {
-        $conflictOrders = static::getConflictOrders_batch([$order], $include_ids, $useCache);
+    public static function getConflictOrders($orderInfo, $include_ids, $useCache = TRUE) {
+        $conflictOrders = static::getConflictOrders_batch([$orderInfo], $include_ids, $useCache);
         return isset($conflictOrders[0]) ? $conflictOrders[0] : [];
     }
 
@@ -419,7 +443,7 @@ class ApproveService extends Component {
                 Yii::info(static::$type_string[static::TYPE_SIMPLE].'审批通过, id='.$order->id.', reason=琴房审批自动通过', '自动审批');
                 static::approveOrder($order, $user, static::TYPE_SIMPLE, '琴房自动通过');
                 $approves[] = $order->id;
-                $rejects_ = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SIMPLE);
+                $rejects_ = static::rejectConflictOrders($order, $user, ApproveService::TYPE_SIMPLE);
                 $rejects = array_merge ($rejects, $rejects_);  
             } catch (UserException $e) {
                 if ($e->getCode() == Error::ROOMTABLE_USED) {
@@ -507,6 +531,17 @@ class ApproveService extends Component {
         ];
         $result = Order::find()->where($where)->orderBy('submit_time ASC')->all();
 
+        //解析order_info用于分析冲突
+        $ordersInfos = [];
+        foreach ($result as $order) {
+            $ordersInfos[$order['id']] = [
+                'id' => $order->id,
+                'date' => $order->date,
+                'room_id' => $order->room_id,
+                'hours' => $order->hours,
+            ];
+        }
+
         $user = UserService::findIdentity(1)->getUser();
         $approveList = [];
         $rejectList = [];
@@ -519,8 +554,8 @@ class ApproveService extends Component {
                 Yii::info(static::$type_string[static::TYPE_SCHOOL].'审批通过, id='.$order->id.', reason=校级审批自动通过', '自动审批');
                 static::approveOrder($order, $user, static::TYPE_SCHOOL, '该申请提交时间最早，自动通过');  
                 $approveList[] = $order->id;
-                $rejectList_1 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_SCHOOL);
-                $rejectList_2 = static::rejectConflictOrder($order, $user, ApproveService::TYPE_MANAGER);
+                $rejectList_1 = static::rejectConflictOrders($order, $user, ApproveService::TYPE_SCHOOL);
+                $rejectList_2 = static::rejectConflictOrders($order, $user, ApproveService::TYPE_MANAGER);
                 $rejectList = array_merge ($rejectList, $rejectList_1, $rejectList_2);  
             } catch (UserException $e) {
                 if ($e->getCode() == Error::ROOMTABLE_USED) {

@@ -4,6 +4,7 @@ namespace backend\models;
 use Yii;
 use yii\base\Model;
 use yii\base\UserException;
+use yii\data\Pagination;
 
 use common\behaviors\ErrorBehavior;
 use common\models\entities\User;
@@ -25,8 +26,8 @@ class ApproveQueryForm extends Model {
     public $room_id;
     public $dept_id;
     public $conflict_id;
-    public $per_page;
-    public $cur_page;
+    public $per_page = 8;
+    public $cur_page = 1;
     
 
     const SCENARIO_GET_APPROVE_ORDER    = 'getApproveOrders';
@@ -57,38 +58,12 @@ class ApproveQueryForm extends Model {
     public function rules() {
         return [
             [['type'], 'required'],
-            [['type'], 'in', 'range' => ['auto', 'manager', 'school',]],
-            [['status'], 'in', 'range' => ['pending', 'approved', 'rejected',]],
+            [['type'], 'in', 'range' => [ApproveService::TYPE_SIMPLE, ApproveService::TYPE_MANAGER, ApproveService::TYPE_SCHOOL]],
+            [['status'], 'in', 'range' => [ApproveService::STATUS_ABS_PENDING, ApproveService::STATUS_ABS_APPROVED, ApproveService::STATUS_ABS_REJECTED]],
             [['start_date', 'end_date'], 'date', 'format'=>'yyyy-MM-dd'],
             [['conflict_id'], 'required', 'on' => [static::SCENARIO_GET_CONFLICT_ORDER]],
             [['per_page', 'cur_page'], 'number'],
         ];
-    }
-
-    public static function getType($type) {
-        switch ($type) {
-            case 'auto':
-                return ApproveService::TYPE_SIMPLE;
-            case 'manager':
-                return ApproveService::TYPE_MANAGER;
-            case 'school':
-                return ApproveService::TYPE_SCHOOL;
-            default:
-                break;
-        }
-    }
-
-    public static function getAbsStatus($status) {
-        switch ($status) {
-            case 'pending':
-                return ApproveService::STATUS_ABS_PENDING;
-            case 'approved':
-                return ApproveService::STATUS_ABS_APPROVED;
-            case 'rejected':
-                return ApproveService::STATUS_ABS_REJECTED;
-            default:
-                break;
-        }
     }
 
     /**
@@ -114,34 +89,61 @@ class ApproveQueryForm extends Model {
         $term = [
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
-            'abs_status' => static::getAbsStatus($this->status),
+            'abs_status' => $this->status,
             'room_id' => $this->room_id,
             'dept_id' => $this->dept_id,
         ];
-        $data = ApproveService::getApproveOrders($user, static::getType($this->type), $term);
-        $orders = $data['orders'];
-        $orderList = $data['orderList'];
+        $order_ids = ApproveService::getApproveOrders($user, $this->type, $term);
+
+        //分页处理
+        $pagination = new Pagination(['totalCount' => count($order_ids)]);
+        $pagination->setPageSize($this->per_page, true);
+        $pagination->setPage($this->cur_page-1, true);
+        $order_ids = array_slice($order_ids, $pagination->getOffset(), $pagination->getLimit());
+        $orders = OrderService::getOrders($order_ids);
+
+        //解析order_info用于分析冲突
+        $ordersInfos = [];
+        foreach ($orders as $order) {
+            $ordersInfos[$order['id']] = [
+                'id' => $order['id'],
+                'date' => $order['date'],
+                'room_id' => $order['room_id'],
+                'hours' => $order['hours'],
+            ];
+        }
 
         //如果涉及了dept_id和status筛选，则需去掉此条件在搜索一次，用于分析冲突
         if (!empty($this->dept_id) || !empty($this->status)) {
-            unset($term['dept_id']);
-            $orderList_all = ApproveService::getApproveOrders($user, static::getType($this->type), $term, TRUE);
+            $term = [
+                'start_date' => $this->start_date,
+                'end_date' => $this->end_date,
+                'room_id' => $this->room_id,
+            ];
+            $order_ids_all = ApproveService::getApproveOrders($user, $this->type, $term);
         } else {
-            $orderList_all = $orderList;
+            $order_ids_all = $order_ids;
         }
 
         //分析冲突
         Yii::beginProfile('分析冲突');  
-        $conflictOrders = ApproveService::getConflictOrders_batch($orders, $orderList_all  );
-        foreach ($orders as $order_id => &$order) {
-            $order['conflict'] = $conflictOrders[$order_id];
+        $conflictOrders_map = ApproveService::getConflictOrders_batch($ordersInfos, $order_ids_all);
+        foreach ($orders as &$order) {
+            $conflictOrders = $conflictOrders_map[$order['id']];
+            $order['conflict'] = !empty($conflictOrders['ordered']) || !empty($conflictOrders['used']) || !empty($conflictOrders['rejected']);
         }
         unset($order);
         Yii::endProfile('分析冲突');
 
         $data = [
             'orders' => $orders,
-            'orderList' => $orderList,
+            'orderList' => $order_ids,
+            '_page' => [
+                'per_page' => $pagination->getPageSize(),
+                'cur_page' => $pagination->getPage()+1,
+                'total_page' => $pagination->getPageCount(),
+                'total' => $pagination->totalCount,
+            ]
         ];
         return $data;
     }
@@ -161,6 +163,14 @@ class ApproveQueryForm extends Model {
             throw new UserException('申请不存在');
         }
         
+        //解析order_info用于分析冲突
+        $ordersInfo = [
+            'id' => $order['id'],
+            'date' => $order['date'],
+            'room_id' => $order['room_id'],
+            'hours' => $order['hours'],
+        ];
+
         //查找所有相关申请，用于分析冲突
         $user = Yii::$app->user->getIdentity()->getUser();
         $term = [
@@ -168,28 +178,35 @@ class ApproveQueryForm extends Model {
             'end_date' => $order['date'],
             'room_id' => $order['room_id'],
         ];
-        $order_ids = ApproveService::getApproveOrders($user, static::getType($this->type), $term, TRUE);
-
-        //获取相关申请的详细信息
-        $orders = OrderService::getOrders($order_ids);
-        if (in_array($this->conflict_id, $order_ids) && $order_ids[0] != $this->conflict_id){
-            array_unshift($order_ids, $this->conflict_id);
-            $order_ids = array_values(array_unique($order_ids));
-        }     
+        $order_ids_all = ApproveService::getApproveOrders($user, $this->type, $term);
 
         //分析冲突
         Yii::beginProfile('分析冲突');  
-        $conflictOrders = ApproveService::getConflictOrders_batch($orders, $order_ids);
-        foreach ($orders as $order_id => &$order) {
-            if (isset($conflictOrders[$order_id])){
-                $order['conflict'] = $conflictOrders[$order_id];
-            } 
-        }
+        $conflictOrders = ApproveService::getConflictOrders($ordersInfo, $order_ids_all);
+        $order_ids = array_merge([$this->conflict_id], $conflictOrders['ordered'], $conflictOrders['used'], $conflictOrders['rejected']);
         Yii::endProfile('分析冲突');
+
+        //分页处理
+        $pagination = new Pagination(['totalCount' => count($order_ids)]);
+        $pagination->setPageSize($this->per_page, true);
+        $pagination->setPage($this->cur_page-1, true);
+        $order_ids = array_slice($order_ids, $pagination->getOffset(), $pagination->getLimit());
+        $orders = OrderService::getOrders($order_ids);
+
+        foreach ($orders as &$order) {
+            $order['conflict'] = true;
+        }
+        unset($order);
 
         $data = [
             'orders' => $orders,
             'orderList' => $order_ids,
+            '_page' => [
+                'per_page' => $pagination->getPageSize(),
+                'cur_page' => $pagination->getPage()+1,
+                'total_page' => $pagination->getPageCount(),
+                'total' => $pagination->totalCount,
+            ]
         ];
         return $data;
     }

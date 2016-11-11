@@ -62,6 +62,11 @@ class ManagerRevokeOperation extends BaseOrderOperation {
      * @inheritdoc
      */
     protected function applyRoomTable() {
+        $order_id = $this->order->id;
+        $hours = $this->order->hours;
+
+        $this->roomTable->removeRejected($order_id);
+        $this->roomTable->addOrdered($order_id, $hours);
     }
 
     /**

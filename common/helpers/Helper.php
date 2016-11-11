@@ -11,7 +11,7 @@ use Yii;
 use yii\bootstrap\Alert;
 
 /**
- * 预约操作出现异常
+ * 一些简易的操作类集合
  */
 class Helper {
     public static function renderFlash() {
@@ -33,5 +33,4 @@ class Helper {
         }
         return '';
     }
-    
 }

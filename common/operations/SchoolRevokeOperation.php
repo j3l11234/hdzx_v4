@@ -59,6 +59,7 @@ class SchoolRevokeOperation extends BaseOrderOperation {
         $hours = $this->order->hours;
         $order_id = $this->order->id;
         $this->roomTable->removeUsed($order_id);
+        $this->roomTable->removeRejected($order_id);
         $this->roomTable->addOrdered($order_id, $hours);
     }
 
