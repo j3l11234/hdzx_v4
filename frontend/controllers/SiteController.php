@@ -2,8 +2,6 @@
 namespace frontend\controllers;
 
 use Yii;
-
-use frontend\models\ContactForm;
 use yii\base\InvalidParamException;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
@@ -12,6 +10,7 @@ use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 
 use common\models\entities\Carousel;
+use frontend\models\ContactForm;
 
 /**
  * Site controller
@@ -72,7 +71,6 @@ class SiteController extends Controller
         ]);
     }
 
-   
     /**
      * Displays contact page.
      *

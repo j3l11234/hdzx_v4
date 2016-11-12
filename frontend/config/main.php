@@ -12,22 +12,18 @@ return [
     'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
     'components' => [
-        'urlManager' => [
-            'enablePrettyUrl' => true,
-            'showScriptName' => false,
-            'rules' => [
-                '' => 'site/index',
-                '/login' => 'user/login-page',
-                '/order' => 'order/order-page',
-                '/myorder' => 'order/myorder-page',
-                '/lock' => 'lock/lock-page',
-                'page/<id:.+>' => 'site/page',
-            ]
+        'request' => [
+            'csrfParam' => '_csrf-frontend',
         ],
         'user' => [
             'identityClass' => 'common\services\UserService',
             'enableAutoLogin' => true,
             'loginUrl' => ['/login'],
+            'identityCookie' => ['name' => '_identity-frontend', 'httpOnly' => true],
+        ],
+        'session' => [
+            // this is the name of the session cookie used for login on the frontend
+            'name' => 'advanced-frontend',
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
@@ -41,6 +37,18 @@ return [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
+        'urlManager' => [
+            'enablePrettyUrl' => true,
+            'showScriptName' => false,
+            'rules' => [
+                '' => 'site/index',
+                '/login' => 'user/login-page',
+                '/order' => 'order/order-page',
+                '/myorder' => 'order/myorder-page',
+                '/lock' => 'lock/lock-page',
+                'page/<id:.+>' => 'site/page',
+            ]
+        ]
     ],
     'params' => $params,
 ];

@@ -12,7 +12,6 @@ use yii\widgets\Breadcrumbs;
 use frontend\assets\AppAsset;
 use common\services\SettingService;
 
-
 AppAsset::register($this);
 $this->params['dynamic'] = [];
 ?>
@@ -36,8 +35,8 @@ $this->params['dynamic'] = [];
     var _Server_Data_ = {};
     _Server_Data_.BASE_URL = '<?= Url::to(['/']) ?>';
 </script>
+
 <div class="wrap">
-    <?php  ?>
     <?php
         if (Yii::$app->user->isGuest) {
             $this->params['dynamic']['user'] = 'false';
@@ -173,6 +172,7 @@ $this->params['dynamic'] = [];
         <p class="pull-right">powered by <a href="http://blog.j3l11234.com">j3l11234</a></p>
     </div>
 </footer>
+
 <?php $this->endBody() ?>
 </body>
 </html>

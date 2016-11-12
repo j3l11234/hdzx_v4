@@ -1,5 +1,7 @@
-# yii console command
+# yii console commands
 /yii
+/yii_test
+/yii_test.bat
 
 # phpstorm project files
 .idea
@@ -30,5 +32,5 @@ phpunit.phar
 /phpunit.xml
 
 /tests/codeception/config/runtime
-
-composer.lock
+# vagrant runtime
+/.vagrant
