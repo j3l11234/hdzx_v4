@@ -8,17 +8,16 @@ use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Alert;
 use yii\captcha\Captcha;
-use common\helpers\Helper;
+use common\widgets\Alert as MessAlert;
 
 $this->title = '激活学生账户';
 ?>
+<?= MessAlert::widget() ?>
 <div class="site-signup">
     <h1><?= Html::encode($this->title) ?></h1>
     <div class="row">
         <div class="col-lg-5">
             <?php $form = ActiveForm::begin(['id' => 'form-signup']); ?>
-                <?= Helper::renderFlash() ?>
-                <br />
                 <?= Alert::widget([
                     'options' => [
                         'class' => 'alert-info',

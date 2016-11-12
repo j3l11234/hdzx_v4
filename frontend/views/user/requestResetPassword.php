@@ -8,9 +8,11 @@ use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
 use yii\bootstrap\Alert;
 use yii\captcha\Captcha;
+use common\widgets\Alert as MessAlert;
 
 $this->title = '申请重设密码';
 ?>
+<?= MessAlert::widget() ?>
 <div class="site-reset-password">
     <h1><?= Html::encode($this->title) ?></h1>
 

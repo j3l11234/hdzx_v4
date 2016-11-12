@@ -7,7 +7,6 @@
 use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
 use yii\captcha\Captcha;
-
 use common\widgets\Alert as MessAlert;
 
 $this->title = '意见反馈';
