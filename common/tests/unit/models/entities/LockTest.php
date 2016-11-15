@@ -20,7 +20,7 @@ class LockTest extends \Codeception\Test\Unit
     public function _before()
     {
         $this->tester->haveFixtures([
-            'user' => [
+            'lock' => [
                 'class' => LockFixture::className(),
                 'dataFile' => codecept_data_dir() . 'lock.php'
             ]

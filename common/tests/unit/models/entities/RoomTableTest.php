@@ -5,6 +5,7 @@ namespace common\tests\unit\models\entities;
 use Yii;
 use common\models\entities\RoomTable;
 use common\fixtures\RoomTable as RoomTableFixture;
+use common\fixtures\Order as OrderFixture;
 
 /**
  * RoomTable test
@@ -19,11 +20,19 @@ class RoomTableTest extends \Codeception\Test\Unit
 
     public function _before()
     {
+       // codecept_debug(Yii::$app->db->createCommand('select @@autocommit')->execute());
+//codecept_debug(Yii::$app->db->createCommand('SHOW ENGINE INNODB STATUS')->queryAll());
+
         $this->tester->haveFixtures([
-            'user' => [
+            'order' => [
+                'class' => OrderFixture::className(),
+                'dataFile' => codecept_data_dir() . 'order.php'
+            ],
+            'roomtable' => [
                 'class' => RoomTableFixture::className(),
                 'dataFile' => codecept_data_dir() . 'roomtable.php'
-            ]
+            ],
+
         ]);
     }
 
@@ -41,6 +50,7 @@ class RoomTableTest extends \Codeception\Test\Unit
                 "9" => [1],
                 "10" => [1],
             ],
+            'rejected' => [],
             'locked' => [],
         ];
         $roomTable = new RoomTable();
@@ -52,6 +62,7 @@ class RoomTableTest extends \Codeception\Test\Unit
         expect('room->room_id', $newRoomTable->room_id)->equals($modelData['room_id']);
         expect('room->ordered', $newRoomTable->ordered)->equals($modelData['ordered']);
         expect('room->used', $newRoomTable->used)->equals($modelData['used']);
+        expect('room->rejected', $newRoomTable->rejected)->equals($modelData['rejected']);
         expect('room->locked ', $newRoomTable->locked)->equals($modelData['locked']);
     }
 
@@ -69,12 +80,13 @@ class RoomTableTest extends \Codeception\Test\Unit
                 "9" => [1],
                 "10" => [1],
             ],
+            'rejected' => [],
             'locked' => [],
         ];
         $roomTable = new RoomTable();
         $roomTable->load($modelData,'');
 
-        $exportData = $roomTable->toArray(['date', 'room_id', 'ordered', 'used', 'locked']);
+        $exportData = $roomTable->toArray(['date', 'room_id', 'ordered', 'used', 'rejected', 'locked']);
         expect('exportData', $exportData)->equals($modelData);
     }
 
@@ -92,6 +104,7 @@ class RoomTableTest extends \Codeception\Test\Unit
                 "9" => [1],
                 "10" => [1],
             ],
+            'rejected' => [],
             'locked' => [],
         ];
         $roomTable = new RoomTable();
@@ -117,6 +130,14 @@ class RoomTableTest extends \Codeception\Test\Unit
 
         $roomTable->addLocked(8, [8,9,10,11]);
         expect('room->locked', $roomTable->locked)->equals([
+            "8" => [8],
+            "9" => [8],
+            "10" => [8],
+            "11" => [8],
+        ]);
+
+        $roomTable->addRejected(8, [8,9,10,11]);
+        expect('room->rejected', $roomTable->rejected)->equals([
             "8" => [8],
             "9" => [8],
             "10" => [8],
@@ -229,7 +250,7 @@ class RoomTableTest extends \Codeception\Test\Unit
         for ($i=8; $i <= 21; $i++) { 
             $hours[] = $i;
         }
-        $hourTable = $roomTable->getHourTable($hours);
+        $hourTable = RoomTable::getHourTable($roomTable->ordered, $roomTable->used,$roomTable->locked,$hours);
         expect('hourtable',  $hourTable)->equals([
             8 => RoomTable::STATUS_ORDERED,
             9 => RoomTable::STATUS_LOCKED,

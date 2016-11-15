@@ -20,7 +20,7 @@ class OrderOperationTest extends \Codeception\Test\Unit
     public function _before()
     {
         $this->tester->haveFixtures([
-            'user' => [
+            'opder_op' => [
                 'class' => OrderOperationFixture::className(),
                 'dataFile' => codecept_data_dir() . 'order_op.php'
             ]

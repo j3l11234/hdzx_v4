@@ -19,7 +19,7 @@ class RoomTest extends \Codeception\Test\Unit
     public function _before()
     {
         $this->tester->haveFixtures([
-            'user' => [
+            'room' => [
                 'class' => RoomFixture::className(),
                 'dataFile' => codecept_data_dir() . 'room.php'
             ]

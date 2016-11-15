@@ -5,6 +5,7 @@ namespace common\tests\unit\models\entities;
 use Yii;
 use common\models\entities\Order;
 use common\fixtures\Order as OrderFixture;
+use common\helpers\DateRoom;
 
 /**
  * Order test
@@ -20,7 +21,7 @@ class OrderTest extends \Codeception\Test\Unit
     public function _before()
     {
         $this->tester->haveFixtures([
-            'user' => [
+            'order' => [
                 'class' => OrderFixture::className(),
                 'dataFile' => codecept_data_dir() . 'order.php'
             ]
@@ -96,5 +97,15 @@ class OrderTest extends \Codeception\Test\Unit
     public function testFindByDateRoom() {
         $orderList = Order::findByDateRoom('2015-12-01', 301);
         expect('the count', count($orderList))->equals(2);
+
+        $dateRooms = [new DateRoom('2015-12-01','301'),new DateRoom('2015-12-02','301')];
+        $orderList = Order::findByDateRooms($dateRooms,['id', 'date', 'room_id'], true, 0);
+        expect('the count', count($orderList))->equals(4);
     }
+
+    public function testHours2Range() {
+        $hours = [8,9,10,11];
+        expect('range ', Order::hours2Range($hours))->equals(['start_hour' => 8, 'end_hour' => 12]);
+    }
+
 }
