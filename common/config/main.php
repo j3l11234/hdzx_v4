@@ -14,12 +14,6 @@ return [
             'class' => 'yii\web\AssetManager',
             'forceCopy' => YII_DEBUG ? TRUE : FALSE,
         ],
-        'request' => [
-            'enableCsrfValidation' => false,
-            'parsers' => [
-                'application/json' => 'yii\web\JsonParser',
-            ],
-        ],
         'response' => [
             'class' => 'yii\web\Response',
             'on beforeSend' => function ($event) {
@@ -45,9 +39,6 @@ return [
                 ],
             ],
         ],
-    ],
-    'controllerMap' => [
-        'data' => 'common\controllers\DataController',
     ],
 
     'name'=>'学活场地申请系统',

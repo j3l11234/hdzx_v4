@@ -15,6 +15,10 @@ return [
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-backend',
+            'enableCsrfValidation' => false,
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ]
         ],
         'user' => [
             'identityClass' => 'common\services\UserService',
@@ -50,6 +54,9 @@ return [
                 '/issue' => 'order/issue-page',
             ],
         ],
+    ],
+    'controllerMap' => [
+        'data' => 'common\controllers\DataController',
     ],
     'params' => $params,
 ];

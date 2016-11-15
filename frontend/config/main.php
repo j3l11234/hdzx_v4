@@ -14,6 +14,10 @@ return [
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-frontend',
+            'enableCsrfValidation' => false,
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
         ],
         'user' => [
             'identityClass' => 'common\services\UserService',
@@ -48,7 +52,10 @@ return [
                 '/lock' => 'lock/lock-page',
                 'page/<id:.+>' => 'site/page',
             ]
-        ]
+        ],
+    ],
+    'controllerMap' => [
+        'data' => 'common\controllers\DataController',
     ],
     'params' => $params,
 ];
