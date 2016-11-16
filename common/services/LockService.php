@@ -150,10 +150,19 @@ class LockService extends Component {
         //解析得出时间、房间范围
         $dates = [];
         $room_ids = [];
+        $start_date = -1;
+        $end_date = -1;
 
         foreach ($dateRooms as $dateRoom) {
             if (!isset($dates[$dateRoom->date])) {
                 $dates[$dateRoom->date] = true;
+                $dateTs = strtotime($dateRoom->date);
+                if ($start_date === -1 || $start_date > $dateTs) {
+                    $start_date = $dateTs;
+                }
+                if ($end_date === -1 || $end_date < $dateTs) {
+                    $end_date = $dateTs;
+                }
             }
 
             $room_ids[$dateRoom->room_id] = true;
@@ -161,8 +170,16 @@ class LockService extends Component {
         }
         $room_ids = array_keys($room_ids);
         $dates = array_keys($dates);
+        $start_date = date('Y-m-d', $start_date);
+        $end_date = date('Y-m-d', $end_date);
 
         $where = ['and'];
+        if ($start_date !== -1){
+            $where[] = ['>=', 'end_date', $start_date];
+        }
+        if ($end_date !== -1 ) {
+            $where[] = ['<=', 'start_date', $end_date];
+        }
         $where[] = ['=', 'status', Lock::STATUS_ENABLE];
 
         $locks = Lock::find()->select(['id'])->where($where)->asArray()->all();
