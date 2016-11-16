@@ -13,6 +13,7 @@ use common\models\entities\RoomTable;
 use common\services\RoomService;
 use common\services\OrderService;
 use common\services\LockService;
+use common\helpers\DateRoom;
 
 /**
  * OrderQuery form
@@ -99,10 +100,10 @@ class OrderQueryForm extends Model {
             $date = date('Y-m-d', $time);
             $dateList[] = $date;
             foreach ($room_ids as $room_id) {
-                $dateRoom = $date.'_'.$room_id;
+                $dateRoom = new DateRoom($date, $room_id);
                 $dateRange = $dateRanges[$room_id];
                 $dateRooms[] = $dateRoom;
-                $avails[$dateRoom] = $time >= $dateRange['start'] && $time <= $dateRange['end'];
+                $avails[$dateRoom->key] = $time >= $dateRange['start'] && $time <= $dateRange['end'];
             }  
         }
 
@@ -150,8 +151,8 @@ class OrderQueryForm extends Model {
             throw new UserException('您查询了太遥远的将来');
         }
 
-        $dateRoom = $this->date.'_'.$this->room;
-        $roomTable = RoomService::getRoomTables([$dateRoom])[$dateRoom];
+        $dateRoom = new DateRoom($this->date, $this->room);
+        $roomTable = RoomService::getRoomTables([$dateRoom])[$dateRoom->key];
         $dateRange = RoomService::getDateRanges([$this->room])[$this->room];
   
         $roomTable['available'] = $dateTs >= $dateRange['start'] && $dateTs <= $dateRange['end'];

@@ -13,6 +13,7 @@ use yii\caching\TagDependency;
 use yii\base\UserException;
 
 use common\helpers\Error;
+use common\helpers\DateRoom;
 use common\models\entities\BaseUser;
 use common\models\entities\User;
 use common\models\entities\StudentUser;
@@ -469,15 +470,7 @@ class OrderService extends Component {
         //生成搜索条件
         $orderWhere = [];
         foreach ($dateRooms as $dateRoom) {
-            $dateRoomSplit = explode('_', $dateRoom);
-            $date = $dateRoomSplit[0];
-            $room_id = $dateRoomSplit[1];
-            if (!isset($orderWhere[$date])){
-                $orderWhere[$date] = [];
-            }
-            $orderWhere[$date][] = $room_id;
-
-            $orderTables[$dateRoom] = [
+            $orderTables[$dateRoom->key] = [
                 'ordered' => [],
                 'used' => [],
                 'rejected' => [],
@@ -491,17 +484,20 @@ class OrderService extends Component {
                 ->select(['id', 'date', 'room_id', 'status', 'hours']));
         }
         
-        foreach ($orderFind->asArray()->each(100) as $order) {
-            $dateRoom = $order['date'].'_'.$order['room_id'];
+        foreach (Order::findByDateRooms($dateRooms, ['id', 'date', 'room_id', 'status', 'hours']) as $order) {
+            $dateRoomKey = (new DateRoom($order['date'], $order['room_id']))->key;
             $order['hours'] = json_decode($order['hours'], true);
 
             $rtStatus = Order::getRoomTableStatus($order['status']);
             if ($rtStatus == Order::ROOMTABLE_ORDERED) {
-                 $orderTables[$dateRoom]['ordered'] = RoomTable::addTable($orderTables[$dateRoom]['ordered'], $order['id'], $order['hours']);
+                $orderTables[$dateRoomKey]['ordered'] = 
+                    RoomTable::addTable($orderTables[$dateRoomKey]['ordered'], $order['id'], $order['hours']);
             } else if ($rtStatus == Order::ROOMTABLE_USED) {
-                $orderTables[$dateRoom]['used'] = RoomTable::addTable($orderTables[$dateRoom]['used'], $order['id'], $order['hours']);
+                $orderTables[$dateRoomKey]['used'] = 
+                    RoomTable::addTable($orderTables[$dateRoomKey]['used'], $order['id'], $order['hours']);
             } else if ($rtStatus == Order::ROOMTABLE_REJECTED) {
-                $orderTables[$dateRoom]['rejected'] = RoomTable::addTable($orderTables[$dateRoom]['rejected'], $order['id'], $order['hours']);
+                $orderTables[$dateRoomKey]['rejected'] = 
+                    RoomTable::addTable($orderTables[$dateRoomKey]['rejected'], $order['id'], $order['hours']);
             } 
         }
         return $orderTables;

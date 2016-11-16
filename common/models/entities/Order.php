@@ -11,6 +11,7 @@ use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 use common\behaviors\JsonBehavior;
+use common\helpers\DateRoom;
 
 /**
  * Order
@@ -163,6 +164,36 @@ class Order extends ActiveRecord {
         return $find->all();
     }
 
+    /**
+     * 批量通过日期和房间查找预约
+     *
+     * @param Array[DateRoom] $daterooms 日期房间二元组的数组
+     * @param array $fields 需要的fileds
+     * @param boolean $asArray 结果是否为数组形式
+     * @return array|yii\db\BatchQueryResult
+     */
+    public static function findByDateRooms($dateRooms, $fields = [], $asArray = true, $each = 100) {
+        $dateRoom_where = [];
+        foreach ($dateRooms as $dateRoom) {
+           $dateRoom_where[] = $dateRoom->toArray();
+        }
+
+        $find = static::find();
+        $find->where(['in', ['date', 'room_id'], $dateRoom_where]);
+        if (!empty($fields)) {
+            $find->select($fields);
+        }
+        if ($asArray){
+            $find = $find->asArray();
+        }
+
+        if ($each != 0) {
+            return $find->each(100);
+        } else {
+            return $find->all();
+        }
+    }
+    
     /**
      * 根据hours取得时间范围
      *

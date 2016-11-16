@@ -13,6 +13,7 @@ use yii\caching\TagDependency;
 use yii\base\UserException;
 
 use common\helpers\Error;
+use common\helpers\DateRoom;
 use common\models\entities\Department;
 use common\models\entities\Order;
 use common\models\entities\User;
@@ -329,17 +330,17 @@ class ApproveService extends Component {
      */
     public static function getConflictOrders_batch($orderInfos, $include_ids, $useCache = TRUE) {
         $conflictOrders_map = [];
-        $dateRoom_map = [];
+        $dateRooms = [];
         
         //批量获取所需的RoomTable
         foreach ($orderInfos as $index => $orderInfo) {
-            $dateRoom_map[$index] = $orderInfo['date'].'_'.$orderInfo['room_id'];
+            $dateRooms[$index] = new DateRoom($orderInfo['date'], $orderInfo['room_id']);
         }
-        $roomTables = RoomService::getRoomTables($dateRoom_map, $useCache);
+        $roomTables = RoomService::getRoomTables($dateRooms, $useCache);
 
         //批量解析冲突
         foreach ($orderInfos as $index => $orderInfo) {
-            $roomTable = $roomTables[$dateRoom_map[$index]];
+            $roomTable = $roomTables[$dateRooms[$index]->key];
             $hous = $orderInfo['hours'];
             $order_id = $orderInfo['id'];
             $conflictOrders = [

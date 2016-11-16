@@ -13,6 +13,7 @@ use yii\caching\TagDependency;
 use yii\base\UserException;
 
 use common\helpers\Error;
+use common\helpers\DateRoom;
 use common\models\entities\Lock;
 use common\models\entities\Room;
 use common\models\entities\RoomTable;
@@ -149,17 +150,22 @@ class LockService extends Component {
         //解析得出时间、房间范围
         $dates = [];
         $room_ids = [];
-        foreach ($dateRooms as $dateRoom) {
-            $dateRoomSplit = explode('_', $dateRoom);
-            $dates[$dateRoomSplit[0]] = TRUE;
-            $room_ids[$dateRoomSplit[1]] = TRUE;
 
-            $lockTables[$dateRoom] = [];
+        foreach ($dateRooms as $dateRoom) {
+            if (!isset($dates[$dateRoom->date])) {
+                $dates[$dateRoom->date] = true;
+            }
+
+            $room_ids[$dateRoom->room_id] = true;
+            $lockTables[$dateRoom->key] = [];
         }
         $room_ids = array_keys($room_ids);
         $dates = array_keys($dates);
 
-        $locks = Lock::find()->select(['id'])->where(['status' => Lock::STATUS_ENABLE])->asArray()->all();
+        $where = ['and'];
+        $where[] = ['=', 'status', Lock::STATUS_ENABLE];
+
+        $locks = Lock::find()->select(['id'])->where($where)->asArray()->all();
         $lock_ids = array_column($locks, 'id');
         $locks = static::getLocks($lock_ids, FALSE);
         foreach ($locks as $lock_id => $lock) {
@@ -170,11 +176,11 @@ class LockService extends Component {
 
             foreach ($_dates as $date) {
                 foreach ($_room_ids as $room_id) {
-                    $dateRoom = $date.'_'.$room_id;
-                    if(!in_array($dateRoom, $dateRooms)){
+                    $dateRoomKey = (new DateRoom($date, $room_id))->key;
+                    if (!isset($lockTables[$dateRoomKey] )) {
                         continue;
                     }
-                    $lockTables[$dateRoom] = RoomTable::addTable($lockTables[$dateRoom], $lock['id'], $lock['hours']);
+                    $lockTables[$dateRoomKey] = RoomTable::addTable($lockTables[$dateRoomKey], $lock['id'], $lock['hours']);
                 }
             }
         }
