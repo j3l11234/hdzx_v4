@@ -93,37 +93,35 @@ class OrderQueryForm extends Model {
         }
 
         $dateRooms = [];
-        $avails = [];
         $dateList = [];
-        $dateRanges = RoomService::getDateRanges($room_ids);
+        
         for ($time = $startDateTs; $time <= $endDateTs; $time = strtotime("+1 day", $time)) {
             $date = date('Y-m-d', $time);
             $dateList[] = $date;
             foreach ($room_ids as $room_id) {
-                $dateRoom = new DateRoom($date, $room_id);
-                $dateRange = $dateRanges[$room_id];
+                $dateRoom = new DateRoom($date, $room_id);         
                 $dateRooms[] = $dateRoom;
-                $avails[$dateRoom->key] = $time >= $dateRange['start'] && $time <= $dateRange['end'];
             }  
         }
 
         $roomTables = RoomService::getRoomTables($dateRooms);
-        foreach ($roomTables as $dateTime => &$roomTable) {
+        $openPeriods = RoomService::getOpenPeriods($dateRooms);
+        foreach ($roomTables as $dateTimeKey => &$roomTable) {
             unset($roomTable['id']);
             if (!$this->rt_detail) {
                 unset($roomTable['ordered']);
                 unset($roomTable['used']);
+                unset($roomTable['rejected']);
                 unset($roomTable['locked']);
             }
-            $roomTable['available'] = $avails[$dateTime];
+            $roomTable['period'] = $openPeriods[$dateTimeKey];
         }
 
         return [
             'dateList' => $dateList,
             'roomList' => $room_ids,
             'roomTables' => $roomTables,
-            'start_date' => date('Y-m-d', $startDateTs),
-            'end_date' => date('Y-m-d', $endDateTs),
+            'serverTime' => microtime(true),
         ];
     }
 
@@ -153,9 +151,10 @@ class OrderQueryForm extends Model {
 
         $dateRoom = new DateRoom($this->date, $this->room);
         $roomTable = RoomService::getRoomTables([$dateRoom])[$dateRoom->key];
-        $dateRange = RoomService::getDateRanges([$this->room])[$this->room];
+        $openPeriod = RoomService::getOpenPeriods([$dateRoom])[$dateRoom->key];
   
-        $roomTable['available'] = $dateTs >= $dateRange['start'] && $dateTs <= $dateRange['end'];
+        $roomTable['period'] = $openPeriod;
+
         $ordered_ids = RoomTable::getTable($roomTable['ordered']);
         $used_ids = RoomTable::getTable($roomTable['used']);
         $locked_ids = RoomTable::getTable($roomTable['locked']);
@@ -169,6 +168,7 @@ class OrderQueryForm extends Model {
             'roomTable' => $roomTable,
             'orders' => $orders,
             'locks' => $locks,
+            'serverTime' => microtime(true),
         ];
 
         return $roomUse;

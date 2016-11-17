@@ -118,7 +118,7 @@ class RoomTable extends ActiveRecord {
         if (!empty($fields)) {
             $find->select($fields);
         }
-        if ($asArray){
+        if ($asArray) {
             $find = $find->asArray();
         }
 

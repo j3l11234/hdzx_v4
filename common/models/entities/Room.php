@@ -7,6 +7,7 @@
 
 namespace common\models\entities;
 
+use DateTime;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
@@ -82,6 +83,36 @@ class Room extends ActiveRecord {
     public function rules() {
         return [
             [['id', 'number', 'name', 'type', 'data', 'align', 'status'], 'safe'],
+        ];
+    }
+
+
+    public static function getOpenPeriod($date, $max_before, $min_before, $by_week, $open_time = null) {
+        $openTimeTs = strtotime($open_time);
+        $openTime_hour = date("H", $openTimeTs);
+        $openTime_min = date("i", $openTimeTs);
+        $openTime_sec = date("s", $openTimeTs);
+
+        $max_before = (int)$max_before;
+        $min_before = (int)$min_before;
+        if ($by_week == 1) {
+            $periodStart = new DateTime($date);
+            $weekDay = $periodStart->format('w');
+            $offset = (1-$weekDay < 1 ? 1-$weekDay : 1-$weekDay-7) - ($max_before-($max_before%7));
+            $periodStart->modify("{$offset} days")
+                ->setTime($openTime_hour, $openTime_min, $openTime_sec);
+            $periodEnd = (new DateTime($date))->modify("-{$min_before} days")
+                ->setTime(23, 59, 59);
+        } else {
+            $periodStart = (new DateTime($date))->modify("-{$max_before} days")
+                ->setTime($openTime_hour, $openTime_min, $openTime_sec);
+            $periodEnd = (new DateTime($date))->modify("-{$min_before} days")
+                ->setTime(23, 59, 59);
+        }
+
+        return [
+            'start' => $periodStart->getTimestamp(),
+            'end' => $periodEnd->getTimestamp(),
         ];
     }
 

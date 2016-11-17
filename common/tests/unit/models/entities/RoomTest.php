@@ -76,6 +76,52 @@ class RoomTest extends \Codeception\Test\Unit
         expect('exportData', $exportData)->equals($modelData);
     }
 
+
+    public function testGetOpenPeriod() {
+        $dateRange = Room::getOpenPeriod('2016-11-17', 10, 5, 0, '07:0:0');
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-11-07 07:00:00'),
+            'end' => strtotime('2016-11-12 23:59:59'),
+        ]);
+
+        $dateRange = Room::getOpenPeriod('2016-11-17', 10, 5, 1, '07:0:0');
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-11-07 07:00:00'),
+            'end' => strtotime('2016-11-12 23:59:59'),
+        ]);
+
+        $dateRange = Room::getOpenPeriod('2016-11-17', 13, 5, 1, '07:0:0');
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-11-07 07:00:00'),
+            'end' => strtotime('2016-11-12 23:59:59'),
+        ]);
+
+        $dateRange = Room::getOpenPeriod('2016-11-20', 10, 5, 1, '07:0:0');
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-11-07 07:00:00'),
+            'end' => strtotime('2016-11-15 23:59:59'),
+        ]);
+
+        $dateRange = Room::getOpenPeriod('2016-11-20', 13, 5, 1, '07:0:0');
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-11-07 07:00:00'),
+            'end' => strtotime('2016-11-15 23:59:59'),
+        ]);
+
+
+        $dateRange = Room::getOpenPeriod('2016-11-20', 14, 5, 1, '07:0:0');
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-10-31 07:00:00'),
+            'end' => strtotime('2016-11-15 23:59:59'),
+        ]);
+
+        $dateRange = Room::getOpenPeriod('2016-11-20', 14, 5, 1, '12:34:56');
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-10-31 12:34:56'),
+            'end' => strtotime('2016-11-15 23:59:59'),
+        ]);
+    }
+
     public function testGetDateRange() {
         $dateRange = Room::getDateRange(10, 5, 0, '0:0:0', strtotime('2016-03-01 0:0:0'));
         expect('dateRange', $dateRange)->equals([

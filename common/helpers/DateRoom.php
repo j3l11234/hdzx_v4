@@ -12,21 +12,16 @@ namespace common\helpers;
  */
 
 class DateRoom { 
-    public $date, $room_id;
+    public $date, $room_id, $key;
 
     public function __construct($date, $room_id) {
         $this->date = $date;
         $this->room_id = $room_id;
-    }
-
-    public function __get($name) {
-        if ($name === 'key') {
-            return $this->__toString();
-        }
+        $this->key = "{$this->date}_{$this->room_id}";
     }
 
     public function __toString() {
-        return "{$this->date}_{$this->room_id}";
+        return $this->key;
     }
 
     public function toArray() {
