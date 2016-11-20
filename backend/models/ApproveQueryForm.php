@@ -167,14 +167,6 @@ class ApproveQueryForm extends Model {
             throw new UserException('申请不存在');
         }
         
-        //解析order_info用于分析冲突
-        $ordersInfo = [
-            'id' => $order['id'],
-            'date' => $order['date'],
-            'room_id' => $order['room_id'],
-            'hours' => $order['hours'],
-        ];
-
         //查找所有相关申请，用于分析冲突
         $user = Yii::$app->user->getIdentity()->getUser();
         $term = [
@@ -185,10 +177,14 @@ class ApproveQueryForm extends Model {
         $order_ids_all = ApproveService::getApproveOrders($user, $this->type, $term);
 
         //分析冲突
-        Yii::beginProfile('分析冲突');  
+        $ordersInfo = [
+            'id' => $order['id'],
+            'date' => $order['date'],
+            'room_id' => $order['room_id'],
+            'hours' => $order['hours'],
+        ];
         $conflictOrders = ApproveService::getConflictOrders($ordersInfo, $order_ids_all);
-        $order_ids = array_merge([$this->conflict_id], $conflictOrders['ordered'], $conflictOrders['used'], $conflictOrders['rejected']);
-        Yii::endProfile('分析冲突');
+        $order_ids = array_merge([(int)$this->conflict_id], $conflictOrders['ordered'], $conflictOrders['used'], $conflictOrders['rejected']);
 
         //分页处理
         $pagination = new Pagination(['totalCount' => count($order_ids)]);
@@ -197,11 +193,29 @@ class ApproveQueryForm extends Model {
         $order_ids = array_slice($order_ids, $pagination->getOffset(), $pagination->getLimit());
         $orders = OrderService::getOrders($order_ids);
 
-        $orders[$this->conflict_id]['conflict'] = [
-            'ordered' => !empty($conflictOrders['ordered']),
-            'used' => !empty($conflictOrders['used']),
-            'rejected' => !empty($conflictOrders['rejected'])
-        ];
+
+        //解析order_info用于分析冲突
+        $ordersInfos = [];
+        foreach ($orders as $order) {
+            $ordersInfos[$order['id']] = [
+                'id' => $order['id'],
+                'date' => $order['date'],
+                'room_id' => $order['room_id'],
+                'hours' => $order['hours'],
+            ];
+        }
+
+        //分析冲突
+        Yii::beginProfile('分析冲突');  
+        $conflictOrders_map = ApproveService::getConflictOrders_batch($ordersInfos, $order_ids_all);
+        foreach ($orders as &$order) {
+            $conflictOrders = $conflictOrders_map[$order['id']];
+            $order['conflict'] = [
+                'ordered' => !empty($conflictOrders['ordered']),
+                'used' => !empty($conflictOrders['used']),
+                'rejected' => !empty($conflictOrders['rejected'])
+            ];
+        }
 
         $data = [
             'orders' => $orders,
