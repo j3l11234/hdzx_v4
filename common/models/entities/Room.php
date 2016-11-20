@@ -53,8 +53,10 @@ class Room extends ActiveRecord {
     /**
      * 房间状态 开放申请
      */
-    const STATUS_OPEN   = 01;
+    const STATUS_OPEN   = 1;
 
+
+    const WEEK_START = 1;
 
     /**
      * @inheritdoc
@@ -87,27 +89,26 @@ class Room extends ActiveRecord {
     }
 
 
-    public static function getOpenPeriod($date, $max_before, $min_before, $by_week, $open_time = null) {
-        $openTimeTs = strtotime($open_time);
-        $openTime_hour = date("H", $openTimeTs);
-        $openTime_min = date("i", $openTimeTs);
-        $openTime_sec = date("s", $openTimeTs);
+    public static function getOpenPeriod($roomData, $date) {
+        $max_before = (int)($roomData['max_before']);
+        $min_before = (int)($roomData['min_before']);
+        $openTime = strtotime($roomData['open_time']) - strtotime('0:0:0');
+        $closeTime = strtotime($roomData['close_time']) - strtotime('0:0:0');
 
-        $max_before = (int)$max_before;
-        $min_before = (int)$min_before;
-        if ($by_week == 1) {
-            $periodStart = new DateTime($date);
-            $weekDay = $periodStart->format('w');
-            $offset = (1-$weekDay < 1 ? 1-$weekDay : 1-$weekDay-7) - ($max_before-($max_before%7));
-            $periodStart->modify("{$offset} days")
-                ->setTime($openTime_hour, $openTime_min, $openTime_sec);
-            $periodEnd = (new DateTime($date))->modify("-{$min_before} days")
-                ->setTime(23, 59, 59);
-        } else {
+        if ($roomData['by_week'] == 0) {
             $periodStart = (new DateTime($date))->modify("-{$max_before} days")
-                ->setTime($openTime_hour, $openTime_min, $openTime_sec);
+                ->setTime(0, 0, 0)->modify("{$openTime} seconds");
             $periodEnd = (new DateTime($date))->modify("-{$min_before} days")
-                ->setTime(23, 59, 59);
+                ->setTime(0, 0, 0)->modify("{$closeTime} seconds");
+        } else { //以周计算
+            $periodStart = new DateTime($date);
+            $periodEnd = (new DateTime($date))->modify("-{$min_before} days")
+                ->setTime(0, 0, 0)->modify("{$closeTime} seconds");
+
+            $weekDay = $periodStart->format('w');
+            $offset = ((static::WEEK_START+7-$weekDay)%7-7) - ($max_before-($max_before%7));
+            $periodStart->modify("{$offset} days")
+                ->setTime(0, 0, 0)->modify("{$openTime} seconds");
         }
 
         return [
@@ -131,37 +132,56 @@ class Room extends ActiveRecord {
      *      'expired' => 过期时间
      * ]
      */
-    public static function getDateRange($max_before, $min_before, $by_week, $open_time = null, $now = null) {
+    public static function getDateRange($roomData, $now = null) {
+         
+
         $now = $now === null ? time() : $now;
-        $open_time = $open_time === null ? '0:0:0' : $open_time;
+        $max_before = (int)($roomData['max_before']);
+        $min_before = (int)($roomData['min_before']);
+        $openTime = strtotime($roomData['open_time'], $now) - strtotime('0:0:0', $now);
+        $closeTime = strtotime($roomData['close_time'], $now) - strtotime('0:0:0', $now);
 
-        $month = date("m", $now);
-        $day = date("d", $now);
-        $year = date("Y", $now);
+        if ($roomData['by_week'] == 0) {
+            $limitStart = (new DateTime())->setTimestamp($now)->modify("-{$closeTime} seconds")
+                ->modify("{$min_before} days")->modify("1 day")->setTime(0, 0, 0);
+            $limitEnd = (new DateTime())->setTimestamp($now)->modify("-{$openTime} seconds")
+                ->modify("{$max_before} days")->setTime(23, 59, 59);
+        } else { //以周计算
+            $limitStart = (new DateTime())->setTimestamp($now)->modify("-{$closeTime} seconds")
+                ->modify("{$min_before} days")->modify("1 day")->setTime(0, 0, 0);
+            $limitEnd = (new DateTime())->setTimestamp($now)
+                ->modify("-{$openTime} seconds");
 
-        $limitStart = mktime(0, 0, 0, $month, $day + $min_before, $year);
-
-        //开放时间判断，如果未到达开放时间，则按照前一天算
-        $open_now = strtotime(date('Y-m-d',$now).' '.date('H:i:s',strtotime($open_time)));
-        if ($now < $open_now){
-            $day--;
-            $expired = $open_now - $now;
-        } else {
-            $expired = mktime(0, 0, 0, $month, $day + 1, $year) - $now;
+            $weekDay = (int)($limitEnd->format('w'));
+            $offset = (((static::WEEK_START+7-$weekDay)%7+6)%7) + ($max_before-($max_before%7));
+            $limitEnd->modify("{$offset} days")->setTime(23, 59, 59);
         }
 
-        $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);
-        //如果是按周开发则自动开放到本周日
-        if($by_week == 1) {
-            $weekDay = date('w', $limitEnd);
-            $max_before += (7 - $weekDay) % 7;
-            $limitEnd = mktime(23, 59, 59, $month, $day + $max_before, $year);
-        }
+        $nowDiff = strtotime('0:0:0', $now) - $now;
+        // $expired = 0;
+        // if ($closeTime >= $openTime) {
+        //     if ($nowDiff <= $openTime) {
+        //         $expired = $openTime - $nowDiff;
+        //     } else if ($nowDiff > $openTime && $nowDiff <= $closeTime) {
+        //         $expired = $closeTime - $nowDiff;
+        //     } else if ($nowDiff > $closeTime) {
+        //         $expired = $openTime - $nowDiff + 86400;
+        //     }
+        // } else if($closeTime < $openTime) {
+        //     if ($nowDiff <= $closeTime) {
+        //         $expired = $closeTime - $nowDiff;
+        //     } else if ($nowDiff > $closeTime && $nowDiff <= $openTime) {
+        //         $expired = $openTime - $nowDiff;
+        //     } else if ($nowDiff > $openTime) {
+        //         $expired = $closeTime - $nowDiff + 86400;
+        //     }
+        // }
+       
 
         return [
-            'start' => $limitStart,
-            'end' => $limitEnd,
-            'expired' => $expired,
+            'start' => $limitStart->getTimestamp(),
+            'end' => $limitEnd->getTimestamp(),
+            //'expired' => $expired
         ];
     }
 
@@ -176,11 +196,11 @@ class Room extends ActiveRecord {
      * @param int $now 参考时间，默认为当前时间
      * @return boolean 是否可以申请
      */
-    public static function checkOpen($date, $max_before, $min_before, $by_week, $open_time = null, $now = null) {
-        $date = strtotime($date);
-        $range = self::getDateRange($max_before, $min_before, $by_week, $open_time, $now);
+    public static function checkOpen($roomData, $date, $now = null) {
+        $now = $now === null ? time() : $now;
+        $range = static::getOpenPeriod($roomData, $date);
 
-        return ($date >= $range['start'] && $date <= $range['end']);
+        return ($now >= $range['start'] && $now < $range['end']);
     }
 
     /**

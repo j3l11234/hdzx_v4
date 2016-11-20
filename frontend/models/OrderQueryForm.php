@@ -75,9 +75,8 @@ class OrderQueryForm extends Model {
         if (!$this->validate()) {
             throw new UserException($this->getErrorMessage());
         }
-
-        $defaultDateRange = RoomService::getSumDateRange();
-        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
+        $defaultDateRange = RoomService::getSumDateRange(strtotime("+7 hours"));
+        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : time();
         $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
         $room_ids = !empty($this->rooms) ? array_intersect(json_decode($this->rooms, TRUE), RoomService::getRoomList(TRUE)) : RoomService::getRoomList(TRUE);
 
@@ -184,20 +183,19 @@ class OrderQueryForm extends Model {
             throw new UserException($this->getErrorMessage());
         }
 
-        $defaultDateRange = RoomService::getSumDateRange();
-        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $defaultDateRange['start'];
-        $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
+        if (empty($this->start_date)) {
+            $this->start_date = date('Y-m-d');
+        }
 
-        if ($endDateTs - $startDateTs > 31*6 * 86400) {
+        if (!empty($this->end_date)
+            && strtotime($this->end_date) - strtotime($this->start_date) > 6 * 31 * 86400) {
             throw new UserException('查询日期间隔不能大于6个月');
         }
 
         $user = Yii::$app->user->getIdentity()->getUser();
-        $data = OrderService::getMyOrders($user, date('Y-m-d', $startDateTs), date('Y-m-d', $endDateTs));
+        $data = OrderService::getMyOrders($user, $this->start_date, $this->end_date);
 
         return array_merge($data, [
-            'start_date' => date('Y-m-d', $startDateTs),
-            'end_date' => date('Y-m-d', $endDateTs),
         ]);
     }
 

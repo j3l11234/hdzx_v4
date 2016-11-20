@@ -127,7 +127,7 @@ class OrderSubmitForm extends Model {
 
         //验证日期
         $roomData = $room->data;
-        if(!Room::checkOpen($this->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'])){
+        if(!Room::checkOpen($roomData, $this->date, time())){
             throw new UserException('该日期下的房间不可用');
         }
 

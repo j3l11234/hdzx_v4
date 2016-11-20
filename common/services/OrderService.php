@@ -387,10 +387,10 @@ class OrderService extends Component {
     public static function getMyOrders($user, $start_date, $end_date) {
         $where = ['and'];
         $where[] = ['=', 'user_id', $user->id];
-        if ($start_date !== null){
+        if (!empty($start_date)) {
             $where[] = ['>=', 'date', $start_date];
         }
-        if ($end_date !== null){
+        if (!empty($end_date)) {
             $where[] = ['<=', 'date', $end_date];
         }
 

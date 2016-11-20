@@ -76,56 +76,21 @@ class RoomService extends Component {
      * 得到房间的日期范围(带缓存)
      *
      * @param Array $room_ids
-     * @param boolean $useCache 是否使用缓存
+     * @param boolean $now 参考时间
      * @return Array DateRange的Map
      */
-    public static function getDateRanges($room_ids, $useCache = TRUE) {
+    public static function getDateRanges($room_ids, $now = null) {
+        $rooms = static::getRoomList()['rooms'];
         $dateRanges = [];
 
-        //读取缓存
-        $cacheMisses;
-        if ($useCache) {
-            $cacheMisses = [];
-            Yii::beginProfile('Room_DateRange读取缓存', '数据缓存');
-            foreach ($room_ids as $room_id) {
-                $cacheKey = 'Room_'.$room_id.'_dateRange';
-                $cacheData = Yii::$app->cache->get($cacheKey);
-                if ($cacheData == null) {
-                    Yii::trace($cacheKey.':缓存失效', '数据缓存');
-                    $cacheMisses[] = $room_id;
-                } else {
-                    Yii::trace($cacheKey.':缓存命中', '数据缓存');
-                    $dateRanges[$room_id] = $cacheData;
-                }
+        foreach ($room_ids as $room_id) {
+            if (!isset($rooms[$room_id])) {
+                continue;
             }
-            Yii::endProfile('Room_DateRange读取缓存', '数据缓存');
-        } else {
-            $cacheMisses = $room_ids;
-        }
+            $room = $rooms[$room_id];
 
-        //获取剩下数据(缓存miss的)
-        if (count($cacheMisses) > 0) {
-            $cacheNews = [];
-            $now = time();
-            foreach (Room::find()->where(['in', 'id', $cacheMisses])
-                ->asArray()->each(100) as $room) {
-                $roomData = json_decode($room['data'], TRUE);
-                $dateRange = Room::getDateRange($roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time'], $now);
-                $dateRanges[$room['id']] = $dateRange;
-                $cacheNews[] = $room['id'];
-            }
-
-            if ($useCache) {
-                //写入缓存
-                Yii::beginProfile('Room_DateRange写入缓存', '数据缓存');
-                foreach ($cacheNews as $room_id) {
-                    $dateRange = $dateRanges[$room_id];
-                    $cacheKey = 'Room_'.$room_id.'_dateRange';
-                    Yii::$app->cache->set($cacheKey, $dateRange, $dateRange['expired'], new TagDependency(['tags' => ['Room_'.$room_id,'Room']]));
-                    Yii::trace($cacheKey.':写入缓存, $expired='.$dateRange['expired'], '数据缓存'); 
-                }
-                Yii::endProfile('Room_DateRange写入缓存', '数据缓存');
-            }
+            $dateRange = Room::getDateRange($room, $now);
+            $dateRanges[$room_id] = $dateRange;
         }
 
         return $dateRanges;
@@ -182,7 +147,7 @@ class RoomService extends Component {
             $cacheNews = [];
             foreach ($cacheMisses as $dateRoom) {
                 $roomData = $roomDatas[$dateRoom->room_id];
-                $openPeriod = Room::getOpenPeriod($dateRoom->date, $roomData['max_before'], $roomData['min_before'], $roomData['by_week'], $roomData['open_time']);
+                $openPeriod = Room::getOpenPeriod($roomData, $dateRoom->date);
 
                 $openPeriods[$dateRoom->key] = $openPeriod;
                 $cacheNews[] = $dateRoom;
@@ -213,47 +178,25 @@ class RoomService extends Component {
      * @param boolean $useCache 是否使用缓存
      * @return json
      */
-    public static function getSumDateRange($useCache = true) {
+    public static function getSumDateRange($now = null, $useCache = true) {
         $sumDateRange;
 
-        //读取缓存
-        $cacheMiss;
-        if ($useCache) {
-            $cacheKey = 'WholeDateRange';
-            $cacheData = Yii::$app->cache->get($cacheKey);
-            if ($cacheData == null) {
-                Yii::trace($cacheKey.':缓存失效', '数据缓存');
-                $cacheMiss = TRUE;
-            } else {
-                Yii::trace($cacheKey.':缓存命中', '数据缓存');
-                $sumDateRange = $cacheData;
-                $cacheMiss = FALSE;
-            }
-        } else {
-            $cacheMiss = TRUE;
-        }
-        if($cacheMiss) {
-            $now = time();
-            $startDate = mktime(0, 0, 0, date("m", $now), date("d", $now), date("Y", $now));
-            $endDate = $startDate;
-            $expired = 86400;
 
-            $roomList = RoomService::getRoomList(TRUE, $useCache);
-            $dateRanges = RoomService::getDateRanges($roomList, $useCache);
-            foreach ($dateRanges as $dateRange) {
-                $endDate = max($endDate, $dateRange['end']);
-                $expired = min($expired,  $dateRange['expired']);
-            }
-            $sumDateRange = [
-                'start' => $startDate,
-                'end' => $endDate,
-            ];
+        $startDate = mktime(0, 0, 0, date("m", $now), date("d", $now), date("Y", $now));
+        $endDate = $startDate;
+        //$expired = 86400;
 
-            //写入缓存
-            $cacheKey = 'WholeDateRange';
-            Yii::$app->cache->set($cacheKey, $sumDateRange, $expired, new TagDependency(['tags' => 'Room']));
-            Yii::trace($cacheKey.':写入缓存, $expired='.$expired, '数据缓存'); 
+        $roomList = RoomService::getRoomList(true, $useCache);
+        $dateRanges = RoomService::getDateRanges($roomList, $now);
+
+        foreach ($dateRanges as $dateRange) {
+            $endDate = max($endDate, $dateRange['end']);
+            //$expired = min($expired,  $dateRange['expired']);
         }
+        $sumDateRange = [
+            'start' => $startDate,
+            'end' => $endDate,
+        ];
 
         return $sumDateRange;
     }
@@ -326,7 +269,7 @@ class RoomService extends Component {
                 $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked']); 
                 $dateRoom = new DateRoom($roomTable['date'], $roomTable['room_id']);
                 $roomTables[$dateRoom->key] = $roomTable;
-                $cacheNews[] = $dateRoom->key;
+                $cacheNews[] = $dateRoom;
             }
 
             $dbMisses = [];
