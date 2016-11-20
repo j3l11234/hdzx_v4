@@ -125,6 +125,18 @@ class RoomTest extends \Codeception\Test\Unit
             'start' => strtotime('2016-11-07 07:00:00'),
             'end' => strtotime('2016-11-17 23:59:59'),
         ]);
+
+        $dateRange = Room::getOpenPeriod([
+            'max_before' => 14,
+            'min_before' => 5,
+            'by_week' => 1,
+            'open_time' => '07:00:00',
+            'close_time' => '23:59:59',
+        ], '2016-12-05');
+        expect('dateRange', $dateRange)->equals([
+            'start' => strtotime('2016-11-21 07:00:00'),
+            'end' => strtotime('2016-11-30 23:59:59'),
+        ]);
     }
 
     public function testGetDateRange() {

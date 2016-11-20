@@ -106,7 +106,7 @@ class Room extends ActiveRecord {
                 ->setTime(0, 0, 0)->modify("{$closeTime} seconds");
 
             $weekDay = $periodStart->format('w');
-            $offset = ((static::WEEK_START+7-$weekDay)%7-7) - ($max_before-($max_before%7));
+            $offset = (static::WEEK_START-$weekDay <= 0 ? static::WEEK_START-$weekDay : static::WEEK_START-$weekDay-7) - ($max_before-($max_before%7));
             $periodStart->modify("{$offset} days")
                 ->setTime(0, 0, 0)->modify("{$openTime} seconds");
         }
