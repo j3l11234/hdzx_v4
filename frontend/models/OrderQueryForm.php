@@ -75,15 +75,17 @@ class OrderQueryForm extends Model {
         if (!$this->validate()) {
             throw new UserException($this->getErrorMessage());
         }
-        $defaultDateRange = RoomService::getSumDateRange(strtotime("+7 hours"));
-        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : time();
+
+        $now = time();
+        $defaultDateRange = RoomService::getSumDateRange(strtotime("+24 hours",$now));
+        $startDateTs = !empty($this->start_date) ? strtotime($this->start_date) : $now;
         $endDateTs = !empty($this->end_date) ? strtotime($this->end_date) : $defaultDateRange['end'];
         $room_ids = !empty($this->rooms) ? array_intersect(json_decode($this->rooms, TRUE), RoomService::getRoomList(TRUE)) : RoomService::getRoomList(TRUE);
 
         if ($endDateTs - $startDateTs > 31 * 86400) {
             throw new UserException('查询日期间隔不能大于1个月');
         }
-        $now = time();
+        
         if ($now - $startDateTs > 10 * 366 * 86400) {
             throw new UserException('查询了太久远的历史');
         }
