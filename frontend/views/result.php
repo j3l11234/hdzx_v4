@@ -14,7 +14,6 @@ $this->title = '操作结果';
 <?= MessAlert::widget() ?>
 <div class="">
     <div class="row">
-         <?= Helper::renderFlash() ?>
     </div>
 </div>
 <script>
