@@ -422,22 +422,25 @@ class RoomService extends Component {
         $endDateTs = strtotime($end_date);
         $room_ids = Room::getOpenRooms(TRUE);
         $dateRooms = [];
-        foreach ($room_ids as $room_id) {
-            for ($time = $startDateTs; $time <= $endDateTs; $time = strtotime("+1 day", $time)) {
-                $date = date('Y-m-d', $time);
-                $dateRooms[] = $date.'_'.$room_id;
+
+        for ($time = $startDateTs; $time <= $endDateTs; $time = strtotime("+1 day", $time)) {
+            $date = date('Y-m-d', $time);
+            foreach ($room_ids as $room_id) {
+                $dateRoom = new DateRoom($date, $room_id);
+                $dateRooms[] = $dateRoom;
             }
         }
-
         $lockTables = LockService::getLockTables($dateRooms);
         $roomTables = RoomService::getRoomTables($dateRooms, FALSE, TRUE, FALSE);
         $roomTableRows = [];
+        $clearCaches = [];
         foreach ($dateRooms as $dateRoom) {
-            $lockTable = $lockTables[$dateRoom];
-            $roomTable = $roomTables[$dateRoom];
+            $lockTable = $lockTables[$dateRoom->key];
+            $roomTable = $roomTables[$dateRoom->key];
             if(md5(json_encode($roomTable['locked'])) !== md5(json_encode($lockTable))){
                 $roomTable['locked'] = $lockTable;
-                $roomTableRows[] = [$dateRoom, json_encode($roomTable['locked'])];
+                $roomTableRows[] = [$roomTable['id'], json_encode($roomTable['locked'])];
+                $clearCaches[] = $dateRoom;
             }
         }
 
@@ -448,9 +451,8 @@ class RoomService extends Component {
         }
 
         //清除缓存
-        foreach ($roomTableRows as $roomTable) {
-            $dateRoom = $roomTable[0];
-            TagDependency::invalidate(Yii::$app->cache, 'RoomTable_'.$dateRoom);
+        foreach ($clearCaches as $dateRoom) {
+            TagDependency::invalidate(Yii::$app->cache, 'RoomTable_'.$dateRoom->key);
         }
     }
 
