@@ -281,9 +281,14 @@ class RoomService extends Component {
             
             //生成缺失数据(数据库中不存在的)
             if(count($dbMisses) > 0) {
-                $roomTables_new = static::addRoomTables($dbMisses, $applyOrder, $applyLock);
-                foreach ($roomTables_new as $roomTable) {
-                    $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked']);
+                static::addRoomTables($dbMisses, $applyOrder, $applyLock);
+                //从数据库获取新生成的数据
+                foreach (RoomTable::findByDateRooms($dbMisses, ['id', 'date', 'room_id', 'ordered', 'used', 'rejected', 'locked']) as $roomTable) {
+                    $roomTable['ordered'] = json_decode($roomTable['ordered'], true);
+                    $roomTable['used'] = json_decode($roomTable['used'], true);
+                    $roomTable['rejected'] = json_decode($roomTable['rejected'], true);
+                    $roomTable['locked'] = json_decode($roomTable['locked'], true);
+                    $roomTable['hourTable'] = RoomTable::getHourTable($roomTable['ordered'], $roomTable['used'], $roomTable['locked']); 
                     $dateRoom = new DateRoom($roomTable['date'], $roomTable['room_id']);
                     $roomTables[$dateRoom->key] = $roomTable;
                     $cacheNews[] = $dateRoom;

@@ -173,16 +173,40 @@ class Order extends ActiveRecord {
      * @return array|yii\db\BatchQueryResult
      */
     public static function findByDateRooms($dateRooms, $fields = [], $asArray = true, $each = 100) {
+
+        //生成搜索条件
         $dateRoom_where = [];
         foreach ($dateRooms as $dateRoom) {
-           $dateRoom_where[] = $dateRoom->toArray();
+            $date = $dateRoom->date;
+            $room_id = $dateRoom->room_id;
+            if (!isset($dateRoom_where[$date])){
+                $dateRoom_where[$date] = [];
+            }
+            $dateRoom_where[$date][] = $room_id;
         }
-
-        $find = static::find();
-        $find->where(['in', ['date', 'room_id'], $dateRoom_where]);
+        $find = static::find()->where('1=0');
         if (!empty($fields)) {
             $find->select($fields);
         }
+        foreach ($dateRoom_where as $date => $rooms_ids) {
+            $oneFind = static::find()->where(['date'=>$date,'room_id'=>$rooms_ids]);
+            if (!empty($fields)) {
+                $oneFind->select($fields);
+            }
+            $find->union($oneFind);
+        }
+
+        //生成搜索条件
+        // $dateRoom_where = [];
+        // foreach ($dateRooms as $dateRoom) {
+        //    $dateRoom_where[] = $dateRoom->toArray();
+        // }
+        // $find = static::find();
+        // $find->where(['in', ['date', 'room_id'], $dateRoom_where]);
+        // if (!empty($fields)) {
+        //     $find->select($fields);
+        // }
+
         if ($asArray){
             $find = $find->asArray();
         }
