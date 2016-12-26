@@ -36,6 +36,8 @@ class OrderSubmitForm extends Model {
     public $activity_type;
     public $need_media;
 
+    public $captchaTime;
+
     const SCENARIO_SUBMIT_ORDER      = 'submitOrder';
     const SCENARIO_SUBMIT_ORDER_PAPER      = 'submitOrderPaper';
     const SCENARIO_CANCEL_ORDER      = 'cancelOrder';
@@ -112,6 +114,22 @@ class OrderSubmitForm extends Model {
             }   
         }
 
+
+        //验证日期
+        $roomData = $room->data;
+        if(!Room::checkOpen($roomData, $this->date, time())){
+            throw new UserException('该日期下的房间不可用');
+        }
+
+        if ($this->captchaTime < Room::getOpenPeriod($roomData, $this->date, time())['start']) {
+            throw new UserException('验证码过期');
+        }
+
+        //验证时长
+        if ($room->data['max_hour'] < count($this->hours)){
+            throw new UserException('申请时长超过限制');
+        }
+
         $orderType;
         switch ($room->type) {
             case Room::TYPE_SIMPLE:
@@ -124,13 +142,7 @@ class OrderSubmitForm extends Model {
                 $orderType = Order::TYPE_TWICE;
                 break;
         }
-
-        //验证日期
-        $roomData = $room->data;
-        if(!Room::checkOpen($roomData, $this->date, time())){
-            throw new UserException('该日期下的房间不可用');
-        }
-
+        
         //验证额度
         $usage = OrderService::queryUsage($user, strtotime($this->date), false);
         if($usage['month'][$this->room_id]['avl'] < count($hours)){

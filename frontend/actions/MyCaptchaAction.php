@@ -11,6 +11,8 @@ use yii\web\Response;
  */
 class MyCaptchaAction extends CaptchaAction {
 
+    public $expireTime = 300;
+
     /**
      * Gets the verification code.
      * @param bool $regenerate whether the verification code should be regenerated.
@@ -45,17 +47,17 @@ class MyCaptchaAction extends CaptchaAction {
         $session = Yii::$app->getSession();
         $session->open();
 
-        //临时解决方案
-        $timeout = false;
+        //验证码是否过期
+        $expired = false;
         $name = $this->getSessionKey() . 'time';
-        if ($session[$name] < strtotime('07:00:00') && time() >= strtotime('07:00:00')) {
-            $timeout = true;
+        if ($session[$name] < time() - $this->expireTime) {
+            $expired = true;
             $valid = false;
         }
 
         $name = $this->getSessionKey() . 'count';
         $session[$name] = $session[$name] + 1;
-        if ($valid || $session[$name] > $this->testLimit && $this->testLimit > 0 || $timeout) {
+        if ($valid || $session[$name] > $this->testLimit && $this->testLimit > 0 || $expired) {
             $this->getVerifyCode(true);
         }
         return $valid;
@@ -84,5 +86,13 @@ class MyCaptchaAction extends CaptchaAction {
 
     public function getCaptchaUrl() {
         return Url::to([$this->id, 'v' => uniqid()]);
+    }
+
+    public function getCaptchaTime() {
+        $session = Yii::$app->getSession();
+        $session->open();
+
+        $name = $this->getSessionKey() . 'time';
+        return $session[$name];
     }
 }
