@@ -17,11 +17,11 @@ class ReactAsset extends AssetBundle{
     ];
 
     public $js = [
-        'js/common.js',
-        'js/lock.js',
-        'js/login.js',
-        'js/myorder.js',
-        'js/order.js',
+        'js/react_common.js',
+        'js/react_lock.js',
+        'js/react_login.js',
+        'js/react_myorder.js',
+        'js/react_order.js',
     ];
 
     public $depends = [
@@ -31,11 +31,15 @@ class ReactAsset extends AssetBundle{
 
     public function registerAssetFiles($view)
     {
+        $_js = $this->js;
         $this->js = [
-            'js/common.js',
+            'js/react_common.js',
         ];
         if (isset($view->params['page'])) {
-            $this->js[] = 'js/'.$view->params['page'].'.js';
+            $jsFile = 'js/react_'.$view->params['page'].'.js';
+            if (in_array($jsFile, $_js)) {
+                $this->js[] = $jsFile;
+            }
         }
         
         parent::registerAssetFiles($view);

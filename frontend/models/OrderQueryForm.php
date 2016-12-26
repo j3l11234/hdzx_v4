@@ -158,11 +158,23 @@ class OrderQueryForm extends Model {
 
         $ordered_ids = RoomTable::getTable($roomTable['ordered']);
         $used_ids = RoomTable::getTable($roomTable['used']);
+        $rejected_ids = RoomTable::getTable($roomTable['rejected']);
         $locked_ids = RoomTable::getTable($roomTable['locked']);
 
-        $orders = OrderService::getOrders(array_merge($ordered_ids, $used_ids));
+        $orders = OrderService::getOrders(array_merge($ordered_ids, $used_ids, $rejected_ids));
         foreach ($orders as $order_id => &$order) {
-            unset($order['opList']);
+            $order = [
+                'id' => $order['id'],
+                'date' => $order['date'],
+                'room_id' => $order['room_id'],
+                'dept_name' => $order['dept_name'],
+                'room_name' => $order['room_name'],
+                'submit_time' => $order['submit_time'],
+                'hours' => $order['hours'],
+                'status' => $order['status'],
+                'student_no' => $order['student_no'],
+                'title' => $order['title'],
+            ];
         }
         $locks = LockService::getLocks($locked_ids);
         $roomUse = [

@@ -7,7 +7,9 @@ use frontend\assets\ReactAsset;
 $this->params['page'] = 'myorder';
 ReactAsset::register($this);
 
-$this->title = '我的预约';
+$this->title = '我的申请';
+$this->params['banner'] = '我的申请';
+
 ?>
 <div id="myorder-page">
 </div>

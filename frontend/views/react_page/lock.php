@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-use backend\assets\ReactAsset;
+use frontend\assets\ReactAsset;
 
 $this->params['page'] = 'lock';
 ReactAsset::register($this);

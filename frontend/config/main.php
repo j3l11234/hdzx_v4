@@ -48,10 +48,21 @@ return [
                 '' => 'site/index',
                 '/login' => 'user/login-page',
                 '/order' => 'order/order-page',
+                '/order_old' => 'order/old-order-page',
                 '/myorder' => 'order/myorder-page',
                 '/lock' => 'lock/lock-page',
                 'page/<id:.+>' => 'site/page',
             ]
+        ],
+        'assetManager' => [
+            'bundles' => [
+                'yii\bootstrap\BootstrapAsset' => [
+                    'sourcePath' => '@vendor/html_assets',
+                    'css' => [
+                        'bootstrap/css/bootstrap.css',
+                    ]
+                ],
+            ],
         ],
     ],
     'controllerMap' => [

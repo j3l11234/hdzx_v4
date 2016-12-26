@@ -90,9 +90,19 @@ class OrderController extends Controller
      *
      * @return mixed
      */
-    public function actionOrderPage()
+    public function actionOldOrderPage()
     {
         return $this->render('/react_page/order');
+    }
+
+    /**
+     * 预约房间-页面
+     *
+     * @return mixed
+     */
+    public function actionOrderPage()
+    {
+        return $this->render('/vue_page/order');
     }
 
     /**
@@ -165,8 +175,8 @@ class OrderController extends Controller
         if (empty($reqData['captcha']) || !$captchaAction->validate($reqData['captcha'], false)) {
             throw new UserException('验证码错误');
         }
-            
         $model = new OrderSubmitForm(['scenario' => OrderSubmitForm::SCENARIO_SUBMIT_ORDER]);
+        $model->captchaTime = $captchaAction->getCaptchaTime();
         $model->load($reqData, '');
         $resData = $model->submitOrder();
         return [
