@@ -136,7 +136,7 @@ $this->params['dynamic'] = [];
         var _nologinEl = document.getElementById('navbar-usermenu-nologin');
         var _loginedEl = document.getElementById('navbar-usermenu-logined');
         var _usernameEl = document.getElementById('navbar-username');
-        if (!_nologinEl || !_loginedEl || _usernameEl) {
+        if (!_nologinEl || !_loginedEl || !_usernameEl) {
             return;
         }
         if (<?=$this->renderDynamic('return $this->params[\'dynamic\'][\'login\'];') ?>) {

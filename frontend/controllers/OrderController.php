@@ -31,13 +31,13 @@ class OrderController extends Controller
             'access' => [
                 'class' => AccessControl::className(),
                 'only' => [
-                    'order-page', 'myorder-page', 
-                    'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getusage', 'getmyorders', 'submitorder', 'cancelorder'],
+                    'myorder-page',
+                    'getrooms', 'getdepts', 'getusage', 'getmyorders', 'submitorder', 'cancelorder'],
                 'rules' => [
                     [
-                        'actions' => [
-                            'order-page', 'myorder-page', 
-                            'getrooms', 'getdepts', 'getroomtables', 'getroomuse', 'getusage', 'getmyorders', 'submitorder', 'cancelorder'],
+                        'actions' => [ 
+                            'myorder-page',
+                            'getrooms', 'getdepts', 'getusage', 'getmyorders', 'submitorder', 'cancelorder'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
