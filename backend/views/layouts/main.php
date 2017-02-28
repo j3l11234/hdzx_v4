@@ -109,12 +109,7 @@ AppAsset::register($this);
     </div>
 </div>
 
-<footer class="footer">
-    <div class="container">
-        <p class="pull-left">&copy; 北京交通大学 学生活动服务中心 <?= date('Y') ?></p>
-        <p class="pull-right">powered by <a href="http://blog.j3l11234.com">j3l11234</a></p>
-    </div>
-</footer>
+<?= $this->renderFile('@app/views/layouts/footer.php') ?>
 
 <?php $this->endBody() ?>
 </body>
