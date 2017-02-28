@@ -20,21 +20,21 @@ class LockController extends Controller
     public function behaviors()
     {
         return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'only' => [
-                    'lock-page', 'getlocks',
-                ],
-                'rules' => [
-                    [
-                        'actions' => [
-                            'lock-page', 'getlocks',
-                        ],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
+            // 'access' => [
+            //     'class' => AccessControl::className(),
+            //     'only' => [
+            //         //'lock-page', 'getlocks',
+            //     ],
+            //     'rules' => [
+            //         [
+            //             'actions' => [
+            //                 //'lock-page', 'getlocks',
+            //             ],
+            //             'allow' => true,
+            //             'roles' => ['@'],
+            //         ],
+            //     ],
+            // ],
         ];
     }
 
